@@ -1,0 +1,278 @@
+diff -rwu muscle3.6_src/fasta2.cpp muscle3.6_src_aed/fasta2.cpp
+--- muscle3.6_src/fasta2.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/fasta2.cpp	2006-05-21 16:38:33.770131966 -0500
+@@ -30,6 +30,21 @@
+ 	int c = fgetc(f);
+ 	if (EOF == c)
+ 		return 0;
++	// = on a line by itself indicates the end of a Multi-FastA entry in an eXtended Multi-FastA file
++	if ('=' == c)
++	{
++		int c = fgetc(f);
++		if (NL == c)
++			return 0;
++		if (CR == c)
++		{
++			c = fgetc(f);
++			if (NL == c)
++				return 0;
++		}
++		Quit("Invalid file format, '=' may only be used on a line by itself to indicate the end of a MFA entry in an XMFA");
++	}
++
+ 	if ('>' != c)
+ 		Quit("Invalid file format, expected '>' to start FASTA label");
+ 
+@@ -62,6 +77,11 @@
+ 	for (;;)
+ 		{
+ 		int c = fgetc(f);
++		if( '=' == c && NL == PreviousChar )
++		{
++			ungetc(c, f);
++			break;	// use = on a line by itself to signify the end of a multi-fasta entry
++		}
+ 		if (EOF == c)
+ 			{
+ 			if (feof(f))
+diff -rwu muscle3.6_src/globals.cpp muscle3.6_src_aed/globals.cpp
+--- muscle3.6_src/globals.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/globals.cpp	2006-05-21 16:38:36.699059289 -0500
+@@ -96,7 +96,9 @@
+ #ifdef WIN32
+ 	if (IsDebuggerPresent())
+ 		{
+-		int iBtn = MessageBox(NULL, szStr, "muscle", MB_ICONERROR | MB_OKCANCEL);
++		// AED 9/27/5: In VS 2005 the MessageBox macro points to MessageBoxW 
++		// but we want MessageBoxA
++		int iBtn = MessageBoxA(NULL, szStr, "muscle", MB_ICONERROR | MB_OKCANCEL);
+ 		if (IDCANCEL == iBtn)
+ 			Break();
+ 		}
+diff -rwu muscle3.6_src/intmath.cpp muscle3.6_src_aed/intmath.cpp
+--- muscle3.6_src/intmath.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/intmath.cpp	2006-05-21 16:38:38.168022838 -0500
+@@ -20,7 +20,7 @@
+ 	if (0 == x)
+ 		return MINUS_INFINITY;
+ 
+-	static const double dInvLn2 = 1.0/log(2);
++	static const double dInvLn2 = 1.0/log((double)2);
+ // Multiply by inverse of log(2) just in case multiplication
+ // is faster than division.
+ 	return log(x)*dInvLn2;
+@@ -69,7 +69,7 @@
+ 	return BTEq2((BASETYPE) b1, (BASETYPE) b2);
+ 	}
+ 
+-const double dLn2 = log(2);
++const double dLn2 = log((double)2);
+ 
+ // pow2(x)=2^x
+ double pow2(double x)
+diff -rwu muscle3.6_src/muscle.h muscle3.6_src_aed/muscle.h
+--- muscle3.6_src/muscle.h	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/muscle.h	2006-05-21 16:38:40.423966860 -0500
+@@ -14,6 +14,7 @@
+ 
+ #ifdef	_MSC_VER	// Miscrosoft compiler
+ #pragma warning(disable : 4800)	// disable int-bool conversion warning
++#define _WIN32_WINNT 0x0400 // AED 9/27/5: fix for missing IsDebuggerPresent() in VS 2005
+ #endif
+ 
+ #define MUSCLE_LONG_VERSION		"MUSCLE v3.6 by Robert C. Edgar"
+diff -rwu muscle3.6_src/muscleout.cpp muscle3.6_src_aed/muscleout.cpp
+--- muscle3.6_src/muscleout.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/muscleout.cpp	2006-05-21 16:38:44.966854136 -0500
+@@ -96,6 +96,8 @@
+ 
+ void MuscleOutput(MSA &msa)
+ 	{
++	if( strcmp(g_pstrOutFileName,"-")==0 )
++		g_bFASTA = true;
+ 	MHackEnd(msa);
+ 	if (g_bStable)
+ 		{
+diff -rwu muscle3.6_src/options.cpp muscle3.6_src_aed/options.cpp
+--- muscle3.6_src/options.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/options.cpp	2006-05-21 16:38:46.682811558 -0500
+@@ -98,6 +98,7 @@
+ 	"RefineW",				false,
+ 	"SW",					false,
+ 	"Profile",				false,
++	"ProfileOnStdIn",		false,
+ 	"PPScore",				false,
+ 	"Cluster",				false,
+ 	"Brenner",				false,
+diff -rwu muscle3.6_src/params.cpp muscle3.6_src_aed/params.cpp
+--- muscle3.6_src/params.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/params.cpp	2006-05-21 16:38:47.607788607 -0500
+@@ -81,6 +81,7 @@
+ bool g_bSW = false;
+ bool g_bCluster = false;
+ bool g_bProfile = false;
++bool g_bProfileOnStdIn = false;
+ bool g_bPPScore = false;
+ bool g_bBrenner = false;
+ bool g_bDimer = false;
+@@ -544,6 +545,7 @@
+ 	FlagParam("SW", &g_bSW, true);
+ 	FlagParam("Cluster", &g_bCluster, true);
+ 	FlagParam("Profile", &g_bProfile, true);
++	FlagParam("ProfileOnStdIn", &g_bProfileOnStdIn, true);
+ 	FlagParam("PPScore", &g_bPPScore, true);
+ 	FlagParam("Brenner", &g_bBrenner, true);
+ 	FlagParam("Dimer", &g_bDimer, true);
+diff -rwu muscle3.6_src/params.h muscle3.6_src_aed/params.h
+--- muscle3.6_src/params.h	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/params.h	2006-05-21 16:38:47.699786324 -0500
+@@ -82,6 +82,7 @@
+ extern bool g_bSW;
+ extern bool g_bCluster;
+ extern bool g_bProfile;
++extern bool g_bProfileOnStdIn;
+ extern bool g_bProfDB;
+ extern bool g_bPPScore;
+ extern bool g_bBrenner;
+diff -rwu muscle3.6_src/profile.cpp muscle3.6_src_aed/profile.cpp
+--- muscle3.6_src/profile.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/profile.cpp	2006-05-21 16:38:49.802734144 -0500
+@@ -70,20 +70,27 @@
+ // Do profile-profile alignment
+ void Profile()
+ 	{
+-	if (0 == g_pstrFileName1 || 0 == g_pstrFileName2)
+-		Quit("-profile needs -in1 and -in2");
++	if ( !g_bProfileOnStdIn && (0 == g_pstrFileName1 || 0 == g_pstrFileName2))
++		Quit("-profile needs -in1 and -in2 or -ProfileOnStdIn");
+ 
+ 	SetSeqWeightMethod(g_SeqWeight1);
+ 
+-	TextFile file1(g_pstrFileName1);
+-	TextFile file2(g_pstrFileName2);
+-
+ 	MSA msa1;
+ 	MSA msa2;
+ 	MSA msaOut;
+ 
++	if( !g_bProfileOnStdIn )
++	{
++		TextFile file1(g_pstrFileName1);
++		TextFile file2(g_pstrFileName2);
++		msa1.FromFile(file1);
++		msa2.FromFile(file2);
++	}else{
++		TextFile file1("-");
++		TextFile file2("-");
+ 	msa1.FromFile(file1);
+ 	msa2.FromFile(file2);
++	}
+ 
+ 	ALPHA Alpha = ALPHA_Undefined;
+ 	switch (g_SeqType)
+diff -rwu muscle3.6_src/refinew.cpp muscle3.6_src_aed/refinew.cpp
+--- muscle3.6_src/refinew.cpp	2005-09-08 17:26:04.000000000 -0500
++++ muscle3.6_src_aed/refinew.cpp	2006-05-21 16:38:52.000679607 -0500
+@@ -2,6 +2,7 @@
+ #include "msa.h"
+ #include "seqvect.h"
+ #include "textfile.h"
++#include <algorithm>
+ 
+ #define MEMDEBUG	0
+ 
+@@ -98,9 +99,11 @@
+ 		MSAFromColRange(msaIn, 0, g_uWindowOffset, msaOut);
+ 		}
+ 
++	if (!g_bQuiet)
+ 	fprintf(stderr, "\n");
+ 	for (unsigned uWindowIndex = g_uWindowFrom; uWindowIndex <= g_uWindowTo; ++uWindowIndex)
+ 		{
++		if (!g_bQuiet)
+ 		fprintf(stderr, "Window %d of %d    \r", uWindowIndex, uWindowCount);
+ 		const unsigned uColFrom = g_uWindowOffset + uWindowIndex*g_uRefineWindow;
+ 		unsigned uColTo = uColFrom + g_uRefineWindow - 1;
+@@ -115,10 +118,72 @@
+ 		_CrtMemState s1;
+ 		_CrtMemCheckpoint(&s1);
+ #endif
++		// Begin AED 5/20/06
++		// remove any empty seqs in this window
++		std::vector< size_t > empty_seqs;
++		SeqVect vr;
++		for( size_t seqI = 0; seqI < v.size(); ++seqI )
++		{
++			if( v[seqI]->size() == 0 )
++				empty_seqs.push_back(seqI);
++			else
++				vr.push_back(v[seqI]);
++		}
++		std::vector< unsigned > seqid_map( vr.size() );
++		for( size_t seqI = 0; seqI < vr.size(); ++seqI )
++		{
++			seqid_map[seqI] = vr[seqI]->GetId();
++			vr[seqI]->SetId(seqI);
++		}
+ 
+ 		MSA msaTmp;
+-		MUSCLE(v, msaTmp);
+-		AppendMSA(msaOut, msaTmp);
++		if( vr.size() > 1 )
++			MUSCLE(vr, msaTmp);
++
++		// remap the seqids to their original state
++		for( size_t seqI = 0; seqI < vr.size(); ++seqI )
++			vr[seqI]->SetId(seqid_map[seqI]);
++
++		// merge empty seqs back in
++		{
++			const unsigned uSeqCount = msaOut.GetSeqCount();
++
++			const unsigned uColCount1 = msaOut.GetColCount();
++			const unsigned uColCount2 = vr.size() > 1 ? msaTmp.GetColCount() : vr[0]->size();
++			const unsigned uColCountCat = uColCount1 + uColCount2;
++			for( unsigned seqI = 0; seqI < vr.size(); ++seqI )
++			{
++				unsigned uSeqIndex = msaOut.GetSeqIndex(seqid_map[seqI]);
++				if( vr.size() > 1 )
++				{
++					unsigned uSeqIndex2 = msaTmp.GetSeqIndex(seqI);
++					for (unsigned uColIndex = 0; uColIndex < uColCount2; ++uColIndex)
++					{
++						const char c = msaTmp.GetChar(uSeqIndex2, uColIndex);
++						msaOut.SetChar(uSeqIndex, uColCount1 + uColIndex, c);
++					}
++				}else{
++					for (unsigned uColIndex = 0; uColIndex < uColCount2; ++uColIndex)
++					{
++						const char c = vr[0]->GetChar(uColIndex);
++						msaOut.SetChar(uSeqIndex, uColCount1 + uColIndex, c);
++					}
++				}
++			}
++			for( unsigned seqI = 0; seqI < empty_seqs.size(); ++seqI )
++			{
++				unsigned uSeqId2 = v[empty_seqs[seqI]]->GetId();
++				unsigned uSeqIndex = msaOut.GetSeqIndex(uSeqId2);
++				for (unsigned uColIndex = 0; uColIndex < uColCount2; ++uColIndex)
++				{
++					msaOut.SetChar(uSeqIndex, uColCount1 + uColIndex, '-');
++				}
++			}
++			vr.clear();
++		}
++//		AppendMSA(msaOut, msaTmp);
++		// end AED 5/20/06
++
+ 		if (uWindowIndex == g_uSaveWindow)
+ 			{
+ 			MSA msaInTmp;
+@@ -158,6 +223,7 @@
+ //		AssertMSAEqIgnoreCaseAndGaps(msaInTmp, msaTmp);
+ //#endif
+ 		}
++	if (!g_bQuiet)
+ 	fprintf(stderr, "\n");
+ 
+ //	AssertMSAEqIgnoreCaseAndGaps(msaIn, msaOut);//@@uncomment!

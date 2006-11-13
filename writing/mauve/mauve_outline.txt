@@ -1,0 +1,109 @@
+Introduction
+ - Importance of sequence alignment
+   - basis for comparative genomics
+   - basis for evolutionary inference
+ - Importance of multiple genome alignment
+   - evolutionary inference and comparative genomics on a new scale
+ - Challenge of Genome Alignment
+   - Genome sequences are too long to be aligned using traditional methods
+   - Frequent recombination causes sequence rearrangements 
+   - Horizontal transfer introduces new dna sequence
+
+Previous Work
+ - Pairwise Genome Alignment
+   - MUMmer
+     - Aligns two genomes by locating maximal unique matches (MUMs) of some minimum length.  A MUM is
+       an exactly matching subsequence that occurs only once in each sequence              and is flanked by mismatching characters.
+     - MUMs are located using an O(n) suffix-tree algorithm, where n is the length
+       of the sequences being aligned.
+     - The regions between adjacent MUMs are aligned using Smith-Waterman O(n^2)
+     - Finds matches on the forward and reverse complement strands of DNA
+   - GLASS
+     - Aligns two genomes by first finding exactly matching regions of some minimum        length.  The regions between adjacent matches are aligned by        recursively searching for smaller matches in these regions.
+   - MUMmer 2
+     - Aligns genomes in a manner similar to MUMmer by using suffix trees and MUMs.
+     - Significantly reduced memory requirements
+ - Multiple Genome Alignment
+   - MGA
+     - Aligns by first locating multiMEMs, maximal exact matches that occur in each
+       sequence being aligned.  O( m * n ) where m is the number of sequences and
+       n is the length of the sequences.
+     - A collinear subset of multiMEMs are selected that corresponds to the maximum
+       weight chain of multiMEMs
+     - Intervening regions are aligned using a recursive approach similar to that
+       of GLASS.
+     - Homologous regions not aligned by recursive alignment are aligned using 
+       ClustalW.
+     - By selecting a single collinear set of multiMEMs, MGA prevents itself from
+       aligning genomes containing significant rearrangements.  Such chromosomal
+       rearrangements are common in many bacteria.
+     - Does not consider the reverse complement strand of DNA, preventing it from
+       locating inverted regions of sequence
+     - Very fast
+   - MLAGAN
+     - Based on CHAOS algorithm for detecting local pairwise similarities
+     - Genomes are aligned to each other or to an existing alignment using a
+       phylogenetic guide tree
+     - O( m * n )
+     - Scoring function is a hybrid sum of pairs, consensus score
+     - Extracts a chain of local CHAOS alignments to use for further alignment,
+       restricts alignment to collinear sequences
+   - blastz
+     - performs pairwise BLAST on each pair of sequences, O( m^2 * n ) where m is
+       number of sequences and n is the length of the sequence
+ - Alignment viewers??
+   - ACT
+   - Vista
+   - Pipeline
+   - pipmaker
+
+Mauve Alignment
+ - Problem Statement:  Given a set of m input sequences, locate homologous
+                       regions, detect significant collinear regions, and compute an                     alignment of all homologous collinear regions of sequence. 
+
+ - Approach
+   - Locate MUMs of some minimum length k
+   - Recursively align intervening regions between adjacent MUMs, aligning
+     repetitive regions not originally aligned
+   - Group MUMs into locally collinear blocks (LCBs), sets that do not contain
+     rearrangements
+   - Remove small LCBs that would be unlikely rearrangements to leave
+     a set of LCBs that represent a likely set of rearrangements
+
+ - Locating MUMs
+   - Simple approach, the sorted mer list (SML)
+ - Recursive Alignment
+   - ClustalW
+ - Determination of LCBs
+   - Interval Adjacency graph
+     - Each interval (MUM or Clustal aligned region) represented by a node
+     - MUMs adjacent in a sequence 'j' are connected by a directed edge
+       labeled with 'j'
+     - edges linking MUMs on the reverse complement strand are in opposite        direction
+     - Rearrangements appear as cycles in the interval adjacency graph
+     - circular chromosomes can be modeled by linking the last match in each
+       sequence to the first match in that sequence and ignoring the cycle                 resulting from the traversal of every edge in a circular sequence
+ - Removing Unlikely LCBs
+   - Identify and remove the cycles in the interval adjacency graph
+   - Identification
+     - Depth first search for cycles
+   - Determine the cost of breaking each cycle
+   - Breaking cycles
+     - Special property of interval adjacency graphs implies that adjacent
+       nodes must always be linked by an edge
+     - As a result, removing a node in the cycle may not always break the cycle
+     - Removal of matches must proceed from the entrance or exit of a sequence's
+       involvement in the cycle.
+     - Permissible operations
+       - remove a node's definition in a sequence
+       - split a node into two nodes each defined in a distinct subset of the
+         node's sequences
+       - remove is a special case of split
+   - Assessing the quality of an LCB
+     - 
+Results  
+ - Method applied to 10 enterobacterial genomes
+   - Alignment requires x minutes on modest workstation
+   - n significant collinear blocks were found
+   - X base pairs were conserved across all 
+   - 
