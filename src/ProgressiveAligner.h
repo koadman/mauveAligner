@@ -196,6 +196,7 @@ public:
 
 	void getPairwiseMatches( const std::vector< node_id_t >& node1_seqs, const std::vector< node_id_t >& node2_seqs, Matrix<mems::MatchList>& pairwise_matches );
 	void getAncestralMatches( const std::vector< node_id_t > node1_seqs, const std::vector< node_id_t > node2_seqs, node_id_t node1, node_id_t node2, node_id_t ancestor, std::vector< mems::AbstractMatch* >& ancestral_matches );
+	void getRepresentativeAncestralMatches( const std::vector< node_id_t > node1_seqs, const std::vector< node_id_t > node2_seqs, node_id_t node1, node_id_t node2, node_id_t ancestor, std::vector< mems::AbstractMatch* >& ancestral_matches );
 	
 	// functions for recursive anchor search
 	
@@ -314,6 +315,15 @@ public:
 };
 
 
+template <class MatchVector>
+void EliminateOverlaps_v2( MatchVector& ml )
+{
+	uint seq_count = ml[0]->SeqCount();
+	vector< uint > seq_ids( seq_count );
+	for( uint i = 0; i < seq_count; ++i )
+		seq_ids[i] = i;
+	EliminateOverlaps_v2( ml, seq_ids );
+};
 
 /**
  * Delete overlapping regions in favor of the larger match.
@@ -447,15 +457,6 @@ void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids )
 	}
 }
 
-template <class MatchVector>
-void EliminateOverlaps_v2( MatchVector& ml )
-{
-	uint seq_count = ml[0]->SeqCount();
-	std::vector< uint > seq_ids( seq_count );
-	for( uint i = 0; i < seq_count; ++i )
-		seq_ids[i] = i;
-	EliminateOverlaps_v2( ml, seq_ids );
-};
 
 template< typename PairType >
 class LabelSort 

@@ -3356,6 +3356,22 @@ double computeID( GappedAlignment& gal, size_t seqI, size_t seqJ )
 	return id / possible;
 }
 
+
+// options for reducing total number of pairwise match data structures during the 
+// translate to ancestral phase:
+// -- for each leaf below node A, call current x
+//    - identify all internal nodes below B
+//    - call the lowest node y
+//    - create a pairwise match for each of x, des(y) multi-matches
+//    - translate x, des(y) matches to x, y pairwise matches
+//    - eliminate overlaps in x, y matches
+//    - pick next descendent of B and call it y, repeat
+//  - pick next leaf below A
+// Analysis: if we select A and B such that A has fewer leaves then 
+//
+//
+// different option -- just pick a representative from leaf(A) and leaf(B) to translate
+
 /*
 void translateToAncestral(  PhyloTree< AlignmentTreeNode >& t, node_id_t node1, node_id_t node2 )
 {
@@ -3424,6 +3440,49 @@ void translateToAncestral(  PhyloTree< AlignmentTreeNode >& t, node_id_t node1, 
 }
 */
 
+void ProgressiveAligner::getRepresentativeAncestralMatches( const vector< node_id_t > node1_seqs, const vector< node_id_t > node2_seqs, node_id_t node1, node_id_t node2, node_id_t ancestor, std::vector< AbstractMatch* >& ancestral_matches )
+{
+	// for each match, extract a representative match from any pair of genomes in node1_seqs and node2_seqs
+	// translate up the resulting set of matches and eliminate overlaps
+	vector< AbstractMatch* > cur_matches;
+	boost::multi_array< vector< AbstractMatch* >, 2 > seq_matches( boost::extents[node1_seqs.size()][node2_seqs.size()] );
+	for( size_t mI = 0; mI < original_ml.size(); mI++ )
+	{
+		for( uint seqI = 0; seqI < node1_seqs.size(); seqI++ )
+		{
+			uint ii = this->node_sequence_map[node1_seqs[seqI]];
+			if( original_ml[mI]->LeftEnd(ii) == NO_MATCH )
+				continue;
+
+			for( uint seqJ = 0; seqJ < node2_seqs.size(); seqJ++ )
+			{
+				uint jj = this->node_sequence_map[node2_seqs[seqJ]];
+				if( original_ml[mI]->LeftEnd(jj) == NO_MATCH )
+					continue;
+				Match mm( 2 );
+				Match* new_m = mm.Copy();
+				new_m->SetStart( 0, original_ml[mI]->Start(ii));
+				new_m->SetStart( 1, original_ml[mI]->Start(jj));
+				new_m->SetLength(original_ml[mI]->Length());
+				if( new_m->Start(0) < 0 )
+					new_m->Invert();	// assign reference orientation to seq 0
+				seq_matches[seqI][seqJ].push_back( new_m );
+				break;
+			}
+			break;
+		}
+	}
+	for( uint seqI = 0; seqI < node1_seqs.size(); seqI++ )
+		for( uint seqJ = 0; seqJ < node2_seqs.size(); seqJ++ )
+		{
+			translateGappedCoordinates( seq_matches[seqI][seqJ], 0, node1_seqs[seqI], node1 );
+			translateGappedCoordinates( seq_matches[seqI][seqJ], 1, node2_seqs[seqJ], node2 );
+			ancestral_matches.insert( ancestral_matches.end(), seq_matches[seqI][seqJ].begin(), seq_matches[seqI][seqJ].end() );
+		}
+
+	EliminateOverlaps_v2( ancestral_matches );
+}
+
 void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2, node_id_t ancestor )
 {
 	// 1) find all pairwise matches
@@ -3446,7 +3505,7 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 	Matrix<MatchList> pairwise_matches( node1_seqs.size(), node2_seqs.size() );
 //	getPairwiseMatches( node1_seqs, node2_seqs, pairwise_matches );
 	vector< AbstractMatch* > anc_pairwise_matches;
-	getAncestralMatches( node1_seqs, node2_seqs, node1, node2, ancestor, anc_pairwise_matches );
+	getRepresentativeAncestralMatches( node1_seqs, node2_seqs, node1, node2, ancestor, anc_pairwise_matches );
 	
 	PhyloTree< AlignmentTreeNode > aln_tree_backup;
 
@@ -4988,7 +5047,7 @@ void ProgressiveAligner::alignPP(IntervalList& prof1, IntervalList& prof2, Inter
 	MatchList mlist;
 	mlist.clear();
 	mlist = original_ml;
-	cout << "Starting with " << mlist.size() << " pairwise matches\n";
+	cout << "Starting with " << mlist.size() << " multi-matches\n";
 
 //
 // Step 1) Compute guide trees for each profile and join them
@@ -6069,7 +6128,7 @@ void ProgressiveAligner::align( vector< gnSequence* >& seq_table, IntervalList& 
 
 	mlist.clear();
 	mlist = original_ml;
-	cout << "Starting with " << mlist.size() << " pairwise matches\n";
+	cout << "Starting with " << mlist.size() << " multi-matches\n";
 
 //
 // Step 2) Compute a phylogenetic guide tree using the pairwise matches
