@@ -13,7 +13,10 @@
 #include "libMems/IntervalList.h"
 #include "libMems/Islands.h"
 #include "libGenome/gnFASSource.h"
+#include "libMems/GappedAlignment.h"
+#include "libMems/Interval.h"
 #include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string/erase.hpp>
 
 using namespace std;
 using namespace genome;
@@ -47,10 +50,28 @@ int main( int argc, const char* argv[] ){
 	
 	IntervalList aligned_ivs;
 	aligned_ivs.ReadStandardAlignment( alignment_in );
+	cout << "Read " << aligned_ivs[0].SeqCount() << " sequences with " << aligned_ivs.size() << " aligned intervals from " << alignment_fname << endl;
+	cout.flush();
 	MatchList mlist;
 	mlist.seq_filename = aligned_ivs.seq_filename;
-	mlist.LoadSequences(&cout);
-		
+	if( mlist.seq_filename.size() > 0 )
+		mlist.LoadSequences(&cout);
+	else if( aligned_ivs.size() == 1 )
+	{
+		mlist.seq_filename.resize( aligned_ivs[0].SeqCount() );	
+		mlist.seq_table.resize( aligned_ivs[0].SeqCount() );
+		std::vector< mems::AbstractMatch* > matches;
+		aligned_ivs[0].StealMatches(matches);
+		std::vector< string > seqs = mems::GetAlignment( *((mems::GappedAlignment*)matches[0]), mlist.seq_table );
+		for( size_t seqI = 0; seqI < mlist.seq_table.size(); ++seqI )
+		{
+			boost::algorithm::erase_all( seqs[seqI], std::string("-") );
+			mlist.seq_table[seqI] = new gnSequence( seqs[seqI] );
+		}
+		aligned_ivs[0].SetMatches( matches );
+	}else{
+		cerr << "Error, source sequence file references not given\n";
+	}
 	// for each interval, extract sliding windows and write them to Multi-FastA files
 	for( uint ivI = 0; ivI < aligned_ivs.size(); ivI++ )
 	{
