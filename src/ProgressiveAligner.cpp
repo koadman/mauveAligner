@@ -5983,6 +5983,24 @@ void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, score_t scor
 
 	bb_list.clear();
 	bb_list = ula_list;
+
+	// debug: sanity check whether there are all gap columns
+	for( size_t ivI = 0; ivI < iv_list.size(); ivI++ )
+	{
+		vector< string > aln;
+		mems::GetAlignment( iv_list[ivI], iv_list.seq_table, aln );
+		for( size_t colI = 0; colI < aln[0].size(); ++colI )
+		{
+			size_t rowI = 0;
+			for( ; rowI < aln.size(); ++rowI )
+				if( aln[rowI][colI] != '-' )
+					break;
+			if( rowI == aln.size() )
+			{
+				cerr << "ERROR!  IV " << ivI << " COLUMN " << colI << " IS ALL GAPS!\n";
+			}
+		}
+	}
 }
 
 void writeBackboneColumns( ostream& bb_out, backbone_list_t& bb_list )
