@@ -318,6 +318,8 @@ public:
 template <class MatchVector>
 void EliminateOverlaps_v2( MatchVector& ml )
 {
+	if( ml.size() < 2 )
+		return;
 	uint seq_count = ml[0]->SeqCount();
 	vector< uint > seq_ids( seq_count );
 	for( uint i = 0; i < seq_count; ++i )
