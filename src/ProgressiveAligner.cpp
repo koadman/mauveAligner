@@ -3781,10 +3781,13 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 
 		// merge unaligned intervals
 		cout << "Merging unaligned intervals\n";
+		cout.flush();
 		vector<Interval*> new_list1;
 		vector<Interval*> merged_intervals;
 		mergeUnalignedIntervals( 1, pairwise_intervals, new_list1 );
 		mergeUnalignedIntervals( 0, new_list1, merged_intervals );
+		cout << "Marbling gaps\n";
+		cout.flush();
 		for( size_t ivI = 0; ivI < merged_intervals.size(); ivI++ )
 			merged_intervals[ivI]->Marble(50);
 
