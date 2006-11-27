@@ -302,6 +302,8 @@ int main( int argc, char* argv[] )
 
 	}
 
+	sort( tree_and_pp_list.begin(), tree_and_pp_list.end() );
+
 	long unique_count = 0;
 
 	// identify unique trees
