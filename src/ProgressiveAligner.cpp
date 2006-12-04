@@ -4006,10 +4006,14 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 					search_cache_db(seqI,seqJ)[mI].second->Free();
 			}
 
+	printMemUsage();
+
 	// aln_tree_backup has the highest scoring alignment_tree
 	alignment_tree = aln_tree_backup;
 	cout << "propagating ancestral breakpoints\n";
 	recursiveApplyAncestralBreakpoints(ancestor);
+
+	printMemUsage();
 
 	// step 8) construct a muscle alignment in each intervening region
 	if( gapped_alignment )
@@ -4028,6 +4032,7 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			markAsRefined( alignment_tree, ancestor );
 		}
 	}
+	printMemUsage();
 
 
 	if( debug_me ) 	 
