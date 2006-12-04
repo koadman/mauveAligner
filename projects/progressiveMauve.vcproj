@@ -146,7 +146,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib ..\..\libMems\lib\mems.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib  ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib ..\..\libMems\lib\mems.lib"
 				OutputFile="$(OutDir)/progressiveMauve.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
@@ -232,7 +232,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib ..\..\libMems\lib\memsfd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib ..\..\libMems\lib\memsfd.lib"
 				OutputFile="$(OutDir)/progressiveMauve.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
