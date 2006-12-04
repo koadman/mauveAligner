@@ -327,14 +327,28 @@ void EliminateOverlaps_v2( MatchVector& ml )
 	EliminateOverlaps_v2( ml, seq_ids );
 };
 
+template <class MatchVector>
+void processNewMatch( uint seqI, MatchVector& new_matches, typename MatchVector::value_type& new_match )
+{
+	new_match->SetStart( seqI, 0 );
+	if( new_match->Multiplicity() > 1 && new_match->Length(seqI) > 0 )
+		new_matches.push_back( new_match );
+	else
+	{
+		new_match->Free();
+		new_match = NULL;
+	}
+}
+
 /**
  * Delete overlapping regions in favor of the larger match.
  * This code isn't perfect, it can delete too many base pairs in some cases
  * @param	ml	The vector of matches
  * @param	seq_ids	The indexes of sequences in which overlaps should be eliminated
+ * @param	eliminate_both	Delete both of the overlapping matches, instead of leaving one remaining
  */
 template <class MatchVector>
-void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids ){
+void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids, bool eliminate_both = false ){
 	if( ml.size() < 2 )
 		return;
 	uint seq_count = ml[0]->SeqCount();
@@ -372,9 +386,12 @@ void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids )
 
 				diff = -diff;
 				typename MatchVector::value_type new_match;
+				bool mem_iter_smaller = ( ml[ nextI ]->Multiplicity() > ml[ matchI ]->Multiplicity() ) ||
+					( ml[ nextI ]->Multiplicity() == ml[ matchI ]->Multiplicity() && ml[ nextI ]->Length(seqI) > ml[ matchI ]->Length(seqI) );
+
 				// delete bases from the smaller match
-				if( ( ml[ nextI ]->Multiplicity() > ml[ matchI ]->Multiplicity() ) ||
-					( ml[ nextI ]->Multiplicity() == ml[ matchI ]->Multiplicity() && ml[ nextI ]->Length(seqI) > ml[ matchI ]->Length(seqI) ) ){
+				if( eliminate_both || mem_iter_smaller )
+				{
 					// mem_iter is smaller
 					new_match = ml[matchI]->Copy();
 					// erase base pairs from new_match
@@ -388,23 +405,11 @@ void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids )
 					}else{
 						ml[ matchI ]->CropRight( diff, seqI );
 						new_match->CropLeft( new_match->Length(seqI) - diff, seqI );
-						/*
-						if( startI > 0 ){
-							ml[ matchI ]->CropRight( diff, seqI );
-							if( startJ > 0 )
-								new_match->CropLeft( new_match->Length(seqI) - diff, seqI );
-							else
-								new_match->CropRight( new_match->Length(seqI) - diff, seqI );
-						}else{
-							ml[ matchI ]->CropLeft( diff, seqI );
-							if( startJ < 0 )
-								new_match->CropRight( new_match->Length(seqI) - diff, seqI );
-							else
-								new_match->CropLeft( new_match->Length(seqI) - diff, seqI );
-						}
-						*/
 					}
-				}else{
+					processNewMatch( seqI, new_matches, new_match );
+				}
+				if( eliminate_both || !mem_iter_smaller )
+				{
 					// match_iter is smaller
 					new_match = ml[nextI]->Copy();
 					// erase base pairs from new_match
@@ -416,31 +421,8 @@ void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids )
 					}else{
 						ml[ nextI ]->CropLeft( diff, seqI );
 						new_match->CropRight( new_match->Length(seqI) - diff, seqI );
-						/*
-						if( startJ > 0 ){
-							if( startI > 0 )
-								ml[ nextI ]->CropLeft( diff, seqI );
-							else
-								ml[ nextI ]->CropRight( diff, seqI );
-							new_match->CropRight( new_match->Length(seqI) - diff, seqI );
-						}else{
-							if( startI < 0 )
-								ml[ nextI ]->CropRight( diff, seqI );
-							else
-								ml[ nextI ]->CropLeft( diff, seqI );
-							new_match->CropLeft( new_match->Length(seqI) - diff, seqI );
-						}
-						*/
 					}
-
-				}
-				new_match->SetStart( seqI, 0 );
-				if( new_match->Multiplicity() > 1 && new_match->Length(seqI) > 0 )
-					new_matches.push_back( new_match );
-				else
-				{
-					new_match->Free();
-					new_match = NULL;
+					processNewMatch( seqI, new_matches, new_match );
 				}
 				if( deleted_matchI )
 					break;
