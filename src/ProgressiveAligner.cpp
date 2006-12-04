@@ -3483,6 +3483,50 @@ void ProgressiveAligner::getRepresentativeAncestralMatches( const vector< node_i
 	EliminateOverlaps_v2( ancestral_matches );
 }
 
+#ifdef WIN32
+#include <windows.h>
+#include <PSAPI.h>
+void printMemUsage()
+{
+	DWORD proclist[500];
+	DWORD cbNeeded;
+	BOOL rval;
+	rval = EnumProcesses( proclist, sizeof(proclist), &cbNeeded );
+	int p_count = cbNeeded / sizeof(DWORD);
+	HANDLE phand;
+	HMODULE hMod;
+	char szFileName[MAX_PATH];
+	for( int p = 0; p < p_count; p++ )
+	{
+		phand = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, proclist[p] );
+		DWORD dwSize2;
+		if (EnumProcessModules(phand, &hMod, sizeof(hMod), &dwSize2)) 
+		{
+
+			// Get the module name
+			if ( !GetModuleBaseName(phand, hMod, szFileName, sizeof(szFileName)) )
+				szFileName[0] = 0;
+			if( strncmp( szFileName, "progressiveMauve", 16 ) == 0 )
+				break;	// found the right module
+		}
+		CloseHandle(phand);
+	}
+
+	PROCESS_MEMORY_COUNTERS mem_info;
+
+	if( GetProcessMemoryInfo( phand, &mem_info, sizeof(mem_info) ) )
+	{
+		cerr << "Working set size: " << mem_info.WorkingSetSize / (1024 * 1024) << " Mb\n";
+//		cerr << "Paged pool usage: " << mem_info.QuotaPagedPoolUsage << endl;
+//		cerr << "Non-Paged pool usage: " << mem_info.QuotaNonPagedPoolUsage << endl;
+		cerr << "Pagefile usage: " << mem_info.PagefileUsage / (1024 * 1024) << " Mb\n";
+	}
+}
+#else
+void printMemUsage()
+{};
+#endif
+
 void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2, node_id_t ancestor )
 {
 	// 1) find all pairwise matches
@@ -3502,10 +3546,14 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 	uint seqI, seqJ;
 	gnSeqI prev_ancestral_seq_len = (std::numeric_limits<gnSeqI>::max)();
 
+	printMemUsage();
+	cerr << "get ancestral matches\n";
+
 	Matrix<MatchList> pairwise_matches( node1_seqs.size(), node2_seqs.size() );
 //	getPairwiseMatches( node1_seqs, node2_seqs, pairwise_matches );
 	vector< AbstractMatch* > anc_pairwise_matches;
 	getRepresentativeAncestralMatches( node1_seqs, node2_seqs, node1, node2, ancestor, anc_pairwise_matches );
+	printMemUsage();
 	
 	PhyloTree< AlignmentTreeNode > aln_tree_backup;
 
@@ -3583,6 +3631,8 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			//
 			//
 			// translate the matches into LcbTrackingMatches
+			printMemUsage();
+			cerr << "construct LCB tracking matches\n";
 			vector< TrackingMatch > tracking_matches;
 			boost::multi_array< size_t, 3 > tm_lcb_id_array;
 			boost::multi_array< double, 3 > tm_score_array;
@@ -3602,8 +3652,13 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			//
 			// score the matches
 			//
+			printMemUsage();
+			cerr << "init tracking match LCB tracking\n";
 			initTrackingMatchLCBTracking( tracking_matches, node1_descendants.size(), node2_descendants.size(), tm_lcb_id_array );
+			printMemUsage();
+			cerr << "pairwise score tracking matches\n";
 			pairwiseScoreTrackingMatches( tracking_matches, node1_descendants, node2_descendants, tm_score_array );
+			printMemUsage();
 
 			// compute bp distances for the current node.
 			// ancestral nodes take the average distance of extant nodes
@@ -3616,11 +3671,13 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 				t_matches[mI] = &tracking_matches[mI];
 
 			// now sort these out into pairwise LCBs
+			cerr << "get pairwise LCBs\n";
 			PairwiseLCBMatrix pairwise_adj_mat(boost::extents[node1_descendants.size()][node2_descendants.size()]);
 			for( uint nodeI = 0; nodeI < node1_descendants.size(); nodeI++ )
 				for( uint nodeJ = 0; nodeJ < node2_descendants.size(); nodeJ++ )
 					getPairwiseLCBs( node1_descendants[nodeI], node2_descendants[nodeJ], nodeI, nodeJ, t_matches, pairwise_adj_mat[nodeI][nodeJ], tm_score_array, tm_lcb_id_array );
 
+			printMemUsage();
 			sort( t_matches.begin(), t_matches.end() );
 
 			// other possibility, choose pairwise LCBs to remove.  a score improvement is always guaranteed
@@ -3678,6 +3735,7 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 //				debug_aligner = true;
 			}
 */
+			cerr << "Greedy BPE\n";
 			vector< TrackingMatch* > final;
 			if(scoring_scheme == AncestralScoring)
 			{
@@ -3750,6 +3808,7 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			for( size_t delI = 0; delI < deleted_matches.size(); ++delI )
 				deleted_matches[delI]->Free();
 		}
+		printMemUsage();
 
 		ancestral_matches.clear();
 
