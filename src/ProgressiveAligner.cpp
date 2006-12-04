@@ -5498,6 +5498,28 @@ void collapseCollinear( IntervalList& iv_list )
 }
 
 
+void checkForAllGapColumns( IntervalList& iv_list )
+{
+	// debug: sanity check whether there are all gap columns
+	for( size_t ivI = 0; ivI < iv_list.size(); ivI++ )
+	{
+		vector< string > aln;
+		mems::GetAlignment( iv_list[ivI], iv_list.seq_table, aln );
+		for( size_t colI = 0; colI < aln[0].size(); ++colI )
+		{
+			size_t rowI = 0;
+			for( ; rowI < aln.size(); ++rowI )
+				if( aln[rowI][colI] != '-' )
+					break;
+			if( rowI == aln.size() )
+			{
+				cerr << "ERROR!  IV " << ivI << " COLUMN " << colI << " IS ALL GAPS!\n";
+			}
+		}
+	}
+}
+
+
 void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, score_t score_threshold )
 {
 	// collapse any intervals that are trivially collinear
@@ -5867,6 +5889,7 @@ void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, score_t scor
 				if( ula_list[ivI][mI]->LeftEnd(seqI) == NO_MATCH )
 					new_cga->SetLeftEnd(seqI, NO_MATCH);
 			}
+			new_cga->CondenseGapColumns();
 			new_matches[mI] = new_cga;
 		}
 		if( new_matches.size() > 0 )
@@ -6046,23 +6069,7 @@ void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, score_t scor
 	bb_list.clear();
 	bb_list = ula_list;
 
-	// debug: sanity check whether there are all gap columns
-	for( size_t ivI = 0; ivI < iv_list.size(); ivI++ )
-	{
-		vector< string > aln;
-		mems::GetAlignment( iv_list[ivI], iv_list.seq_table, aln );
-		for( size_t colI = 0; colI < aln[0].size(); ++colI )
-		{
-			size_t rowI = 0;
-			for( ; rowI < aln.size(); ++rowI )
-				if( aln[rowI][colI] != '-' )
-					break;
-			if( rowI == aln.size() )
-			{
-				cerr << "ERROR!  IV " << ivI << " COLUMN " << colI << " IS ALL GAPS!\n";
-			}
-		}
-	}
+	checkForAllGapColumns( iv_list );
 }
 
 void writeBackboneColumns( ostream& bb_out, backbone_list_t& bb_list )
