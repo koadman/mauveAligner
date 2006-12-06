@@ -90,7 +90,8 @@ try{
 	vector<string> sml_files;
 	vector<gnSequence*> seq_table;
 	vector<DNAFileSML*> sml_table;
-	uint mer_size = 0;	// Use default settings
+	uint seed_size = 0;	// Use default settings
+	int seed_rank = 0;
 	boolean recursive = true;
 	boolean lcb_extension = true;
 	boolean gapped_alignment = true;
@@ -160,6 +161,7 @@ try{
 		opt_no_lcb_extension,
 		opt_no_gapped_alignment,
 		opt_seed_size,
+		opt_seed_type,
 		opt_weight,
 		opt_output,
 		opt_eliminate_inclusions,
@@ -203,6 +205,7 @@ try{
 		{"no-lcb-extension", no_argument, &config_opt, opt_no_lcb_extension},
 		{"no-gapped-alignment", no_argument, &config_opt, opt_no_gapped_alignment},
 		{"seed-size", required_argument, &config_opt, opt_seed_size},
+		{"seed-type", required_argument, &config_opt, opt_seed_type},
 		{"weight", required_argument, &config_opt, opt_weight},
 		{"output", required_argument, &config_opt, opt_output},
 		{"eliminate-inclusions", no_argument, &config_opt, opt_eliminate_inclusions },
@@ -262,7 +265,21 @@ try{
 						gapped_alignment = false;
 						break;
 					case opt_seed_size:
-						mer_size = atoi( optarg );
+						seed_size = atoi( optarg );
+						break;
+					case opt_seed_type:
+						if( stricmp( "solid", optarg ) == 0 )
+							seed_rank = SOLID_SEED;
+						else if( stricmp( "coding", optarg ) == 0 )
+							seed_rank = CODING_SEED;
+						else if( stricmp( "spaced", optarg ) == 0 )
+							seed_rank = 0;
+						else if( stricmp( "spaced1", optarg ) == 0 )
+							seed_rank = 1;
+						else if( stricmp( "spaced2", optarg ) == 0 )
+							seed_rank = 2;
+						else
+							cerr << "Warning: --seed-type parameter not understood.  Using default spaced seeds\n";
 						break;
 					case opt_weight:
 						LCB_size = atol( optarg );
@@ -440,7 +457,7 @@ try{
 	MLDeleter deleter( match_list );
 	
 	if( seq_files.size() == 1 && sml_files.size() == 0 ){
-		match_list.LoadMFASequences( seq_files[0], mer_size, &cout, find_repeats || ( !read_lcbs && !read_matches ));
+		match_list.LoadMFASequences( seq_files[0], seed_size, &cout, find_repeats || ( !read_lcbs && !read_matches ), seed_rank);
 	}else if( seq_files.size() != sml_files.size() ){
 		cerr << "Error: Each sequence file must have a corresponding SML file specified.\n";
 		return -1;
@@ -449,7 +466,7 @@ try{
 		match_list.sml_filename = sml_files;
 		match_list.LoadSequences( &cout );
 		if( find_repeats || !read_matches || ( !read_lcbs && !read_matches ) )
-			match_list.LoadSMLs( mer_size, &cout );
+			match_list.LoadSMLs( seed_size, &cout, seed_rank );
 	}
 
 	ostream* match_out;
@@ -658,9 +675,9 @@ try{
 	// Align the sequences if necessary
 	if( LCB_size < 0 ){
 		// calculate a default LCB weight, 3 times the mer size times the seq. count
-		if( mer_size <= 0 )	
-			mer_size = MatchList::GetDefaultMerSize( match_list.seq_table );
-		LCB_size = mer_size * 3 * match_list.seq_table.size();
+		if( seed_size <= 0 )	
+			seed_size = MatchList::GetDefaultMerSize( match_list.seq_table );
+		LCB_size = seed_size * 3 * match_list.seq_table.size();
 	}else{
 		// adjust the LCB weight for the number of sequences being aligned
 		LCB_size *= match_list.seq_table.size();
