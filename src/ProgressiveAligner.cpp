@@ -65,6 +65,52 @@ size_t max_gap_length = 3000;
 size_t lcb_hangover = 300;
 
 
+#ifdef WIN32
+#include <windows.h>
+#include <PSAPI.h>
+void printMemUsage()
+{
+	DWORD proclist[500];
+	DWORD cbNeeded;
+	BOOL rval;
+	rval = EnumProcesses( proclist, sizeof(proclist), &cbNeeded );
+	int p_count = cbNeeded / sizeof(DWORD);
+	HANDLE phand;
+	HMODULE hMod;
+	char szFileName[MAX_PATH];
+	for( int p = 0; p < p_count; p++ )
+	{
+		phand = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, proclist[p] );
+		DWORD dwSize2;
+		if (EnumProcessModules(phand, &hMod, sizeof(hMod), &dwSize2)) 
+		{
+
+			// Get the module name
+			if ( !GetModuleBaseName(phand, hMod, szFileName, sizeof(szFileName)) )
+				szFileName[0] = 0;
+			if( strncmp( szFileName, "progressiveMauve", 16 ) == 0 )
+				break;	// found the right module
+		}
+		CloseHandle(phand);
+	}
+
+	PROCESS_MEMORY_COUNTERS mem_info;
+
+	if( GetProcessMemoryInfo( phand, &mem_info, sizeof(mem_info) ) )
+	{
+		cout << "Working set size: " << mem_info.WorkingSetSize / (1024 * 1024) << " Mb\n";
+//		cout << "Paged pool usage: " << mem_info.QuotaPagedPoolUsage << endl;
+//		cout << "Non-Paged pool usage: " << mem_info.QuotaNonPagedPoolUsage << endl;
+		cout << "Pagefile usage: " << mem_info.PagefileUsage / (1024 * 1024) << " Mb\n";
+		cout.flush();
+	}
+}
+#else
+void printMemUsage()
+{};
+#endif
+
+
 void mergeUnalignedIntervals( uint seqI, vector< Interval* >& iv_list, vector< Interval* >& new_list );
 
 /**
@@ -2533,12 +2579,15 @@ void ProgressiveAligner::doGappedAlignment( node_id_t ancestor, bool profile_aln
 			continue;	// don't bother re-refining intervals that didn't get aligned here
 		}
 
+		printMemUsage();
 		GappedAlignment gal;
 		extractAlignment(ancestor, aI, gal);
 		if( gal.Multiplicity() > 1 )	// no point in refining intervals that are unaligned anyways
 			refineAlignment( gal, ancestor, profile_aln, apt );
 		else
 			apt.cur_leftend += gal.AlignmentLength();
+		cout << "construct siv\n";
+		printMemUsage();
 		ConstructSuperIntervalFromMSA(ancestor, aI, gal);
 
 		// print a progress message
@@ -2546,7 +2595,10 @@ void ProgressiveAligner::doGappedAlignment( node_id_t ancestor, bool profile_aln
 		printProgress(apt.prev_progress, cur_progress, cout);
 		apt.prev_progress = cur_progress;
 	}
+	printMemUsage();
+	cout << "Fix left ends\n";
 	FixLeftEnds(ancestor);
+	printMemUsage();
 
 	if( debug_aligner )
 		validateSuperIntervals(alignment_tree[ancestor].children[0], alignment_tree[ancestor].children[1], ancestor);
@@ -3357,89 +3409,9 @@ double computeID( GappedAlignment& gal, size_t seqI, size_t seqJ )
 }
 
 
-// options for reducing total number of pairwise match data structures during the 
-// translate to ancestral phase:
-// -- for each leaf below node A, call current x
-//    - identify all internal nodes below B
-//    - call the lowest node y
-//    - create a pairwise match for each of x, des(y) multi-matches
-//    - translate x, des(y) matches to x, y pairwise matches
-//    - eliminate overlaps in x, y matches
-//    - pick next descendent of B and call it y, repeat
-//  - pick next leaf below A
-// Analysis: if we select A and B such that A has fewer leaves then 
 //
 //
 // different option -- just pick a representative from leaf(A) and leaf(B) to translate
-
-/*
-void translateToAncestral(  PhyloTree< AlignmentTreeNode >& t, node_id_t node1, node_id_t node2 )
-{
-	//
-	// do a depth first? traversal of the tree starting at both node1 and node2
-	// translate up to each cross-pair of internal nodes and eliminate overlaps
-	// 
-	stack< node_id_t > n1_stack;
-	stack< node_id_t > n2_stack;
-	n1_stack.push(node1);
-	n2_stack.push(node2);
-	bitset_t visited( t.size() );
-	while( n1_stack.size() > 0 )
-	{
-		node_id_t cur_n1 = n1_stack.top();
-
-		if( t[cur_n1].children.size() == 0 )
-		{
-			n1_stack.pop();
-			visited[cur_n1].set();
-			continue;
-		}
-		// both are internal nodes
-		// do we need to visit children?
-		node_id_t n1_c1 = t[cur_n1].children[0];
-		node_id_t n1_c2 = t[cur_n1].children[1];
-		if( !visited[n1_c1] && !visited[n1_c2] )
-		{
-			n1_stack.push(n1_c1);
-			n1_stack.push(n1_c2);
-			continue;
-		}else if( !visited[n1_c1] || !visited[n1_c2] )
-		{
-			cerr << "bad tree topology\n";
-		}
-
-		while( n2_stack.size() > 0 )
-		{
-			node_id_t cur_n2 = n2_stack.top();
-			if( t[cur_n2].children.size() == 0 )
-			{
-				n2_stack.pop();
-				visited[cur_n1].set();
-				continue;
-			}
-			node_id_t n2_c1 = t[cur_n2].children[0];
-			node_id_t n2_c2 = t[cur_n2].children[1];
-			if( !visited[n2_c1] && !visited[n2_c2] )
-			{
-				n1_stack.push(n2_c1);
-				n1_stack.push(n2_c2);
-				continue;
-			}else if( !visited[n2_c1] || !visited[n2_c2] )
-			{
-				cerr << "bad tree topology n2\n";
-			}
-
-			// all children have been visited, ready to translate up the tree
-			vector< AbstractMatch* > am_list( pairwise_matches(seqI, seqJ).begin(), pairwise_matches(seqI, seqJ).end() );
-			pairwise_matches(seqI, seqJ).clear();
-			translateGappedCoordinates( am_list, 1, node_sequence_map[seqJ], node2 );
-			translateGappedCoordinates( am_list, 0, node1_seqs[seqI], node1 );
-			ancestral_matches.insert( ancestral_matches.end(), am_list.begin(), am_list.end() );
-		}
-	}
-}
-*/
-
 void ProgressiveAligner::getRepresentativeAncestralMatches( const vector< node_id_t > node1_seqs, const vector< node_id_t > node2_seqs, node_id_t node1, node_id_t node2, node_id_t ancestor, std::vector< AbstractMatch* >& ancestral_matches )
 {
 	// for each match, extract a representative match from any pair of genomes in node1_seqs and node2_seqs
@@ -3483,49 +3455,6 @@ void ProgressiveAligner::getRepresentativeAncestralMatches( const vector< node_i
 	EliminateOverlaps_v2( ancestral_matches );
 }
 
-#ifdef WIN32
-#include <windows.h>
-#include <PSAPI.h>
-void printMemUsage()
-{
-	DWORD proclist[500];
-	DWORD cbNeeded;
-	BOOL rval;
-	rval = EnumProcesses( proclist, sizeof(proclist), &cbNeeded );
-	int p_count = cbNeeded / sizeof(DWORD);
-	HANDLE phand;
-	HMODULE hMod;
-	char szFileName[MAX_PATH];
-	for( int p = 0; p < p_count; p++ )
-	{
-		phand = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, proclist[p] );
-		DWORD dwSize2;
-		if (EnumProcessModules(phand, &hMod, sizeof(hMod), &dwSize2)) 
-		{
-
-			// Get the module name
-			if ( !GetModuleBaseName(phand, hMod, szFileName, sizeof(szFileName)) )
-				szFileName[0] = 0;
-			if( strncmp( szFileName, "progressiveMauve", 16 ) == 0 )
-				break;	// found the right module
-		}
-		CloseHandle(phand);
-	}
-
-	PROCESS_MEMORY_COUNTERS mem_info;
-
-	if( GetProcessMemoryInfo( phand, &mem_info, sizeof(mem_info) ) )
-	{
-		cerr << "Working set size: " << mem_info.WorkingSetSize / (1024 * 1024) << " Mb\n";
-//		cerr << "Paged pool usage: " << mem_info.QuotaPagedPoolUsage << endl;
-//		cerr << "Non-Paged pool usage: " << mem_info.QuotaNonPagedPoolUsage << endl;
-		cerr << "Pagefile usage: " << mem_info.PagefileUsage / (1024 * 1024) << " Mb\n";
-	}
-}
-#else
-void printMemUsage()
-{};
-#endif
 
 void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2, node_id_t ancestor )
 {
@@ -3547,7 +3476,7 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 	gnSeqI prev_ancestral_seq_len = (std::numeric_limits<gnSeqI>::max)();
 
 	printMemUsage();
-	cerr << "get ancestral matches\n";
+	cout << "get ancestral matches\n";
 
 	Matrix<MatchList> pairwise_matches( node1_seqs.size(), node2_seqs.size() );
 //	getPairwiseMatches( node1_seqs, node2_seqs, pairwise_matches );
@@ -3570,28 +3499,29 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			ancestral_matches.insert( ancestral_matches.begin(), anc_pairwise_matches.begin(), anc_pairwise_matches.end() );
 			anc_pairwise_matches.clear();
 		}
-
-		// part 2, construct pairwise matches to the ancestral sequence
-		// A)  for each pairwise match, translate its
-		//     coordinates to the ancestral genome
-		//	   -- try to use translateCoordinates
-		//     -- build a translation table for translateCoordinates
-
-		for( seqI = 0; seqI < node1_seqs.size(); seqI++ )
+		else
 		{
-			for( seqJ = 0; seqJ < node2_seqs.size(); seqJ++ )
-			{
-				cout << node_sequence_map[node1_seqs[seqI]] << "," << node_sequence_map[node2_seqs[seqJ]] << " has " << pairwise_matches(seqI,seqJ).size() << " pairwise matches\n";
-				cout.flush();
+			// part 2, construct pairwise matches to the ancestral sequence
+			// A)  for each pairwise match, translate its
+			//     coordinates to the ancestral genome
+			//	   -- try to use translateCoordinates
+			//     -- build a translation table for translateCoordinates
 
-				vector< AbstractMatch* > am_list( pairwise_matches(seqI, seqJ).begin(), pairwise_matches(seqI, seqJ).end() );
-				pairwise_matches(seqI, seqJ).clear();
-				translateGappedCoordinates( am_list, 1, node2_seqs[seqJ], node2 );
-				translateGappedCoordinates( am_list, 0, node1_seqs[seqI], node1 );
-				ancestral_matches.insert( ancestral_matches.end(), am_list.begin(), am_list.end() );
+			for( seqI = 0; seqI < node1_seqs.size(); seqI++ )
+			{
+				for( seqJ = 0; seqJ < node2_seqs.size(); seqJ++ )
+				{
+					cout << node_sequence_map[node1_seqs[seqI]] << "," << node_sequence_map[node2_seqs[seqJ]] << " has " << pairwise_matches(seqI,seqJ).size() << " pairwise matches\n";
+					cout.flush();
+
+					vector< AbstractMatch* > am_list( pairwise_matches(seqI, seqJ).begin(), pairwise_matches(seqI, seqJ).end() );
+					pairwise_matches(seqI, seqJ).clear();
+					translateGappedCoordinates( am_list, 1, node2_seqs[seqJ], node2 );
+					translateGappedCoordinates( am_list, 0, node1_seqs[seqI], node1 );
+					ancestral_matches.insert( ancestral_matches.end(), am_list.begin(), am_list.end() );
+				}
 			}
 		}
-
 		// include any matches from a previous iteration of this loop
 		for( size_t aI = 0; aI < alignment_tree[ancestor].ordering.size(); aI++ )
 		{
@@ -3632,11 +3562,22 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			//
 			// translate the matches into LcbTrackingMatches
 			printMemUsage();
-			cerr << "construct LCB tracking matches\n";
+			cout << "construct LCB tracking matches\n";
 			vector< TrackingMatch > tracking_matches;
 			boost::multi_array< size_t, 3 > tm_lcb_id_array;
 			boost::multi_array< double, 3 > tm_score_array;
 			constructLcbTrackingMatches( ancestor, ancestral_matches, tracking_matches );
+
+			cout << "There are " << tracking_matches.size() << " tracking matches\n";
+			size_t used_components = 0;
+			for( size_t tmI = 0; tmI < tracking_matches.size(); ++tmI )
+			{
+				for( uint ssI = 0; ssI < tracking_matches[tmI].node_match->SeqCount(); ++ssI )
+					if( tracking_matches[tmI].node_match->LeftEnd(ssI) != NO_MATCH )
+						used_components++;
+			}
+			size_t total_components = tracking_matches.size() * tracking_matches[0].node_match->SeqCount();
+			cout << "There are " << used_components << " / " << total_components << " components used\n";
 
 			vector<node_id_t> node1_descendants;
 			vector<node_id_t> node2_descendants;
@@ -3653,10 +3594,10 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 			// score the matches
 			//
 			printMemUsage();
-			cerr << "init tracking match LCB tracking\n";
+			cout << "init tracking match LCB tracking\n";
 			initTrackingMatchLCBTracking( tracking_matches, node1_descendants.size(), node2_descendants.size(), tm_lcb_id_array );
 			printMemUsage();
-			cerr << "pairwise score tracking matches\n";
+			cout << "pairwise score tracking matches\n";
 			pairwiseScoreTrackingMatches( tracking_matches, node1_descendants, node2_descendants, tm_score_array );
 			printMemUsage();
 
@@ -3671,13 +3612,18 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 				t_matches[mI] = &tracking_matches[mI];
 
 			// now sort these out into pairwise LCBs
-			cerr << "get pairwise LCBs\n";
+			cout << "get pairwise LCBs\n";
+			size_t pair_lcb_count = 0;
 			PairwiseLCBMatrix pairwise_adj_mat(boost::extents[node1_descendants.size()][node2_descendants.size()]);
 			for( uint nodeI = 0; nodeI < node1_descendants.size(); nodeI++ )
 				for( uint nodeJ = 0; nodeJ < node2_descendants.size(); nodeJ++ )
+				{
 					getPairwiseLCBs( node1_descendants[nodeI], node2_descendants[nodeJ], nodeI, nodeJ, t_matches, pairwise_adj_mat[nodeI][nodeJ], tm_score_array, tm_lcb_id_array );
-
+					pair_lcb_count += pairwise_adj_mat[nodeI][nodeJ].size();
+				}
+			cout << "there are " << pair_lcb_count << " pairwise LCBs\n";
 			printMemUsage();
+
 			sort( t_matches.begin(), t_matches.end() );
 
 			// other possibility, choose pairwise LCBs to remove.  a score improvement is always guaranteed
@@ -3735,7 +3681,7 @@ void ProgressiveAligner::alignProfileToProfile( node_id_t node1, node_id_t node2
 //				debug_aligner = true;
 			}
 */
-			cerr << "Greedy BPE\n";
+			cout << "Greedy BPE\n";
 			vector< TrackingMatch* > final;
 			if(scoring_scheme == AncestralScoring)
 			{
