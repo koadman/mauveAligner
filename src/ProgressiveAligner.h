@@ -91,18 +91,42 @@ public:
 };
 typedef LcbTrackingMatch< mems::AbstractMatch* > TrackingMatch;
 
-
+/** 
+ * This class is used to track relationships between LCBs during the LCB determination process.
+ */
 template <class MatchType>
-class TrackingLCB : public mems::LCB
+class TrackingLCB
 {
 public:
-	TrackingLCB& operator=( const LCB& l )
+	TrackingLCB(){}
+	TrackingLCB( const TrackingLCB& l ){ *this = l; }
+	/** Constructs a TrackingLCB from a pairwise LCB */
+	TrackingLCB( const mems::LCB& l ){ *this = l; }
+	TrackingLCB& operator=( const mems::LCB& l )
 	{
-		LCB::operator=(l);
+		left_end[0] = l.left_end[0];
+		left_end[1] = l.left_end[1];
+		right_end[0] = l.right_end[0];
+		right_end[1] = l.right_end[1];
+		left_adjacency[0] = l.left_adjacency[0];
+		left_adjacency[1] = l.left_adjacency[1];
+		right_adjacency[0] = l.right_adjacency[0];
+		right_adjacency[1] = l.right_adjacency[1];
+		lcb_id = l.lcb_id;
+		weight = l.weight;
+		to_be_deleted = false;
 		return *this;
 	}
+	int64 left_end[2];	/**< The left end position of the LCB in each sequence */
+	int64 right_end[2];  /**< The right end position of the LCB in each sequence */
+	uint left_adjacency[2];	/**< 'Pointers' (actually IDs) to the LCBs on the left in each sequence */
+	uint right_adjacency[2];	/**< 'Pointers' (actually IDs) to the LCBs on the right in each sequence */
+	double weight;		/**< The weight (or coverage) of this LCB */
 	std::vector< MatchType > matches;
+	int lcb_id;			/**< A numerical ID that can be assigned to this LCB */
+	bool to_be_deleted;
 };
+
 
 struct AlnProgressTracker
 {
@@ -582,7 +606,6 @@ void computeLCBAdjacencies_v3( const std::vector< MatchVector >& lcb_list, std::
 		}
 		lcb.lcb_id = adjacencies.size();
 		lcb.weight = weights[ lcbI ];
-		lcb.to_be_deleted = false;
 		adjacencies.push_back( lcb );
 	}
 

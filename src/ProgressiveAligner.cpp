@@ -258,8 +258,9 @@ void getPairwiseLCBs(
 	for( size_t lcbI = 0; lcbI < adjacencies.size(); ++lcbI )
 	{
 		t_lcbs[lcbI] = adjacencies[lcbI];
+		t_lcbs[lcbI].matches.resize(LCB_list[lcbI].size());
 		for( size_t mI = 0; mI < LCB_list[lcbI].size(); ++mI )
-			t_lcbs[lcbI].matches.push_back( ((PairwiseMatchAdapter*)LCB_list[lcbI][mI])->tm );
+			t_lcbs[lcbI].matches[mI] = ((PairwiseMatchAdapter*)LCB_list[lcbI][mI])->tm;
 		// sort them by ptr
 		sort( t_lcbs[lcbI].matches.begin(), t_lcbs[lcbI].matches.end() );
 
@@ -269,8 +270,9 @@ void getPairwiseLCBs(
 	}
 
 	// free the memory used by pairwise matches
-	for( size_t mI = 0; mI < pair_matches.size(); ++mI )
-		pair_matches[mI]->Free();
+//	for( size_t mI = 0; mI < pair_matches.size(); ++mI )
+//		pair_matches[mI]->Free();
+	SlotAllocator< PairwiseMatchAdapter >::GetSlotAllocator().Purge();
 }
 
 
@@ -282,9 +284,8 @@ void getPairwiseLCBs(
  *						and the function undoLcbRemoval() can undo these operations in reverse order
  */
 template< class LcbVector >
-uint RemoveLCBandCoalesce( size_t lcbI, LcbVector& adjacencies, std::vector< double >& scores, std::vector< std::pair< uint, uint > >& id_remaps, std::vector< uint >& impact_list )
+uint RemoveLCBandCoalesce( size_t lcbI, uint seq_count, LcbVector& adjacencies, std::vector< double >& scores, std::vector< std::pair< uint, uint > >& id_remaps, std::vector< uint >& impact_list )
 {
-	uint seq_count = adjacencies[0].left_end.size();
 	uint removed_count = 0;
 	vector< uint > imp_tmp(seq_count * 10, LCB_UNASSIGNED);
 	swap(impact_list, imp_tmp);
@@ -409,7 +410,7 @@ uint RemoveLCBandCoalesce( size_t lcbI, LcbVector& adjacencies, std::vector< dou
 
 
 template< class LcbVector >
-void undoLcbRemoval( LcbVector& adjs, std::vector< std::pair< uint, uint > >& id_remaps )
+void undoLcbRemoval( uint seq_count, LcbVector& adjs, std::vector< std::pair< uint, uint > >& id_remaps )
 {
 	for( size_t rI = id_remaps.size(); rI > 0; --rI )
 	{
@@ -418,7 +419,6 @@ void undoLcbRemoval( LcbVector& adjs, std::vector< std::pair< uint, uint > >& id
 			// this one was deleted
 			// revert adjacencies
 			uint lcbI = id_remaps[rI-1].first;
-			uint seq_count = adjs[ lcbI ].left_adjacency.size();
 			for( uint seqI = 0; seqI < seq_count; seqI++ )
 			{
 				uint left_adj = adjs[ lcbI ].left_adjacency[ seqI ];
@@ -439,7 +439,6 @@ void undoLcbRemoval( LcbVector& adjs, std::vector< std::pair< uint, uint > >& id
 			adjs[lcbJ].weight -= adjs[lcbI].weight;
 			// link lcbI back in
 			// TODO: fix right end and left end coordinates
-			uint seq_count = adjs[ lcbI ].left_adjacency.size();
 			for( uint seqI = 0; seqI < seq_count; ++seqI )
 			{
 				uint ladj = adjs[lcbI].left_adjacency[seqI];
@@ -818,7 +817,7 @@ public:
 
 					std::vector< std::pair< uint, uint > > id_remaps;
 					std::vector< uint > impact_list;
-					uint removed_count = RemoveLCBandCoalesce( my_del_lcbs[delI], adjs, bogus_scores, id_remaps, impact_list );
+					uint removed_count = RemoveLCBandCoalesce( my_del_lcbs[delI], 2, adjs, bogus_scores, id_remaps, impact_list );
 					fid_remaps.insert( fid_remaps.end(), id_remaps.begin(), id_remaps.end() );
 					fimp_list.insert( fimp_list.end(), impact_list.begin(), impact_list.end() );
 
@@ -883,7 +882,7 @@ public:
 		if( !really_remove )
 			for( size_t i = seqI_first; i < seqI_last; ++i )
 				for( size_t j = seqJ_first; j < seqJ_last; ++j )
-					undoLcbRemoval( pairwise_adjacencies[i][j], all_id_remaps[i][j] );
+					undoLcbRemoval( 2, pairwise_adjacencies[i][j], all_id_remaps[i][j] );
 
 		undoScoreDifference( lcb_score_diff, lcb_removed_count );
 
@@ -1225,8 +1224,8 @@ public:
 		double cur_score = score();
 		std::vector< std::pair< uint, uint > > id_remaps;
 		std::vector< uint > impact_list;
-		uint bp_removed = RemoveLCBandCoalesce( lcbI, adjs, scores, id_remaps, impact_list );
-		undoLcbRemoval( adjs, id_remaps );
+		uint bp_removed = RemoveLCBandCoalesce( lcbI, adjs[0].left_adjacency.size(), adjs, scores, id_remaps, impact_list );
+		undoLcbRemoval( adjs[0].left_adjacency.size(), adjs, id_remaps );
 		double bp_score = (double)(bp_count - bp_removed) * bp_penalty;
 		double move_score = total_weight - adjs[lcbI].weight - bp_score;
 		return move_score - cur_score;
@@ -1237,7 +1236,7 @@ public:
 	{
 		std::vector< std::pair< uint, uint > > id_remaps;
 		std::vector< uint > impact_list;
-		uint bp_removed = RemoveLCBandCoalesce( lcbI, adjs, scores, id_remaps, impact_list );
+		uint bp_removed = RemoveLCBandCoalesce( lcbI, adjs[0].left_adjacency.size(), adjs, scores, id_remaps, impact_list );
 		total_weight -= adjs[lcbI].weight;
 		bp_count -= bp_removed;
 		for( size_t impI = 0; impI < impact_list.size(); impI++ )
@@ -1300,7 +1299,7 @@ public:
 	{
 		std::vector< std::pair< uint, uint > > id_remaps;
 		std::vector< uint > impact_list;
-		uint bp_removed = RemoveLCBandCoalesce( lcbI, adjs, scores, id_remaps, impact_list );
+		uint bp_removed = RemoveLCBandCoalesce( lcbI, adjs[0].left_adjacency.size(), adjs, scores, id_remaps, impact_list );
 		total_weight -= (adjs[lcbI].weight-min_weight);
 		for( size_t impI = 0; impI < impact_list.size(); impI++ )
 		{
@@ -1403,7 +1402,7 @@ int64 greedyBreakpointElimination_v4( vector< LCB >& adjacencies, vector< double
 		total_current_lcb_weight -= scores[best_move.second];
 		std::vector< std::pair< uint, uint > > id_remaps;
 		std::vector< uint > impact_list;
-		lcb_count -= RemoveLCBandCoalesce( best_move.second, adjacencies, scores, id_remaps, impact_list );
+		lcb_count -= RemoveLCBandCoalesce( best_move.second, adjacencies[0].left_end.size(), adjacencies, scores, id_remaps, impact_list );
 #ifdef LCB_WEIGHT_LOSS_PLOT
 		mins = scores[best_move.second];
 		if( status_out != NULL )
@@ -2473,7 +2472,8 @@ void ProgressiveAligner::refineAlignment( GappedAlignment& gal, node_id_t ancest
 //	{
 //		removeLargeGapsPP( gal, gal_list, gap_iv, seqs1, seqs2 );
 //	}else{
-		gal_list.push_back( gal.Copy() );
+//		gal_list.push_back( gal.Copy() );
+		gal_list.push_back( new GappedAlignment( gal ) );
 		gap_iv.push_back(false);
 //	}
 	list< GappedAlignment* >::iterator gal_iter = gal_list.begin();
@@ -2492,7 +2492,8 @@ void ProgressiveAligner::refineAlignment( GappedAlignment& gal, node_id_t ancest
 			gnSeqI split_point = (*gal_iter)->AlignmentLength() / 2;
 			list< GappedAlignment* >::iterator ins_iter = gal_iter;
 			++ins_iter;
-			ins_iter = gal_list.insert(ins_iter, (*gal_iter)->Copy());
+			ins_iter = gal_list.insert(ins_iter, new GappedAlignment(**gal_iter) );
+//			ins_iter = gal_list.insert(ins_iter, (*gal_iter)->Copy());
 			vector<bool>::iterator gap_ins_iter = gap_iter;
 			size_t gap_off = gap_iter - gap_iv.begin();
 			++gap_ins_iter;
@@ -2554,7 +2555,8 @@ void ProgressiveAligner::refineAlignment( GappedAlignment& gal, node_id_t ancest
 			aln_matrix[seqI].replace(pos[seqI], tmp_mat[seqI].size(), tmp_mat[seqI]);
 			pos[seqI] += tmp_mat[seqI].size();
 		}
-		(*gal_iter)->Free();
+//		(*gal_iter)->Free();
+		delete (*gal_iter);
 	}
 	gal.SetAlignment(aln_matrix);
 }
@@ -2580,15 +2582,19 @@ void ProgressiveAligner::doGappedAlignment( node_id_t ancestor, bool profile_aln
 		}
 
 		printMemUsage();
+		cout << "extract aln\n";
 		GappedAlignment gal;
 		extractAlignment(ancestor, aI, gal);
+		printMemUsage();
+		cout << "refine aln\n";
 		if( gal.Multiplicity() > 1 )	// no point in refining intervals that are unaligned anyways
 			refineAlignment( gal, ancestor, profile_aln, apt );
 		else
 			apt.cur_leftend += gal.AlignmentLength();
-		cout << "construct siv\n";
 		printMemUsage();
+		cout << "construct siv\n";
 		ConstructSuperIntervalFromMSA(ancestor, aI, gal);
+		printMemUsage();
 
 		// print a progress message
 		double cur_progress = ((double)apt.cur_leftend / (double)apt.total_len)*100.0;
