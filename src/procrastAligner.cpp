@@ -495,6 +495,7 @@ int main( int argc, char* argv[] )
 	sme.FindMatches( seedml );
 
 	// need single nuc & kmer frequency
+	
 	string sequence = seedml.seq_table.at(0)->ToString();
 	string uppercase = sequence;
 	ToUPPER tupperware;
