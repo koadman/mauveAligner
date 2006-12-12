@@ -268,15 +268,15 @@ try{
 						seed_size = atoi( optarg );
 						break;
 					case opt_seed_type:
-						if( stricmp( "solid", optarg ) == 0 )
+						if( strcmp( "solid", optarg ) == 0 )
 							seed_rank = SOLID_SEED;
-						else if( stricmp( "coding", optarg ) == 0 )
+						else if( strcmp( "coding", optarg ) == 0 )
 							seed_rank = CODING_SEED;
-						else if( stricmp( "spaced", optarg ) == 0 )
+						else if( strcmp( "spaced", optarg ) == 0 )
 							seed_rank = 0;
-						else if( stricmp( "spaced1", optarg ) == 0 )
+						else if( strcmp( "spaced1", optarg ) == 0 )
 							seed_rank = 1;
-						else if( stricmp( "spaced2", optarg ) == 0 )
+						else if( strcmp( "spaced2", optarg ) == 0 )
 							seed_rank = 2;
 						else
 							cerr << "Warning: --seed-type parameter not understood.  Using default spaced seeds\n";
