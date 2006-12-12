@@ -339,17 +339,6 @@ public:
 };
 
 
-template <class MatchVector>
-void EliminateOverlaps_v2( MatchVector& ml )
-{
-	if( ml.size() < 2 )
-		return;
-	uint seq_count = ml[0]->SeqCount();
-	vector< uint > seq_ids( seq_count );
-	for( uint i = 0; i < seq_count; ++i )
-		seq_ids[i] = i;
-	EliminateOverlaps_v2( ml, seq_ids );
-};
 
 template <class MatchVector>
 void processNewMatch( uint seqI, MatchVector& new_matches, typename MatchVector::value_type& new_match )
@@ -465,6 +454,17 @@ void EliminateOverlaps_v2( MatchVector& ml, const std::vector< uint >& seq_ids, 
 	}
 }
 
+template <class MatchVector>
+void EliminateOverlaps_v2( MatchVector& ml )
+{
+	if( ml.size() < 2 )
+		return;	// can't eliminate overlaps between fewer than 2 matches
+	uint seq_count = ml[0]->SeqCount();
+	std::vector< uint > seq_ids( seq_count );
+	for( uint i = 0; i < seq_count; ++i )
+		seq_ids[i] = i;
+	EliminateOverlaps_v2( ml, seq_ids );
+};
 
 template< typename PairType >
 class LabelSort 
