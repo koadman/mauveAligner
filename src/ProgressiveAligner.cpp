@@ -2512,8 +2512,13 @@ void ProgressiveAligner::refineAlignment( GappedAlignment& gal, node_id_t ancest
 	gnSeqI new_len = 0;
 
 	gap_iter = gap_iv.begin();
+
+#pragma omp parallel
 	for( gal_iter = gal_list.begin(); gal_iter != gal_list.end(); ++gal_iter )
 	{
+#pragma omp single nowait
+		{
+		try{
 		apt.cur_leftend += (*gal_iter)->AlignmentLength();
 		if( profile_aln && !(*gap_iter) )
 		{
@@ -2540,6 +2545,11 @@ void ProgressiveAligner::refineAlignment( GappedAlignment& gal, node_id_t ancest
 		double cur_progress = ((double)apt.cur_leftend / (double)apt.total_len)*100.0;
 		printProgress(apt.prev_progress, cur_progress, cout);
 		apt.prev_progress = cur_progress;
+		}catch(...)
+		{
+			cerr << "Unhandled exception in parallel zone!!\n";
+		}
+		}	// end omp single nowait
 	}
 
 	// put humpty dumpty back together
