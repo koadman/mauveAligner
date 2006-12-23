@@ -937,10 +937,7 @@ int main( int argc, char* argv[] )
 	IntervalList iv_list;
 	iv_list.ReadStandardAlignment( aln_input );
 
-	MatchList ml;
-	ml.seq_filename = iv_list.seq_filename;
-	ml.LoadSequences(&cout);
-	iv_list.seq_table = ml.seq_table;
+	LoadSequences(iv_list, &cout);
 
 	// read the guide tree
 	PhyloTree< TreeNode > tree;
