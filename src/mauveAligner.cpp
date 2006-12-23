@@ -380,9 +380,8 @@ try{
 						collinear_genomes = true;
 						break;
 					case opt_muscle_args:
-						cerr << "Warning: -stable must be in the muscle argument list!\n";
 						muscle_args = optarg;
-						mi.SetMuscleArguments( muscle_args );
+						mi.SetExtraMuscleArguments( muscle_args );
 						break;
 					case opt_permutation_matrix_output:
 						permutation_filename = optarg;
@@ -457,14 +456,16 @@ try{
 	MLDeleter deleter( match_list );
 	
 	if( seq_files.size() == 1 && sml_files.size() == 0 ){
-		match_list.LoadMFASequences( seq_files[0], seed_size, &cout, find_repeats || ( !read_lcbs && !read_matches ), seed_rank);
+		LoadMFASequences( match_list, seq_files[0], &cout);
+		if( find_repeats || ( !read_lcbs && !read_matches ) )
+			match_list.CreateMemorySMLs(seed_size, &cout, seed_rank);
 	}else if( seq_files.size() != sml_files.size() ){
 		cerr << "Error: Each sequence file must have a corresponding SML file specified.\n";
 		return -1;
 	}else{
 		match_list.seq_filename = seq_files;
 		match_list.sml_filename = sml_files;
-		match_list.LoadSequences( &cout );
+		LoadSequences( match_list, &cout );
 		if( find_repeats || !read_matches || ( !read_lcbs && !read_matches ) )
 			match_list.LoadSMLs( seed_size, &cout, seed_rank );
 	}
@@ -485,7 +486,7 @@ try{
 		RepeatHash repeat_finder;
 		repeat_finder.LogProgress( &cout );
 		repeat_finder.FindMatches( match_list );
-		match_list.WriteList( *match_out );
+		WriteList( match_list, *match_out );
 		match_out->flush();
 		return 0;
 	}
@@ -500,7 +501,7 @@ try{
 		if( !lcb_match_input_format )
 		{
 			try{
-				match_list.ReadList( match_in );
+				ReadList( match_list, match_in );
 			}catch( gnException& gne ){
 				cerr << "Error reading " << match_input_file << "\nPossibly corrupt file or invalid file format\n";
 				return -2;
@@ -608,7 +609,7 @@ try{
 			match_list.MultiplicityFilter( match_list.seq_table.size() );
 		}
 		
-		match_list.WriteList( *match_out );
+		WriteList( match_list, *match_out );
 		match_out->flush();
 		
 		// output a guide tree or a coverage list if necessary
