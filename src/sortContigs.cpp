@@ -35,10 +35,7 @@ try{
 	IntervalList iv_list;
 	iv_list.ReadList( aln_file );
 	cerr << "Read " << argv[1] << endl;
-	MatchList mlist;
-	mlist.seq_filename = iv_list.seq_filename;
-	mlist.LoadSequences( &cout );
-	iv_list.seq_table = mlist.seq_table;
+	LoadSequences(iv_list, &cout );
 
 	// remove all but the n-way intervals
 	IntervalList nway_iv_list;
