@@ -51,11 +51,8 @@ try{
 	IntervalList aligned_ivs;
 	aligned_ivs.ReadStandardAlignment( alignment_in );
 	
-	MatchList ml;
-	ml.seq_filename = aligned_ivs.seq_filename;
-	ml.LoadSequences(&cout);
-	aligned_ivs.seq_table = ml.seq_table;
-	source_seqs = ml.seq_table;
+	ml.LoadSequences(aligned_ivs, &cout);
+	source_seqs = aligned_ivs.seq_table;
 
 	// add the sequence data to the interval list
 	uint seq_count = source_seqs.size();
