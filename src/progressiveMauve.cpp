@@ -180,6 +180,9 @@ try{
 	MauveOption opt_skip_refinement( mauve_options, "skip-refinement", no_argument, "Do not perform iterative refinement" );
 	MauveOption opt_skip_gapped_alignment( mauve_options, "skip-gapped-alignment", no_argument, "Do not perform gapped alignment" );
 	MauveOption opt_bp_dist_estimate_min_score( mauve_options, "bp-dist-estimate-min-score", required_argument, "<number> Minimum LCB score for estimating pairwise breakpoint distance" );
+	MauveOption opt_gap_open( mauve_options, "gap-open", required_argument, "<number> Gap open penalty" );
+	MauveOption opt_gap_extend( mauve_options, "gap-extend", required_argument, "<number> Gap extend penalty" );
+	MauveOption opt_substitution_matrix( mauve_options, "substitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
 	MauveOption opt_weight( mauve_options, "weight", required_argument, "<number> Minimum pairwise LCB score" );
 
 	if( argc <= 0 ){
@@ -236,17 +239,17 @@ try{
 		MatchList ml;
 		ml.seq_filename = iv_list.seq_filename;
 		if( ml.seq_filename[0] != ml.seq_filename[1] )
-			ml.LoadSequences(&cout);
+			LoadSequences(ml, &cout);
 		else
-			ml.LoadMFASequences(ml.seq_filename[0], 7, &cout, false);
+			LoadMFASequences(ml, ml.seq_filename[0], &cout);
 		iv_list.seq_table = ml.seq_table;
 		string bb_fname = opt_output.arg_value + ".backbone";
 		ofstream bb_out( bb_fname.c_str() );
 		backbone_list_t bb_list;
 		if( opt_island_score.set )
-			applyIslands(iv_list, bb_list, atoi( opt_island_score.arg_value.c_str() ) );
+			applyIslands(iv_list, bb_list, getDefaultScoringScheme(), atoi( opt_island_score.arg_value.c_str() ) );
 		else
-			applyIslands(iv_list, bb_list);
+			applyIslands(iv_list, bb_list, getDefaultScoringScheme());
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		ofstream bbcols_out( bbcols_fname.c_str() );
@@ -307,11 +310,12 @@ try{
 	}
 	
 	if( seq_files.size() == 1 ){
-		pairwise_match_list.LoadMFASequences( seq_files[0], mer_size, &cout, true );
+		LoadMFASequences( pairwise_match_list, seq_files[0], &cout );
+		pairwise_match_list.CreateMemorySMLs( mer_size, &cout, true );
 	}else{
 		pairwise_match_list.seq_filename = seq_files;
 		pairwise_match_list.sml_filename = sml_files;
-		pairwise_match_list.LoadSequences( &cout );
+		LoadSequences( pairwise_match_list, &cout );
 		pairwise_match_list.LoadSMLs( mer_size, &cout );
 	}
 
@@ -335,7 +339,7 @@ try{
 			return -2;
 		}
 		try{
-			pairwise_match_list.ReadList( match_in );
+			ReadList( pairwise_match_list, match_in );
 		}catch( gnException& gne ){
 			cerr << gne << endl;
 			cerr << "Error reading " << opt_match_input.arg_value << "\nPossibly corrupt file or invalid file format\n";
@@ -364,7 +368,7 @@ try{
 	
 	if( opt_mums.set )
 	{
-		pairwise_match_list.WriteList(*match_out);
+		WriteList(pairwise_match_list, *match_out);
 		return 0;
 	}
 
@@ -446,6 +450,51 @@ try{
 	{
 		aligner.setPairwiseMatches( pairwise_match_list );
 	}
+	if( opt_muscle_args.set )
+	{
+		MuscleInterface& mi = MuscleInterface::getMuscleInterface();
+		mi.SetExtraMuscleArguments(opt_muscle_args.arg_value);
+	}
+
+	PairwiseScoringScheme pss;
+	if( opt_gap_open.set )
+	{
+		pss.gap_open = atoi(opt_gap_open.arg_value.c_str());
+
+		// tell MUSCLE to use the same gap open
+		string musc_args = mi.GetExtraMuscleArguments();
+		musc_args += " -gapopen " + opt_gap_open.arg_value + " ";
+		mi.SetExtraMuscleArguments(musc_args);
+	}
+	if( opt_gap_extend.set )
+	{
+		pss.gap_extend = atoi(opt_gap_open.arg_value.c_str());
+
+		// tell MUSCLE to use the same gap extend
+		string musc_args = mi.GetExtraMuscleArguments();
+		musc_args += " -gapextend " + opt_gap_extend.arg_value + " ";
+		mi.SetExtraMuscleArguments(musc_args);
+	}
+	if( opt_substitution_matrix.set )
+	{
+		ifstream sub_in( opt_substitution_matrix.arg_value.c_str() );
+		if( !sub_in.is_open() )
+		{
+			cerr << "Error opening substitution matrix file: \"" << opt_substitution_matrix.arg_value << "\"\n";
+			return -1;
+		}
+		score_t matrix[4][4];
+		readSubstitutionMatrix( sub_in, matrix );
+		pss = PairwiseScoringScheme(matrix, pss.gap_open, pss.gap_extend);
+
+		// tell MUSCLE to use the same substitution matrix
+		string musc_args = mi.GetExtraMuscleArguments();
+		musc_args += " -matrix " + opt_substitution_matrix.arg_value + " ";
+		mi.SetExtraMuscleArguments(musc_args);
+	}
+	aligner.setPairwiseScoringScheme(pss);
+
+	MauveOption opt_subsitution_matrix( mauve_options, "subsitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
 
 	if( opt_input_guide_tree.set )
 		aligner.setInputGuideTreeFileName( opt_input_guide_tree.arg_value );
@@ -463,8 +512,6 @@ try{
 			return -3;
 		}
 
-		MatchList tmp_ml;
-
 		ifstream lcb_input_1( opt_profile_1.arg_value.c_str() );
 		if( !lcb_input_1.is_open() ){
 			cerr << "Error opening " << opt_profile_1.arg_value << endl;
@@ -472,9 +519,7 @@ try{
 		}
 		try{
 			profile_1.ReadStandardAlignment( lcb_input_1 );
-			tmp_ml.seq_filename = profile_1.seq_filename;
-			tmp_ml.LoadSequences(NULL);
-			profile_1.seq_table = tmp_ml.seq_table;
+			LoadSequences(profile_1, NULL);
 		}catch( gnException& gne ){
 			cerr << gne << endl;
 			cerr << "Error reading " << opt_profile_1.arg_value << "\nPossibly corrupt file or invalid file format\n";
@@ -487,10 +532,7 @@ try{
 		}
 		try{
 			profile_2.ReadStandardAlignment( lcb_input_2 );
-			tmp_ml.seq_filename = profile_2.seq_filename;
-			tmp_ml.seq_table.clear();
-			tmp_ml.LoadSequences(NULL);
-			profile_2.seq_table = tmp_ml.seq_table;
+			LoadSequences(profile_2, NULL);
 		}catch( gnException& gne ){
 			cerr << gne << endl;
 			cerr << "Error reading " << opt_profile_2.arg_value << "\nPossibly corrupt file or invalid file format\n";
@@ -520,7 +562,7 @@ try{
 			if( opt_island_score.set )
 				island_score = atoi( opt_island_score.arg_value.c_str() );
 			backbone_list_t bb_list;
-			applyIslands(interval_list, bb_list, island_score);
+			applyIslands(interval_list, bb_list, getDefaultScoringScheme(), island_score);
 			writeBackboneColumns( bbcols_out, bb_list );
 			if( opt_backbone_output.set )
 			{

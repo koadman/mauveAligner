@@ -20,6 +20,7 @@
 #include <boost/type_traits/remove_pointer.hpp>
 #include <boost/multi_array.hpp>
 #include "SeedOccurrenceList.h"
+#include "libMems/SubstitutionMatrix.h"
 
 // this is a 99.9% score threshold derived from the EVD of
 // simulations of homolgous sequence diverged to .75 substitutions per site and .05 indels per site
@@ -171,6 +172,8 @@ public:
 	/** Set whether iterative refinement using MUSCLE should be performed (true/false) */
 	void setGappedAlignment( bool do_gapped_alignment ){ this->gapped_alignment = do_gapped_alignment; }
 
+	void setPairwiseScoringScheme( const mems::PairwiseScoringScheme& pss ){ this->subst_scoring = pss; }
+
 	enum LcbScoringScheme
 	{
 		AncestralScoring,
@@ -295,6 +298,8 @@ protected:
 	double bp_dist_estimate_score;	/**< the minimum LCB score to use when estimating BP distance.  should be conservative (high) */
 
 	size_t max_gapped_alignment_length;
+
+	mems::PairwiseScoringScheme subst_scoring;
 };
 
 extern bool debug_aligner;
@@ -302,7 +307,7 @@ extern bool debug_aligner;
 typedef mems::UngappedLocalAlignment< mems::HybridAbstractMatch<> > ULA;
 
 typedef std::vector< std::vector< ULA* > > backbone_list_t;
-void applyIslands( mems::IntervalList& iv_list, backbone_list_t& bb_list, mems::score_t score_threshold = DEFAULT_ISLAND_SCORE_THRESHOLD );
+void applyIslands( mems::IntervalList& iv_list, backbone_list_t& bb_list, const mems::PairwiseScoringScheme& subst_scoring, mems::score_t score_threshold = DEFAULT_ISLAND_SCORE_THRESHOLD );
 void writeBackboneSeqCoordinates( backbone_list_t& bb_list, mems::IntervalList& iv_list, std::ostream& bb_out );
 void writeBackboneColumns( std::ostream& bb_out, backbone_list_t& bb_list );
 

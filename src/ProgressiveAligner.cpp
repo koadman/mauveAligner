@@ -3105,7 +3105,7 @@ void markAsRefined( PhyloTree< AlignmentTreeNode >& alignment_tree, node_id_t an
 }
 
 template< class MatchVector >
-double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, SeedOccurrenceList& sol_1, SeedOccurrenceList& sol_2 ){
+double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, const PairwiseScoringScheme& subst_scoring, SeedOccurrenceList& sol_1, SeedOccurrenceList& sol_2 ){
 	double lcb_score = 0;
 	typename MatchVector::iterator match_iter = lcb.begin();
 	for( ; match_iter != lcb.end(); ++match_iter )
@@ -3117,8 +3117,8 @@ double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, 
 		GetAlignment(*m, seq_table, et);
 
 		// get substitution/gap score
-		computeMatchScores( et[0], et[1], scores );
-		computeGapScores( et[0], et[1], scores );
+		computeMatchScores( et[0], et[1], subst_scoring, scores );
+		computeGapScores( et[0], et[1], subst_scoring, scores );
 		double m_score = 0;
 		for( size_t i = 0; i < scores.size(); ++i )
 			if( scores[i] != INVALID_SCORE )
@@ -3222,8 +3222,8 @@ void ProgressiveAligner::pairwiseScoreTrackingMatches(
 
 				// get substitution/gap score
 				std::fill( scores.begin(), scores.end(), 0 );
-				computeMatchScores( et[cur_n1], et[cur_n2], scores );
-				computeGapScores( et[cur_n1], et[cur_n2], scores );
+				computeMatchScores( et[cur_n1], et[cur_n2], subst_scoring, scores );
+				computeGapScores( et[cur_n1], et[cur_n2], subst_scoring, scores );
 				double m_score = 0;
 				for( size_t i = 0; i < scores.size(); ++i )
 					if( scores[i] != INVALID_SCORE )
@@ -3231,7 +3231,24 @@ void ProgressiveAligner::pairwiseScoreTrackingMatches(
 
 				if( !( m_score > -1000000000 && m_score < 1000000000 ) )
 				{
-					cerr << "scoring error\n";
+					cerr << "scoring error, m_score is: " << m_score << "\n";
+					cerr << "scores are: \n"; 
+					for( size_t i = 0; i < scores.size(); ++i )
+						cerr << "(" << i << "," << scores[i] << ") ";
+					cerr << endl;
+					cerr << "scoring error, m_score is: " << m_score << "\n";
+					cerr << "go: " << subst_scoring.gap_open << endl;
+					cerr << "ge: " << subst_scoring.gap_extend << endl;
+					cerr << " matrix:\n";
+					for( int p = 0; p < 4; p++ )
+					{
+						for( int q = 0; q < 4; q++ )
+						{
+							cerr << "\t" << subst_scoring.matrix[p][q];
+						}
+						cerr << endl;
+					}
+
 					genome::breakHere();
 				}
 				size_t merI = 0;
@@ -4874,7 +4891,7 @@ void ProgressiveAligner::CreatePairwiseBPDistance( boost::multi_array<double, 2>
 			ComputeLCBs_v2( ml, breakpoints, LCB_list );
 			vector< double > lcb_scores( LCB_list.size() );
 			for( size_t lcbI = 0; lcbI < LCB_list.size(); ++lcbI )
-				lcb_scores[lcbI] = GetPairwiseLcbScore( LCB_list[lcbI], ml.seq_table, sol_list[seqI], sol_list[seqJ] );
+				lcb_scores[lcbI] = GetPairwiseLcbScore( LCB_list[lcbI], ml.seq_table, this->subst_scoring, sol_list[seqI], sol_list[seqJ] );
 
 			computeLCBAdjacencies_v3( LCB_list, lcb_scores, adjacencies );
 
@@ -5487,7 +5504,7 @@ void checkForAllGapColumns( IntervalList& iv_list )
 }
 
 
-void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, score_t score_threshold )
+void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, const PairwiseScoringScheme& subst_scoring, score_t score_threshold )
 {
 	// collapse any intervals that are trivially collinear
 	collapseCollinear( iv_list );
@@ -5537,7 +5554,7 @@ void applyIslands( IntervalList& iv_list, backbone_list_t& bb_list, score_t scor
 
 			vector< CompactGappedAlignment<>* > hss_list;
 			// now find islands
-			findHssRandomWalkCga( pair_cgas, pair_ivs.seq_table, score_threshold, hss_list );
+			findHssRandomWalkCga( pair_cgas, pair_ivs.seq_table, subst_scoring, score_threshold, hss_list );
 			for( size_t cgaI = 0; cgaI < pair_cgas.size(); ++cgaI )
 				pair_cgas[cgaI]->Free();
 			pair_cgas.clear();
