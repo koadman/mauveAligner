@@ -4,6 +4,8 @@
 class SeedOccurrenceList
 {
 public:
+	typedef float32 frequency_type;
+
 	SeedOccurrenceList(){}
 
 	template< typename SMLType >
@@ -35,13 +37,40 @@ public:
 		// hack: fudge the last few values on the end of the sequence
 		for( ; seedI < count.size(); ++seedI )
 			count[seedI]=1;
+
+		smoothFrequencies( sml );
 	}
 
-	gnSeqI getFrequency( gnSeqI position )
+
+	frequency_type getFrequency( gnSeqI position )
 	{
 		return count[position];
 	}
+
 protected:
+	/**
+	 * converts position freqs to the average freq of all k-mers containing that position
+	 */
+	template< typename SMLType >
+	void smoothFrequencies( const SMLType& sml )
+	{
+		size_t seed_length = sml.SeedLength();
+		// hack: for beginning (seed_length) positions assume that previous
+		// containing seeds were unique
+		double sum = seed_length - 1 + count[0];
+		vector<frequency_type> buf(seed_length, 1);
+		buf[0] = count[0];
+		for( size_t i = 1; i < count.size(); i++ )
+		{
+			count[i-1] = sum / seed_length;
+			sum += count[i];
+			size_t bufI = i % seed_length;
+			sum -= buf[bufI];
+			buf[bufI] = count[i];
+		}
+	}
+
+
 	/** 
 	 * using a uint16 limits us to a max frequency of 65535, but saves substantial memory.
 	 * the score contribution of something with frequency 65535 should be marginal enough
@@ -49,7 +78,7 @@ protected:
 	 * To handle mammalian genomes we'd need to dump this to a file anyways
 	 */
 	static const size_t resolution_limit = UINT16_MAX;
-	std::vector<uint16> count;	
+	std::vector<frequency_type> count;	
 };
 
 
