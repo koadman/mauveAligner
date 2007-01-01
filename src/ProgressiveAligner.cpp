@@ -1425,24 +1425,7 @@ int64 greedyBreakpointElimination_v4( vector< LCB >& adjacencies, vector< double
 /*
  * A progressive alignment algorithm for genomes with rearrangements.
  * Start simple, add complexity later.
- * (1) Compute gene content distance matrix and phylogeny
- * (2) Align the two most similar genomes
- *     - Do ordinary Mauve alignment but after the first part of LCB
- *       extension, do an anchored extension off the ends of each LCB
- *       - If two anchored extensions overlap, give the overlapping region
- *         to the higher scoring alignment -- calculate up to 100 bp of overlapping
- *         alignment...
- *     - recursively align and complete an alignment
- * (3) Add a third genome, calculate avg. distance between each genome
- *     and the current pair, select the genome with min avg. distance.
- *     - Do pairwise anchoring between the new genome and the aligned genomes
- *       - discard any overlapping anchors that are /inconsistent/ with
- *         the existing alignment
- * (4) Extend LCBs in the third genome -- find matches outside existing LCBs
- *     Then do the windowed extension -- find matches within a 10k (or some
- *     other fixed size) window off the end of each LCB
- * (5) Repeat steps (3) and (4) for each additional genome.
- * (6) Feed windows of the alignment to MUSCLE for iterative refinement
+ * TODO: rewrite the algorithm outline
  */
 
 ProgressiveAligner::ProgressiveAligner( uint seq_count ) :
@@ -2591,20 +2574,20 @@ void ProgressiveAligner::doGappedAlignment( node_id_t ancestor, bool profile_aln
 			continue;	// don't bother re-refining intervals that didn't get aligned here
 		}
 
-		printMemUsage();
-		cout << "extract aln\n";
+//		printMemUsage();
+//		cout << "extract aln\n";
 		GappedAlignment gal;
 		extractAlignment(ancestor, aI, gal);
-		printMemUsage();
-		cout << "refine aln\n";
+//		printMemUsage();
+//		cout << "refine aln\n";
 		if( gal.Multiplicity() > 1 )	// no point in refining intervals that are unaligned anyways
 			refineAlignment( gal, ancestor, profile_aln, apt );
 		else
 			apt.cur_leftend += gal.AlignmentLength();
-		printMemUsage();
-		cout << "construct siv\n";
+//		printMemUsage();
+//		cout << "construct siv\n";
 		ConstructSuperIntervalFromMSA(ancestor, aI, gal);
-		printMemUsage();
+//		printMemUsage();
 
 		// print a progress message
 		double cur_progress = ((double)apt.cur_leftend / (double)apt.total_len)*100.0;
@@ -3105,7 +3088,8 @@ void markAsRefined( PhyloTree< AlignmentTreeNode >& alignment_tree, node_id_t an
 }
 
 template< class MatchVector >
-double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, const PairwiseScoringScheme& subst_scoring, SeedOccurrenceList& sol_1, SeedOccurrenceList& sol_2 ){
+double GetPairwiseAnchorScore( MatchVector& lcb, vector< gnSequence* >& seq_table, const PairwiseScoringScheme& subst_scoring, SeedOccurrenceList& sol_1, SeedOccurrenceList& sol_2, bool penalize_gaps = false )
+{
 	double lcb_score = 0;
 	typename MatchVector::iterator match_iter = lcb.begin();
 	for( ; match_iter != lcb.end(); ++match_iter )
@@ -3118,7 +3102,30 @@ double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, 
 
 		// get substitution/gap score
 		computeMatchScores( et[0], et[1], subst_scoring, scores );
-		computeGapScores( et[0], et[1], subst_scoring, scores );
+		if( penalize_gaps )
+			computeGapScores( et[0], et[1], subst_scoring, scores );
+
+		// scale match scores by uniqueness
+		size_t merI = 0;
+		size_t merJ = 0;
+		double uni_count = 0;
+		double uni_score = 0;
+		for( size_t colI = 0; colI < m->AlignmentLength(); ++colI )
+		{
+			if(et[0][colI] != '-' && et[1][colI] != '-' )
+			{
+				SeedOccurrenceList::frequency_type uni1 = sol_1.getFrequency(m->LeftEnd(0) + merI - 1);
+				SeedOccurrenceList::frequency_type uni2 = sol_2.getFrequency(m->LeftEnd(1) + merJ - 1);
+				// scale by the uniqueness product, which approximates the number of ways to match up non-unique k-mers
+				scores[colI] /= uni1 * uni2;
+			}
+			if(et[0][colI] != '-')
+				merI++;
+			if(et[1][colI] != '-')
+				merJ++;
+		}
+
+
 		double m_score = 0;
 		for( size_t i = 0; i < scores.size(); ++i )
 			if( scores[i] != INVALID_SCORE )
@@ -3129,6 +3136,11 @@ double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, 
 			cerr << "scoring error\n";
 			genome::breakHere();
 		}
+		lcb_score += m_score;
+
+		// old uniqueness scoring method:
+		// score by average uniqueness of entire LCB
+		/*
 		size_t merI = 0;
 		size_t merJ = 0;
 		double uni_count = 0;
@@ -3151,7 +3163,21 @@ double GetPairwiseLcbScore( MatchVector& lcb, vector< gnSequence* >& seq_table, 
 
 		double avg_uni = uni_count > 0 ? uni_score / uni_count : 1;	// if there were no aligned columns then m_score should already be very negative
 		lcb_score = m_score * avg_uni;
+		*/
 	}
+	
+	// for debugging:
+	/*
+	vector<gnSeqI> left_end(2);
+	vector<gnSeqI> length(2);
+	vector<bool> orientation(2);
+
+	FindBoundaries( lcb, left_end, length, orientation );
+	cout << left_end[0] << "--" << left_end[0] + length[0] << "\t aln to:\t"
+		<< left_end[1] << "--" << left_end[1] + length[1] << "\tscore: "
+		<< lcb_score << endl;
+	*/
+
 	return lcb_score;
 }
 
@@ -3167,43 +3193,6 @@ void ProgressiveAligner::pairwiseScoreTrackingMatches(
 	{
 		TrackingMatch* cur_match = &tracking_matches[mI];
 		AbstractMatch* node_match = cur_match->node_match;
-
-		vector<bitset_t> aln_mat;
-		node_match->GetAlignment(aln_mat);
-
-		// build a match among extant seqs only
-		bitset_t tmp_bs( aln_mat[0].size(), false );
-		vector< bitset_t > extant_mat( aln_mat.size(), tmp_bs );
-		vector< gnSequence* > extant_seqs( aln_mat.size(), (gnSequence*)NULL );
-		CompactGappedAlignment<> extant_cga( aln_mat.size(), aln_mat[0].size() );
-		for( size_t nI = 0; nI < node1_descendants.size(); ++nI )
-		{
-			if( node_sequence_map[node1_descendants[nI]] == (std::numeric_limits<uint>::max)()  ||
-				node_match->LeftEnd(node1_descendants[nI]) == NO_MATCH )
-				continue;
-			extant_mat[node1_descendants[nI]] = aln_mat[ node1_descendants[nI] ];
-			extant_seqs[node1_descendants[nI]] = alignment_tree[ node1_descendants[nI] ].sequence;
-			extant_cga.SetStart( node1_descendants[nI], node_match->Start( node1_descendants[nI] ) );
-			extant_cga.SetLength( node_match->Length( node1_descendants[nI] ), node1_descendants[nI] );
-		}
-		for( size_t nJ = 0; nJ < node2_descendants.size(); ++nJ )
-		{
-			if( node_sequence_map[node2_descendants[nJ]] == (std::numeric_limits<uint>::max)()  ||
-				node_match->LeftEnd(node2_descendants[nJ]) == NO_MATCH )
-				continue;
-			extant_mat[ node2_descendants[nJ] ] = aln_mat[ node2_descendants[nJ] ];
-			extant_seqs[node2_descendants[nJ]] = alignment_tree[ node2_descendants[nJ] ].sequence;
-			extant_cga.SetStart( node2_descendants[nJ], node_match->Start( node2_descendants[nJ] ) );
-			extant_cga.SetLength( node_match->Length( node2_descendants[nJ] ), node2_descendants[nJ] );
-		}
-		extant_cga.SetAlignment( extant_mat );
-
-		vector< std::string > et;
-		GetAlignment( extant_cga, extant_seqs, et );
-		const vector< bitset_t >& cga_mat = extant_cga.GetAlignment();
-
-		double match_sum = 0;
-		vector< score_t > scores( et[0].size() );
 		for( size_t nI = 0; nI < node1_descendants.size(); ++nI )
 		{
 			if( node_sequence_map[node1_descendants[nI]] == (std::numeric_limits<uint>::max)()  ||
@@ -3215,67 +3204,17 @@ void ProgressiveAligner::pairwiseScoreTrackingMatches(
 					node_match->LeftEnd(node2_descendants[nJ]) == NO_MATCH )
 					continue;	// not extant or no match between this pair
 
-				double uni_score = 0;
-				double uni_count = 0;
 				node_id_t cur_n1 = node1_descendants[nI];
 				node_id_t cur_n2 = node2_descendants[nJ];
+				size_t nsmI = node_sequence_map[cur_n1];
+				size_t nsmJ = node_sequence_map[cur_n2];
+				PairwiseMatchAdapter pma( node_match, cur_n1, cur_n2 );
+				vector< AbstractMatch* > lcb_vect( 1, &pma );
+				vector< gnSequence* > ex_seqs(2);
+				ex_seqs[0] = alignment_tree[ cur_n1 ].sequence;
+				ex_seqs[1] = alignment_tree[ cur_n2 ].sequence;
 
-				// get substitution/gap score
-				std::fill( scores.begin(), scores.end(), 0 );
-				computeMatchScores( et[cur_n1], et[cur_n2], subst_scoring, scores );
-				computeGapScores( et[cur_n1], et[cur_n2], subst_scoring, scores );
-				double m_score = 0;
-				for( size_t i = 0; i < scores.size(); ++i )
-					if( scores[i] != INVALID_SCORE )
-						m_score += scores[i];
-
-				if( !( m_score > -1000000000 && m_score < 1000000000 ) )
-				{
-					cerr << "scoring error, m_score is: " << m_score << "\n";
-					cerr << "scores are: \n"; 
-					for( size_t i = 0; i < scores.size(); ++i )
-						cerr << "(" << i << "," << scores[i] << ") ";
-					cerr << endl;
-					cerr << "scoring error, m_score is: " << m_score << "\n";
-					cerr << "go: " << subst_scoring.gap_open << endl;
-					cerr << "ge: " << subst_scoring.gap_extend << endl;
-					cerr << " matrix:\n";
-					for( int p = 0; p < 4; p++ )
-					{
-						for( int q = 0; q < 4; q++ )
-						{
-							cerr << "\t" << subst_scoring.matrix[p][q];
-						}
-						cerr << endl;
-					}
-
-					genome::breakHere();
-				}
-				size_t merI = 0;
-				size_t merJ = 0;
-				for( size_t colI = 0; colI < node_match->AlignmentLength(); ++colI )
-				{
-					if(cga_mat[cur_n1].test(colI) && cga_mat[cur_n2].test(colI) )
-					{
-						double uni1 = (double)sol_list[node_sequence_map[cur_n1]].getFrequency(extant_cga.LeftEnd(cur_n1) + merI - 1);
-						double uni2 = (double)sol_list[node_sequence_map[cur_n2]].getFrequency(extant_cga.LeftEnd(cur_n2) + merJ - 1);
-						uni_score += 1 / uni1;
-						uni_score += 1 / uni2;
-						uni_count += 2;
-					}
-					if(cga_mat[cur_n1].test(colI))
-						merI++;
-					if(cga_mat[cur_n2].test(colI))
-						merJ++;
-				}
-
-				double avg_uni = uni_count > 0 ? uni_score / uni_count : 1;	// if there were no aligned columns then m_score should already be very negative
-				tm_score_array[mI][nI][nJ] = m_score * avg_uni;
-				if( !( m_score > -1000000000 && m_score < 1000000000 ) )
-				{
-					cerr << "scoring error\n";
-					genome::breakHere();
-				}
+				tm_score_array[mI][nI][nJ] = GetPairwiseAnchorScore(lcb_vect, ex_seqs, subst_scoring, sol_list[nsmI], sol_list[nsmJ]);
 			}
 		}
 	}
@@ -4891,7 +4830,7 @@ void ProgressiveAligner::CreatePairwiseBPDistance( boost::multi_array<double, 2>
 			ComputeLCBs_v2( ml, breakpoints, LCB_list );
 			vector< double > lcb_scores( LCB_list.size() );
 			for( size_t lcbI = 0; lcbI < LCB_list.size(); ++lcbI )
-				lcb_scores[lcbI] = GetPairwiseLcbScore( LCB_list[lcbI], ml.seq_table, this->subst_scoring, sol_list[seqI], sol_list[seqJ] );
+				lcb_scores[lcbI] = GetPairwiseAnchorScore( LCB_list[lcbI], ml.seq_table, this->subst_scoring, sol_list[seqI], sol_list[seqJ] );
 
 			computeLCBAdjacencies_v3( LCB_list, lcb_scores, adjacencies );
 
