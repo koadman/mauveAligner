@@ -58,7 +58,7 @@ protected:
 		// hack: for beginning (seed_length) positions assume that previous
 		// containing seeds were unique
 		double sum = seed_length - 1 + count[0];
-		vector<frequency_type> buf(seed_length, 1);
+		std::vector<frequency_type> buf(seed_length, 1);
 		buf[0] = count[0];
 		for( size_t i = 1; i < count.size(); i++ )
 		{
