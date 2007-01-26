@@ -49,13 +49,39 @@ try{
 	
 	cout << "Loading alignment...\n";
 	IntervalList aligned_ivs;
-	aligned_ivs.ReadStandardAlignment( alignment_in );
-	
+	aligned_ivs.ReadStandardAlignment( alignment_in );	
 	LoadSequences(aligned_ivs, &cout);
 	source_seqs = aligned_ivs.seq_table;
-
-	// add the sequence data to the interval list
+	// calculate total lengths covered
 	uint seq_count = source_seqs.size();
+	double avg_coverage = 0;
+	double total_lcb_len = 0;
+	for( uint seqI = 0; seqI < seq_count; ++seqI )
+	{
+		double cur_size = 0;
+		for( uint ivI = 0; ivI < aligned_ivs.size(); ++ivI )
+			cur_size += aligned_ivs[ivI].Length(seqI);
+		total_lcb_len += cur_size;
+		cout << "Genome " << seqI << " coverage is: " << cur_size << " / " << source_seqs[seqI]->length() << " = ";
+		cur_size /= (double)source_seqs[seqI]->length();
+		cout << cur_size << endl;
+		avg_coverage += cur_size; 
+	}
+	avg_coverage /= (double)seq_count;
+	cout << "Average coverage = " << avg_coverage << endl;
+	double avg_lcb_len = total_lcb_len / (double)(seq_count * aligned_ivs.size());
+	double lcb_len_variance = 0;
+
+	for( uint seqI = 0; seqI < seq_count; ++seqI )
+	{
+		for( uint ivI = 0; ivI < aligned_ivs.size(); ++ivI )
+			lcb_len_variance += (aligned_ivs[ivI].Length(seqI) - avg_lcb_len) * (aligned_ivs[ivI].Length(seqI) - avg_lcb_len);
+	}
+	lcb_len_variance /= (double)((seq_count*aligned_ivs.size()) - 1.0);
+	cout << "Avg lcb len: " << avg_lcb_len << endl;
+	cout << "variance: " << lcb_len_variance << endl;
+	cout << "std dev: " << pow( lcb_len_variance, 0.5 ) << endl;
+
 	cout << "Extracting backbone..." << endl;
 	vector< GappedAlignment > backbone_data;
 	simpleFindBackbone( aligned_ivs, min_bb_length, max_gap_length, backbone_data );
