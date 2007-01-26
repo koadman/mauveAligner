@@ -482,7 +482,7 @@ int main( int argc, char* argv[] )
 	MatchList seedml;
 	seedml.seq_filename = vector< string >( 1, sequence_file );
 	seedml.sml_filename = vector< string >( 1, seedml.seq_filename[0] + ".sml" );
-	seedml.LoadSequences( &cout );
+	LoadSequences( seedml, &cout );
 	if( seed_weight == 0 )
 		seed_weight = (int)((double)getDefaultSeedWeight( seedml.seq_table[0]->length() ) * .9);
 	seedml.LoadSMLs( seed_weight, &cout );

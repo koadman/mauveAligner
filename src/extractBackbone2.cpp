@@ -46,10 +46,7 @@ int main( int argc, const char* argv[] ){
 	
 	IntervalList aligned_ivs;
 	aligned_ivs.ReadList( alignment_in );
-	MatchList mlist;
-	mlist.seq_filename = aligned_ivs.seq_filename;
-	mlist.LoadSequences(&cout);
-	aligned_ivs.seq_table = mlist.seq_table;	
+	LoadSequences(aligned_ivs, &cout);
 
 	vector< GappedAlignment > backbone_data;
 	simpleFindBackbone( aligned_ivs, min_bb_length, max_gap_length, backbone_data );

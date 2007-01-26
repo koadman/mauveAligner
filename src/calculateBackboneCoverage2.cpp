@@ -51,7 +51,7 @@ try{
 	IntervalList aligned_ivs;
 	aligned_ivs.ReadStandardAlignment( alignment_in );
 	
-	ml.LoadSequences(aligned_ivs, &cout);
+	LoadSequences(aligned_ivs, &cout);
 	source_seqs = aligned_ivs.seq_table;
 
 	// add the sequence data to the interval list

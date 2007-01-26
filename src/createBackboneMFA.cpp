@@ -9,7 +9,6 @@ using namespace genome;
 int main( int argc, char* argv[] )
 {
 	IntervalList iv_list;
-	MatchList mlist;
 	if( argc != 3 )
 	{
 		cerr << "Usage: <input interval file> <output MFA name>\n";
@@ -22,10 +21,7 @@ int main( int argc, char* argv[] )
 		return -1;
 	}
 	iv_list.ReadList( in_file );
-	mlist.seq_filename = iv_list.seq_filename;
-	mlist.LoadSequences(NULL);
-	iv_list.seq_table = mlist.seq_table;
-	iv_list.seq_filename = mlist.seq_filename;
+	LoadSequences(iv_list, NULL);
 	string base_name = argv[2];
 	cout << "Input alignment has " << iv_list.size() << " intervals\n";
 	vector< string > superaln = vector<string>( iv_list.seq_table.size() );

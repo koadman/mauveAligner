@@ -29,10 +29,7 @@ int main( int argc, char* argv[] )
 
 	IntervalList iv_list;
 	iv_list.ReadList( mauve_file );
-	MatchList ml;
-	ml.seq_filename = iv_list.seq_filename;
-	ml.LoadSequences(&cout);
-	iv_list.seq_table = ml.seq_table;
+	LoadSequences(iv_list, &cout);
 	iv_list.WriteStandardAlignment( xmfa_file );
 }
 

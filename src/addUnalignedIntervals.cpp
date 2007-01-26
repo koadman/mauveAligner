@@ -8,7 +8,6 @@ using namespace mems;
 int main( int argc, char* argv[] )
 {
 	IntervalList iv_list;
-	MatchList mlist;
 	if( argc != 3 )
 	{
 		cerr << "Usage: <input interval file> <output interval file>";
@@ -21,10 +20,7 @@ int main( int argc, char* argv[] )
 		return -1;
 	}
 	iv_list.ReadList( in_file );
-	mlist.seq_filename = iv_list.seq_filename;
-	mlist.LoadSequences(NULL);
-	iv_list.seq_table = mlist.seq_table;
-	iv_list.seq_filename = mlist.seq_filename;
+	LoadSequences(iv_list, NULL);
 	addUnalignedIntervals( iv_list );
 	ofstream out_file( argv[2] );
 	if( !out_file.is_open() )

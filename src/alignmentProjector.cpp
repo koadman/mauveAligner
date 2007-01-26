@@ -254,7 +254,7 @@ int main( int argc, char* argv[] )
 
 		MatchList ml;
 		ml.seq_filename = input_ivs.seq_filename;
-		ml.LoadMFASequences( mfa_seqs, 7, NULL, false );
+		LoadMFASequences( ml, mfa_seqs, NULL );
 		input_ivs.seq_table = ml.seq_table;
 
 		// create a projection list

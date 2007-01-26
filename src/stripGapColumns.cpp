@@ -25,17 +25,15 @@ int main( int argc, char* argv[] )
 	}
 	IntervalList iv_list;
 	iv_list.ReadStandardAlignment( aln_infile );
-	MatchList mlist;
-	mlist.seq_filename = iv_list.seq_filename;
-	mlist.LoadSequences( &cout );
+	LoadSequences( iv_list, &cout );
 	IntervalList iv_outlist;
 	iv_outlist.seq_filename = iv_list.seq_filename;
-	iv_outlist.seq_table = mlist.seq_table;
+	iv_outlist.seq_table = iv_list.seq_table;
 	for( uint ivI = 0; ivI < iv_list.size(); ivI++ )
 	{
 		Interval& cur_iv = iv_list[ivI];
 		vector< string > alignment;
-		GetAlignment( cur_iv, mlist.seq_table, alignment );
+		GetAlignment( cur_iv, iv_list.seq_table, alignment );
 		vector< string > seq_align = vector< string >( cur_iv.SeqCount() );
 		for( gnSeqI colI = 0; colI < cur_iv.AlignmentLength(); colI++ )
 		{

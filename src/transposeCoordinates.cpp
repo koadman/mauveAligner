@@ -44,7 +44,7 @@ int main( int argc, const char* argv[] ){
 	int trans_seq = atoi( argv[3] );
 	
 	MatchList mlist;
-	mlist.ReadList( match_file );
+	ReadList( mlist, match_file );
 	mlist.MultiplicityFilter( mlist.seq_filename.size() );
 	
 	int64 coord;
@@ -62,7 +62,7 @@ int main( int argc, const char* argv[] ){
 		cerr << "Error opening \"" << match_outname << "\"" << endl;
 		return -1;
 	}
-	mlist.WriteList( match_out );
+	WriteList( mlist, match_out );
 	
 	
 	return 0;

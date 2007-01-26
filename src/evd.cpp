@@ -26,8 +26,9 @@ void getLocalRecordHeights( const MatchVector& iv_list, std::vector< genome::gnS
 			for( seqJ = seqI + 1; seqJ < seq_count; seqJ++ ){
 
 				std::vector< score_t > scores;
-				computeMatchScores( aln_table[seqI], aln_table[seqJ], scores );
-				computeGapScores( aln_table[seqI], aln_table[seqJ], scores );
+				PairwiseScoringScheme pss;
+				computeMatchScores( aln_table[seqI], aln_table[seqJ], pss, scores );
+				computeGapScores( aln_table[seqI], aln_table[seqJ], pss, scores );
 
 				// Invert the scores since we're trying to detect rare bouts of non-homologous sequence
 				for( size_t sI = 0; sI < scores.size(); ++sI )
@@ -93,7 +94,7 @@ int main( int argc, char* argv[] )
 		stringstream seq_fname;
 		seq_fname << "alignjob." << runI << "/evolved_seqs.fas";
 		MatchList ml;
-		ml.LoadMFASequences(seq_fname.str(), 7, &cout, false);
+		LoadMFASequences(ml, seq_fname.str(), &cout);
 		iv_list.seq_table = ml.seq_table;
 
 		vector< Interval* > iv_ptrs( iv_list.size() );

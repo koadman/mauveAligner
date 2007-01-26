@@ -32,13 +32,10 @@ int main( int argc, char* argv[] )
 			aligned_ivs.ReadStandardAlignment( alignment_in );
 
 
-			MatchList mlist;
-			mlist.seq_filename = aligned_ivs.seq_filename;
-			mlist.LoadSequences(NULL);
-			aligned_ivs.seq_table = mlist.seq_table;
+			LoadSequences(aligned_ivs, NULL);
 
 			// add the sequence data to the interval list
-			uint seq_count = mlist.seq_table.size();
+			uint seq_count = aligned_ivs.seq_table.size();
 			vector< GappedAlignment > backbone_data;
 			simpleFindBackbone( aligned_ivs, 50, 50, backbone_data );
 

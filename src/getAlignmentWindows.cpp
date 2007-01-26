@@ -55,7 +55,7 @@ int main( int argc, const char* argv[] ){
 	MatchList mlist;
 	mlist.seq_filename = aligned_ivs.seq_filename;
 	if( mlist.seq_filename.size() > 0 )
-		mlist.LoadSequences(&cout);
+		LoadSequences(mlist, &cout);
 	else if( aligned_ivs.size() == 1 )
 	{
 		mlist.seq_filename.resize( aligned_ivs[0].SeqCount() );	
