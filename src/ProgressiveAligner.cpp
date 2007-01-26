@@ -5266,6 +5266,8 @@ neighbor_t& getNeighbor( pair< neighbor_t, neighbor_t >& entry, int direction )
 
 void collapseCollinear( IntervalList& iv_list )
 {
+	if( iv_list.size() == 0 )
+		return;	// nothing to see here, move along...
 	const size_t seq_count = iv_list.seq_table.size();
 	std::vector< Interval* > iv_ptrs(iv_list.size());
 	size_t lilI = 0;
