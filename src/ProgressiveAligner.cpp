@@ -5307,8 +5307,11 @@ void collapseCollinear( IntervalList& iv_list )
 			cur_i = iv_tracker[i].first;
 		}
 		// get the last one
-		neighbor_list[cur_i].first[seqI] = prev_i;
-		neighbor_list[cur_i].second[seqI] = NEIGHBOR_UNKNOWN;
+		if( cur_i != NEIGHBOR_UNKNOWN )
+		{
+			neighbor_list[cur_i].first[seqI] = prev_i;
+			neighbor_list[cur_i].second[seqI] = NEIGHBOR_UNKNOWN;
+		}
 	}
 
 	// now look for neighbor pair entries which can be merged
