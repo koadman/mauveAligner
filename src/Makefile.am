@@ -21,7 +21,7 @@ pairCompare procrastAligner scoreALU evd alignmentProjector
 
 EXTRA_PROGRAMS = mauveMpatrol mauveEfence toGBKsequence multiToRawSequence unalign
 
-mauveAligner_SOURCES = mauveAligner.cpp
+mauveAligner_SOURCES = mauveAligner.cpp mauveAligner.h
 mauveAligner_LDADD = $(LIBRARY_CL)
 EXTRA_mauveAligner_SOURCES = getopt.c getopt.h getopt1.c
 mauveAligner_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
@@ -164,10 +164,10 @@ gappiness_LDFLAGS = @STATIC_FLAG@
 gappiness_LDADD = $(LIBRARY_CL)
 
 
-progressiveMauve_SOURCES = progressiveMauve.cpp ProgressiveAligner.cpp PairwiseMatchFinder.cpp ProgressiveAligner.h PairwiseMatchFinder.h UniqueMatchFinder.h UniqueMatchFinder.cpp
+progressiveMauve_SOURCES = progressiveMauve.cpp ProgressiveAligner.cpp PairwiseMatchFinder.cpp ProgressiveAligner.h PairwiseMatchFinder.h UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h SeedOccurrenceList.h TreeUtilities.h
 progressiveMauve_LDADD = $(LIBRARY_CL)
 
-progressiveMauveStatic_SOURCES = progressiveMauve.cpp ProgressiveAligner.cpp PairwiseMatchFinder.cpp ProgressiveAligner.h PairwiseMatchFinder.h UniqueMatchFinder.h UniqueMatchFinder.cpp
+progressiveMauveStatic_SOURCES = progressiveMauve.cpp ProgressiveAligner.cpp PairwiseMatchFinder.cpp ProgressiveAligner.h PairwiseMatchFinder.h UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h SeedOccurrenceList.h TreeUtilities.h
 progressiveMauveStatic_LDFLAGS = @STATIC_FLAG@
 progressiveMauveStatic_LDADD = $(LIBRARY_CL)
 
@@ -191,7 +191,7 @@ pairCompare_SOURCES = pairCompare.cpp
 pairCompare_LDFLAGS = @STATIC_FLAG@
 pairCompare_LDADD = $(LIBRARY_CL)
 
-procrastAligner_SOURCES = procrastAligner.cpp 
+procrastAligner_SOURCES = procrastAligner.cpp MatchRecord.h procrastUtilities.h SeedMatchEnumerator.h
 #	bagFFT/utils.cpp \
 #	bagFFT/fft.cpp bagFFT/minimize.cpp \
 #	bagFFT/llr_score.cpp bagFFT/bagFFT.cpp 

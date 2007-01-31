@@ -195,7 +195,7 @@ void computeLCBAdjacencies_v3( const std::vector< MatchVector >& lcb_list, std::
 }
 
 
-void projectIntervalList( IntervalList& iv_list, vector< uint >& projection, vector< vector< MatchProjectionAdapter* > >& LCB_list, vector< LCB >& projected_adjs )
+void projectIntervalList( IntervalList& iv_list, vector< size_t >& projection, vector< vector< MatchProjectionAdapter* > >& LCB_list, vector< LCB >& projected_adjs )
 {
 	vector< MatchProjectionAdapter* > mpa_list;
 	// construct pairwise Interval projections
@@ -258,7 +258,7 @@ int main( int argc, char* argv[] )
 		input_ivs.seq_table = ml.seq_table;
 
 		// create a projection list
-		vector< uint > projection;
+		vector< size_t > projection;
 		IntervalList proj_ivs;
 		for( int i = 5; i < argc; ++i )
 		{
