@@ -1,6 +1,7 @@
 #ifndef __MatchRecord_h__
 #define __MatchRecord_h__
 
+#include "libMems/MuscleInterface.h"
 #include "libMems/AbstractMatch.h"
 #include "libMems/SparseAbstractMatch.h"
 #include "libMems/AbstractGappedAlignment.h"
@@ -9,6 +10,7 @@
 #include "libMems/MatchProjectionAdapter.h"
 #include <iostream>
 #include <set>
+#include <vector>
 //#include <boost/variant.hpp>
 
 
@@ -126,7 +128,7 @@ public:
 	 * Call to indicate that all matches have been placed in the chained_matches list and can be 
 	 * converted to a gapped alignment
 	 */
-	void finalize();
+	void finalize(std::vector<genome::gnSequence *> seq_table);
 
 // methods inherited from AbstractGappedAlignment
 public:
@@ -167,29 +169,28 @@ public:
 	bool operator()( const T* a ){ return a == NULL; }
 };
 
-void GappedMatchRecord::finalize()
+void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 {
+	// tjt: need seq_table for actual sequences associate with matches
+	//      solution? send it in when calling this function
+
+	std::vector< mems::AbstractMatch* > iv_matches;
+
 	MatchSortEntryCompare msec;
 	std::vector< MatchSortEntry > mse_list( chained_matches.size() );
+	//chained_matches.at(0)->
 	for( size_t cI = 0; cI < chained_matches.size(); ++cI )
 	{
 		mse_list[cI].first = chained_matches[cI];
 		mse_list[cI].second = &chained_component_maps[cI];
 	}
-/*	if( this == (GappedMatchRecord*)0x01d2eab8 )
-	{
-		for( size_t cI = 0; cI < chained_matches.size(); ++cI )
-		{
-			std::cout << (GappedMatchRecord*)chained_matches[cI] << std::endl;
-			std::cout << *(GappedMatchRecord*)chained_matches[cI] << std::endl;
-		}
-	}
-*/
+
 	std::sort( mse_list.begin(), mse_list.end(), msec );
 	// add lowest multiplicity matches first, progressively add higher mult. matches
 	std::vector< mems::AbstractMatch* > chain;
 	for( size_t cI = 0; cI < mse_list.size(); ++cI )
 	{
+		//tjt: almost reinvented the wheel here, didnt realize MatchProjectionAdapter existed!
 		mems::MatchProjectionAdapter mpaa( mse_list[cI].first, *(mse_list[cI].second) );
 		// clobber any region that overlaps with this mpaa
 		for( size_t seqI = 0; seqI < mpaa.SeqCount(); seqI++ )
@@ -221,6 +222,8 @@ void GappedMatchRecord::finalize()
 					continue;
 				}
 				m->CropLeft( mpaa.RightEnd(seqI) - m->LeftEnd(seqI) + 1, seqI );
+				//tjt: pull out regions for gapped aligned
+				
 			}
 		}
 		// get rid of any null entries in the chain
@@ -236,32 +239,93 @@ void GappedMatchRecord::finalize()
 		*this = GappedMatchRecord();
 		return;
 	}
-/*	if( this == (GappedMatchRecord*)0x01d2eab8 )
-	{
-		std::cerr << "matches in chain: " << std::endl;
-		for( size_t cI = 0; cI < chain.size(); ++cI )
-			std::cout << *((GappedMatchRecord*)((MatchProjectionAdapter*)chain[cI])->m) << std::endl;
-
-		for( size_t cI = 0; cI < chain.size(); ++cI )
-		{
-			for( size_t seqI = 0; seqI < SeqCount(); seqI++ )
-				std::cout << "(" << chain[cI]->Start(seqI) << "," << chain[cI]->RightEnd(seqI) << ")\t";
-			std::cout << std::endl;
-		}
-	}
-*/
 
 	mems::MatchStartComparator< mems::AbstractMatch > asc(0);
 	std::sort( chain.begin(), chain.end(), asc );
+	// aed: At this point the matches in chain are in sorted order, so the region betweeen each of them is what should get fed to muscle
+	//      will need to feed AbstractMatch instead of Match to MuscleInterface::Align though
+	
+	std::vector< mems::AbstractMatch* >::iterator chain_begin = chain.begin();
+	uint chainsize = chain.size()-1;
+	try{
+	for( uint i = 0; i < chainsize; i++ )
+	{
+		
+		mems::GappedAlignment* cr = NULL;
+		boolean align_success = false;
+		// attempt a muscle alignment
+		cr = new mems::GappedAlignment();
+
+		mems::AbstractMatch* m1 = chain.at(i);
+		mems::AbstractMatch* m2 = chain.at(i+1);
+
+		
+		/*  tjt: can't do base to dervied (AbstractMatch* to Match*) dynamic_cast since AbstractMatch is not polymorphic, its an Abstract base class
+		mems::Match* r_lend = dynamic_cast<mems::Match*>( chain.at(count));
+		mems::Match* r_rend = dynamic_cast<mems::Match*>( chain.at(count+1));
+		tjt: so let's try static_cast
+		const mems::Match* r_lend = static_cast< const mems::Match* >( m1 );
+		const mems::Match* r_rend = static_cast< const mems::Match* >( m2 );
+		*/
+
+		//  aed: muscle alignment happens here
+		//		 remember, aligning regions between each match component
+		//align_success = mems::MuscleInterface::getMuscleInterface().Align( *cr,  const_cast<mems::Match *>(r_lend) , const_cast<mems::Match *>(r_rend),  seq_table );
+		align_success = mems::MuscleInterface::getMuscleInterface().Align( *cr,  m1 , m2,  seq_table );
+   
+
+		if( align_success )
+		{
+			iv_matches.push_back( cr );
+			// aed: just insert the resulting GappedAlignment objects into chain
+			chain.insert(chain.begin()+(i+1), cr);
+			chainsize++;
+			std::vector<std::string> alignment;
+
+			std::vector< mems::bitset_t > aln_mat;
+			cr->GetAlignment(aln_mat);
+			alignment = std::vector<std::string>( aln_mat.size() );
+			const genome::gnFilter* comp_filter = genome::gnFilter::DNAComplementFilter();
+			for( std::size_t seqI = 0; seqI < alignment.size(); seqI++ )
+			{
+				alignment[seqI] = std::string( aln_mat[0].size(), '-' );
+				if( cr->LeftEnd(seqI) == mems::NO_MATCH )
+					continue;
+				std::string cur_seq = seq_table[0]->ToString( cr->Length(seqI), cr->LeftEnd(seqI) );
+				if( cr->Orientation(seqI) == AbstractMatch::reverse )
+					comp_filter->ReverseFilter(cur_seq);
+				std::size_t cI = 0; 
+				for( std::size_t gI = 0; gI < alignment[seqI].size(); gI++ )
+					if( aln_mat[seqI][gI] )
+						alignment[seqI][gI] = cur_seq[cI++];
+			}
+			
+			// tjt: skip over newly inserted item
+			i++;
+			
+		}
+		
+	}
+	
+	}catch( genome::gnException& gne ){
+		std::cerr << gne << std::endl;
+	}catch(std::exception& e){
+		std::cerr << e.what() << std::endl;
+		std::cerr << chain.size() << std::endl;
+	}catch(...){
+		std::cerr << "matrix exception?\n";
+	}
+
 
 	MatchRecord* mr = this->Copy();
 	SetMatches( chain );
-
+	//tjt: now chain should be empty
 	// don't keep a potentially huge tree of GappedMatchRecords.  instead, flatten to
 	// a single cga
 	mems::CompactGappedAlignment<> tmpcga(*this);
 	chain.push_back(tmpcga.Copy());
 	SetMatches( chain );
+	//tjt: assign this to slot allocated & copied MatchRecord
 	MatchRecord::operator=(*mr);
 	mr->Free();
 }

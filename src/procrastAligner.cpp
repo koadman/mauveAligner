@@ -1,5 +1,8 @@
 #include "libGenome/gnSequence.h"
 #include "libMems/Interval.h"
+#include "libMems/Islands.h"
+#include "libMems/Aligner.h"
+#include "libMems/MuscleInterface.h"
 #include "ProgressiveAligner.h"
 
 #include <iostream>
@@ -210,7 +213,8 @@ void checkLinkAndComponent( MatchRecord*& mr, size_t& component )
 	}
 }
 
-/** returns one of the superset links from a match.  direction is 1 for left, -1 for right */
+/** returns one of the superset links f
+rom a match.  direction is 1 for left, -1 for right */
 MatchLink& getSuperset( MatchRecord* mr, int direction )
 {
 	if( direction == 1 )
@@ -401,6 +405,7 @@ int main( int argc, char* argv[] )
 	string outputfile = "";
 	string xmfa_file = "";
 	bool find_novel_subsets = false;
+	bool solid_seed = false;
 
 	po::variables_map vm;
 	try {
@@ -411,6 +416,7 @@ int main( int argc, char* argv[] )
             ("sequence", po::value<string>(&sequence_file), "FastA sequence file")
 			("w", po::value<unsigned>(&w)->default_value(0), "max gap width ")
 			("z", po::value<unsigned>(&seed_weight)->default_value(0), "seed weight")
+			("solid", po::value<bool>(&solid_seed)->default_value(0), "use solid seed")
 			("b", po::value<int>(&kmersize)->default_value(1), "kmer background freq size ")
 			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches ")
 			("output", po::value<string>(&outputfile)->default_value(""), "output ")
@@ -482,14 +488,24 @@ int main( int argc, char* argv[] )
 	MatchList seedml;
 	seedml.seq_filename = vector< string >( 1, sequence_file );
 	seedml.sml_filename = vector< string >( 1, seedml.seq_filename[0] + ".sml" );
+	//seedml.LoadSequences( &cout );
 	LoadSequences( seedml, &cout );
 	if( seed_weight == 0 )
+	{
 		seed_weight = (int)((double)getDefaultSeedWeight( seedml.seq_table[0]->length() ) * .9);
-	seedml.LoadSMLs( seed_weight, &cout );
-	int64 seed = getSeed( seed_weight );
+	}
+	int seed_rank = 0;
+	if ( solid_seed )
+	{
+		seed_rank = INT_MAX;
+		std::cout << "Using solid seed" << std::endl;
+	}
+	seedml.LoadSMLs( seed_weight, &cout, seed_rank );
+	int64 seed = getSeed( seed_weight, seed_rank);
 	uint seed_size = getSeedLength( seed );
 	if( w == 0 )
 		w = seed_weight * 4;	// default value
+	
 	cout << "Using seed weight: " << seed_weight << " and w: " << w << endl;
 	SeedMatchEnumerator sme;
 	sme.FindMatches( seedml );
@@ -1183,7 +1199,8 @@ int main( int argc, char* argv[] )
 
 					M_n->chained_matches.push_back(M_j);
 					M_n->chained_component_maps.push_back(new_to_j_map);
-					M_n->finalize();	// make this one a legitimate match...
+					//tjt: need to send finalize seq_table for muscle alignment
+					M_n->finalize(seedml.seq_table);	// make this one a legitimate match...
 					M_n->chained_matches.clear();
 					M_n->chained_component_maps.clear();
 
@@ -1315,15 +1332,8 @@ int main( int argc, char* argv[] )
 		//
 		// finalize the alignment -- this resolves overlapping components into a single gapped alignment
 		//
-
-		M_i->finalize();
-
-//		if( M_i == (GappedMatchRecord*)0x012b7658 )
-//			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
-//		if( M_i == (GappedMatchRecord*)0x00f57e88 )
-//			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
-//		if( M_i == (GappedMatchRecord*)0x00c9f218 )
-//			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
+		//tjt: need to send finalize seq_table for muscle alignment
+		M_i->finalize(seedml.seq_table);
 
 //		validate( extended_matches );
 //		validate( match_record_list );
@@ -1356,8 +1366,15 @@ int main( int argc, char* argv[] )
 			xmfa_out.close();
 		}
 	}
+
+	
+	// finally add any unaligned regions to the interval list	
+	//if( gapped_alignment )
+	//addUnalignedIntervals( interval_list );
+	
 	// 
-	// part 10, score matches
+	// part 10, score matches using consensus
+	
 	
 	//create output stream
 	ostream* output;
@@ -1370,82 +1387,47 @@ int main( int argc, char* argv[] )
 		output = &aln_out_file;
 	}
 	vector< pair< double, GappedMatchRecord* > > scored( final.size() );
-	string alphabet = "ATGC";
-    vector<double> entropyscore;
 	for( size_t fI = 0; fI < final.size(); fI++ )
 	{
-		//entropy score here we go!
+		
 	    vector<string> alignment;
 		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
 		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
 		//send temporary output format to file if requested 
 		*output << "#procrastAlignment " << fI+1 << endl << *final.at(fI) << endl;
-		double entropy = 0.0;
-		for( gnSeqI i = 0; i < alignment.at(0).size(); i++)
+
+		for( gnSeqI i = 0; i < alignment.size(); i++)
 		{
-			for ( int k = 0; k < alphabet.size(); k++)
-			{
-				double occurrences = 0;
-				string letter = alphabet.substr(k,1);
-				for( int s = 0; s < alignment.size(); s++)
-				{
-					char aln_s_i = toupper(alignment[s][i]);
-					if( aln_s_i == alphabet[k] )
-						occurrences +=1;
-					else if( aln_s_i != 'A' &&  
-							aln_s_i != 'C' && 
-							aln_s_i != 'G' && 
-							aln_s_i != 'T'  )
-						occurrences += .25;	// unknown
-				}
-				//tjt: equation given in Uri Keich Bioinformatics Paper for calculating
-				//	   the entropy score for a given column i of the alignment
-				//double(((occurences*alignment.size())/nucFrequency(k)))
-				if( occurrences != 0 )	// log of 0 is undefined
-					entropy += occurrences * log( (double) (occurrences/alignment.size())/nucFrequency.at(k) );
-			}
+			
+			*output << alignment.at(i) << endl;
+			//continue;
 		}
-		entropyscore.push_back(entropy);
 
-		//Log-likelihood score, entropy score from alignment? int?
-		double s = entropy;
+		//tjt: now each column in scores should be..
 
-		// alignment row count
-		gnSeqI N = alignment[0].length();
-
-		//Lattice size
-		int Q = 16384;
-
-		double score = s;
-		string pvalue="1";
-		/*
-		if (!CallbagFFT("bagFFT",N, K, s, pu, Q,pvalue))
-			cout << "pvalue not calculated, error" << endl;
-		else
-			cout << "bagFFT result: " << pvalue << endl;
-		double score = atof(pvalue.c_str());
-		*/
-		/**FIX MEMORY LEAK BEFORE USING THIS CODE **/
-/*		bagFFT_return_value result = bagFFT(N, K, s, pu, Q);
-		cout << "Entropy: " << entropy << "\tp-Value = " << result.log_pvalue << " (" << exp(result.log_pvalue) << ")" << endl;
-		double score = result.log_pvalue;
-		**/
+		double score = 110.0;
 		
 		scored[fI] = make_pair( score, final[fI] );
 	}
 	std::sort( scored.begin(), scored.end() );
-
+	cout << "finished procrastination, time for work..." << endl;
+	double minscore = 0;
 
 	// 
-	// part 11, report matches in scored order
+	// part 11, report matches in scored order, highest multiplicity first?
 	//
-	for( size_t sI = 0; sI < scored.size(); ++sI )
+	if (0)
 	{
-		cout << "Alignment length: " << scored[sI].second->AlignmentLength() << endl;
-		cout << "Score: " << scored[sI].first << endl;
-		cout << *scored[sI].second << endl;
+		for( size_t sI = 0; sI < scored.size(); ++sI )
+		{
+			if ( scored[sI].first > minscore )
+			{
+				cout << "Alignment length: " << scored[sI].second->AlignmentLength() << endl;
+				cout << "Score: " << scored[sI].first << endl;
+				cout << *scored[sI].second << endl;
+			}
+		}
 	}
-	
 	// clean up
 	for( size_t eI = 0; eI < match_record_list.size(); ++eI )
 		match_record_list[eI]->Free();
