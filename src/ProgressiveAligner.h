@@ -21,6 +21,7 @@
 #include <boost/multi_array.hpp>
 #include "SeedOccurrenceList.h"
 #include "libMems/SubstitutionMatrix.h"
+#include "libMems/MatchProjectionAdapter.h"
 
 // this is a 99.9% score threshold derived from the EVD of
 // simulations of homolgous sequence diverged to .75 substitutions per site and .05 indels per site
@@ -809,6 +810,34 @@ void addUnalignedIntervals_v2( MatchVectorType& iv_list, std::set< uint > seq_se
 			}
 		}
 	}
+}
+
+inline
+void projectIntervalList( mems::IntervalList& iv_list, std::vector< uint >& projection, std::vector< std::vector< mems::MatchProjectionAdapter* > >& LCB_list, std::vector< mems::LCB >& projected_adjs )
+{
+	std::vector< size_t > proj(projection.size());
+	for( size_t i = 0; i < projection.size(); ++i )
+		proj[i] = projection[i];
+	std::vector< mems::MatchProjectionAdapter* > mpa_list;
+	// construct pairwise Interval projections
+	for( size_t corI = 0; corI < iv_list.size(); corI++ )
+	{
+		size_t projI = 0;
+		for( ; projI < projection.size(); ++projI )
+			if( iv_list[corI].LeftEnd(projection[projI]) == mems::NO_MATCH )
+				break;
+		if( projI != projection.size() )
+			continue;
+		mems::MatchProjectionAdapter mpa_tmp( &iv_list[corI], proj );
+		mpa_list.push_back( mpa_tmp.Copy() );
+		if( mpa_list.back()->Orientation(0) == mems::AbstractMatch::reverse )
+			mpa_list.back()->Invert();
+	}
+	std::vector< gnSeqI > breakpoints;
+	IdentifyBreakpoints( mpa_list, breakpoints );
+	ComputeLCBs_v2( mpa_list, breakpoints, LCB_list );
+	std::vector< double > lcb_scores( LCB_list.size(), 0 );
+	computeLCBAdjacencies_v3( LCB_list, lcb_scores, projected_adjs );
 }
 
 

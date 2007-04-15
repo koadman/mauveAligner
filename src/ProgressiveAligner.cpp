@@ -98,11 +98,14 @@ void printMemUsage()
 
 	if( GetProcessMemoryInfo( phand, &mem_info, sizeof(mem_info) ) )
 	{
+		if( debug_aligner )
+		{
 		cout << "Working set size: " << mem_info.WorkingSetSize / (1024 * 1024) << " Mb\n";
 //		cout << "Paged pool usage: " << mem_info.QuotaPagedPoolUsage << endl;
 //		cout << "Non-Paged pool usage: " << mem_info.QuotaNonPagedPoolUsage << endl;
 		cout << "Pagefile usage: " << mem_info.PagefileUsage / (1024 * 1024) << " Mb\n";
 		cout.flush();
+		}
 	}
 }
 #else
@@ -4927,32 +4930,6 @@ void DistanceMatrix( IntervalList& iv_list, NumericMatrix<double>& distmat )
 	TransformDistanceIdentity(distmat);
 }
 
-void projectIntervalList( IntervalList& iv_list, vector< uint >& projection, vector< vector< MatchProjectionAdapter* > >& LCB_list, vector< LCB >& projected_adjs )
-{
-	vector< size_t > proj(projection.size());
-	for( size_t i = 0; i < projection.size(); ++i )
-		proj[i] = projection[i];
-	vector< MatchProjectionAdapter* > mpa_list;
-	// construct pairwise Interval projections
-	for( size_t corI = 0; corI < iv_list.size(); corI++ )
-	{
-		size_t projI = 0;
-		for( ; projI < projection.size(); ++projI )
-			if( iv_list[corI].LeftEnd(projection[projI]) == NO_MATCH )
-				break;
-		if( projI != projection.size() )
-			continue;
-		MatchProjectionAdapter mpa_tmp( &iv_list[corI], proj );
-		mpa_list.push_back( mpa_tmp.Copy() );
-		if( mpa_list.back()->Orientation(0) == AbstractMatch::reverse )
-			mpa_list.back()->Invert();
-	}
-	vector< gnSeqI > breakpoints;
-	IdentifyBreakpoints( mpa_list, breakpoints );
-	ComputeLCBs_v2( mpa_list, breakpoints, LCB_list );
-	vector< double > lcb_scores( LCB_list.size(), 0 );
-	computeLCBAdjacencies_v3( LCB_list, lcb_scores, projected_adjs );
-}
 
 void makeSuperIntervals( IntervalList& iv_list, PhyloTree< TreeNode >& alignment_tree, vector< uint >& node_sequence_map )
 {
