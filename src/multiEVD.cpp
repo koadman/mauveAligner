@@ -13,6 +13,7 @@
 #include "libMems/Islands.h"
 #include "libMems/IntervalList.h"
 #include "libMems/MatchList.h"
+#include "libMems/MuscleInterface.h"
 #include "libGenome/gnSequence.h"
 
 #include "ProgressiveAligner.h"
@@ -42,6 +43,7 @@ void getLocalRecordHeights( const MatchVector& iv_list, std::vector< genome::gnS
 		std::string consensus;
 		score_t total_score;
 
+		stripGapColumns(aln_table);
 		computeConsensusScore( aln_table, pss, scores, consensus, total_score );
 
 		// Invert the scores since we're trying to detect rare bouts of non-homologous sequence
@@ -175,7 +177,7 @@ int main( int argc, char* argv[] )
 	boost::multi_array<score_t, 2> evd_table;
 	evd_table.resize( boost::extents[4][seq_count-1] );
 	boost::multi_array<size_t, 2> ss_table;
-	evd_table.resize( boost::extents[4][seq_count-1] );
+	ss_table.resize( boost::extents[4][seq_count-1] );
 	for( size_t mult = 2; mult < seq_count + 1; mult++ )
 	{
 		std::sort( lrh_all[mult].begin(), lrh_all[mult].end() );
@@ -210,6 +212,7 @@ int main( int argc, char* argv[] )
 	print2d_matrix( evd_table, cout );
 	cout << "\n\nMatrix of sample sizes:\n";
 	print2d_matrix( ss_table, cout );
+	cout << endl;
 }
 
 
