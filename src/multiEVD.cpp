@@ -40,11 +40,10 @@ void getLocalRecordHeights( const MatchVector& iv_list, std::vector< genome::gnS
 		
 		std::vector< score_t > scores;
 		PairwiseScoringScheme pss;
-		std::string consensus;
 		score_t total_score;
 
 		stripGapColumns(aln_table);
-		computeConsensusScore( aln_table, pss, scores, consensus, total_score );
+		computeSPScore( aln_table, pss, scores, total_score );
 
 		// Invert the scores since we're trying to detect rare bouts of non-homologous sequence
 		for( size_t sI = 0; sI < scores.size(); ++sI )
