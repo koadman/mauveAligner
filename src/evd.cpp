@@ -42,7 +42,7 @@ void getLocalRecordHeights( const MatchVector& iv_list, std::vector< genome::gnS
 					if( scores[colI] == INVALID_SCORE )
 						continue;
 
-					if( score_sum >= 0 && score_sum + scores[colI] < 0 )
+					if( score_sum > 0 && score_sum + scores[colI] < 0 )
 					{
 						// end of an excursion
 						score_sum = 0;
@@ -54,7 +54,7 @@ void getLocalRecordHeights( const MatchVector& iv_list, std::vector< genome::gnS
 						score_sum += scores[colI];
 						if( score_sum > local_record_height )
 							local_record_height = score_sum;
-					}else{
+					}else if( score_sum > 0 ){
 						score_sum += scores[colI];
 						if( score_sum > local_record_height )
 							local_record_height = score_sum;
