@@ -1,8 +1,11 @@
 #include "libGenome/gnSequence.h"
 #include "libMems/Interval.h"
+#include "libMems/CompactGappedAlignment.h"
 #include "libMems/Islands.h"
 #include "libMems/Aligner.h"
 #include "libMems/MuscleInterface.h"
+#include "libGenome/gnFASSource.h"
+
 #include "ProgressiveAligner.h"
 
 #include <iostream>
@@ -21,6 +24,8 @@ namespace po = boost::program_options;
 using namespace std;
 using namespace genome;
 using namespace mems;
+
+int scoredropoff_matrix[10] = {0,0,4756,9144,13471,17981,25302,30945,38361,40754};
 
 /** A Match Position Entry stores a pointer to a match and its component for a given sequence coordinate */
 typedef std::pair< MatchRecord*, size_t >	MatchPositionEntry;
@@ -63,7 +68,10 @@ public:
 		return a->Multiplicity() < b->Multiplicity();
 	}
 };
-
+bool scorecmp( pair< double, GappedMatchRecord* > a, pair< double, GappedMatchRecord* > b ) 
+{
+   return a.first > b.first;
+ }
 /** The subset record contains the subset pointer, the component map to the superset, and a vector of distances */
 typedef boost::tuple< MatchRecord*, std::vector< size_t >, std::vector< size_t > > NeighborhoodGroup;
 
@@ -393,6 +401,345 @@ public:
 	char operator()( char a ){ return toupper(a); }
 };
 
+//void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
+void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w)
+{
+	//todo: remove alignment parameter
+	//      dont pass vector? 
+
+	//punt on this for now..
+	bool novel_hss_regions_support = false;
+
+	vector< string > alignment;
+	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
+			
+	//caculate extend length
+	// m = 0.48
+	// b = 500.04
+	// punt: use this equation for now, update later with simulation data
+	int multi = mte->Multiplicity();
+	
+	int extend_length_1 = ceil(-0.48*multi+500.04); 
+	int extend_length_2 = 10*mte->Length(0);
+	int extend_length_3 = 2*w;
+	int extend_length = min(extend_length_1, extend_length_3);
+
+	int left_extend_length = extend_length;
+	int right_extend_length = extend_length;
+
+	//careful, if mte->LeftEnd(j) < extend_length, ToString() will be disappointed...
+	for( gnSeqI j = 0; j < alignment.size(); j++)
+	{
+		//cout << mte->LeftEnd(j) << " " << mte->LeftEnd(j) - extend_length << " " << left_extend_length << endl;
+
+		if ( mte->LeftEnd(j) - extend_length > 4000000000u )
+		{
+			if( left_extend_length > mte->LeftEnd(j) )
+				left_extend_length = mte->LeftEnd(j);
+		}
+		if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
+		{
+			if( right_extend_length < seq_table[0]->length()-mte->RightEnd(j) )
+				right_extend_length = seq_table[0]->length()-mte->RightEnd(j);
+		}	
+	}
+	const gnFilter* rc_filter = gnFilter::DNAComplementFilter();
+	
+	std::vector<std::string> leftExtension( multi);
+	GappedAlignment leftside(multi,alignment.at(0).size());
+	std::vector<std::string> rightExtension( alignment.size() );
+	GappedAlignment rightside(multi,alignment.at(0).size());
+	vector< string > leftExtension_aln;
+	vector< string > rightExtension_aln;
+	score_t score = 0;
+	std::vector< score_t > scores;
+	int leftgaps = 0;
+	int rightgaps = 0;
+	if ( mte->extend_left && left_extend_length > 0 )
+	{
+		// extract sequence data
+		
+		for( gnSeqI j = 0; j < alignment.size(); j++)
+		{
+			
+			std::string left_seq = seq_table[0]->ToString( left_extend_length, mte->LeftEnd(j) - left_extend_length );
+			leftside.SetLeftEnd(j,mte->LeftEnd(j) - left_extend_length);
+			leftside.SetOrientation(j,AbstractMatch::forward);
+			if( mte->Orientation(j) == AbstractMatch::reverse )
+			{			
+				leftside.SetOrientation(j,AbstractMatch::reverse);
+				left_seq = seq_table[0]->ToString( left_extend_length, mte->RightEnd(j)+1 );
+				leftside.SetLeftEnd(j,mte->RightEnd(j)+1);
+				rc_filter->ReverseFilter(left_seq);
+			}
+			leftside.SetLength(left_extend_length,j);
+			leftExtension[j] = string(left_seq.begin(), left_seq.end());
+		}
+		bool align_success = false;
+
+		cout << "preparing to call MUSCLE on left region: " << left_extend_length << endl;
+		
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscle( leftExtension_aln, leftExtension );
+		leftside.SetAlignment(leftExtension_aln);
+		leftside.SetAlignmentLength(leftExtension_aln.at(0).size());
+		leftgaps = leftExtension_aln.at(0).size()-leftExtension.at(0).size();
+
+	}
+	if (  mte->extend_right & right_extend_length > 0  )
+	{
+		
+		for( gnSeqI j = 0; j < alignment.size(); j++)
+		{
+			std::string right_seq = seq_table[0]->ToString( right_extend_length, mte->RightEnd(j)+1 );
+			rightside.SetLeftEnd(j,mte->RightEnd(j)+1 );
+			rightside.SetOrientation(j,AbstractMatch::forward);
+			if( mte->Orientation(j) == AbstractMatch::reverse )
+			{			
+				rightside.SetOrientation(j,AbstractMatch::reverse);
+				right_seq = seq_table[0]->ToString( right_extend_length, mte->LeftEnd(j) - right_extend_length );
+				rightside.SetLeftEnd(j,mte->LeftEnd(j) - right_extend_length);
+				rc_filter->ReverseFilter(right_seq);
+			}
+			rightside.SetLength(right_extend_length,j);
+			rightExtension[j] = string(right_seq.begin(), right_seq.end());
+		}
+		bool align_success = false;
+
+		cout << "preparing to call MUSCLE on right region: " << right_extend_length << endl;
+		
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscle( rightExtension_aln, rightExtension );
+		
+		rightside.SetAlignment(rightExtension_aln);
+		rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
+		rightgaps = rightExtension_aln.at(0).size()-rightExtension.at(0).size();
+
+	}
+	for( gnSeqI j = 0; j < alignment.size(); j++)
+	{
+		if( mte->extend_left )
+			alignment.at(j).insert(alignment.at(j).begin(),leftExtension_aln.at(j).begin(), leftExtension_aln.at(j).end());
+		if( mte->extend_right)
+			alignment.at(j).append(rightExtension_aln.at(j).begin(), rightExtension_aln.at(j).end());
+	}
+
+	computeSPScore( alignment, pss, scores, score);
+	
+	int x = multi;
+	double signficance_threshold = 0.0;
+	//2,3,4,5,6,7,8,9
+	if( x <= 9 )
+		signficance_threshold = scoredropoff_matrix[x];
+	else
+		signficance_threshold = 59.997*(x*x)+3395.408*x+11669.838;
+
+	hss_list_t hss_list;
+	findHssRandomWalkScoreVector(scores, signficance_threshold, hss_list, 0, 0);
+	
+	hss_list_t hss_new;
+	ComplementHss(alignment.at(0).size(),hss_list,hss_new);
+	vector< AbstractMatch* > mlist;
+	mlist.push_back(leftside.Copy());
+	mlist.push_back(mte->Copy());
+	mlist.push_back(rightside.Copy());
+ 
+	gnSequence myseq;
+	for( uint j = 0; j < multi; j++)
+		myseq += alignment.at(j);
+
+	gnFASSource::Write(myseq, "coolio1.txt" );
+	
+
+	//createInterval
+	Interval iv;
+	iv.SetMatches(mlist);
+
+	//vector<string>  tmpaln;
+	//mems::GetAlignment(iv, seq_table, tmpaln);	// expects one seq_table entry per matching component
+
+	uint compact_seq_count =  iv.Multiplicity();
+	//aln = dynamic_cast< GappedAlignment* >( iv_list[ ivI ].GetMatches()[0] );
+	//here: seq_ids getting mucked up??
+
+	CompactGappedAlignment<> cga( iv );
+	
+	int hss_for_match = -1;
+	if (hss_new.size() == 1)
+		hss_for_match = 0;
+	bool boundaries_improved = false;
+	vector< CompactGappedAlignment<>* > cga_list;
+	for( uint i = 0; i < hss_new.size(); i++)
+	{
+
+		//CompactGappedAlignment<>* new_cga;
+		//new_cga = new CompactGappedAlignment<>(iv.Multiplicity(),hss_new.at(i).right_col-hss_new.at(i).left_col);
+		//cga.copyRange(*new_cga,hss_new.at(i).left_col,hss_new.at(i).right_col-hss_new.at(i).left_col);
+		//cga_list.push_back(new_cga);
+
+		CompactGappedAlignment<> tmp_cga;
+		cga_list.push_back( tmp_cga.Copy() );
+		cga.copyRange(*(cga_list.back()),hss_new.at(i).left_col,hss_new.at(i).right_col-hss_new.at(i).left_col);
+		if( cga_list.back()->LeftEnd(0) == NO_MATCH )
+		{
+			// this one must have been covering an invalid region (gaps aligned to gaps)
+			cga_list.back()->Free();
+			cga_list.erase( cga_list.end()-1 );
+			continue;
+		}
+		
+		
+		for( uint j = 0; j < alignment.size(); j++)
+		{			
+			
+			if( cga_list.back()->LeftEnd(j) < mte->LeftEnd(j) && cga_list.back()->RightEnd(j)-1 >= mte->RightEnd(j) || cga_list.back()->LeftEnd(j) <= mte->LeftEnd(j) && cga_list.back()->RightEnd(j)-1 > mte->RightEnd(j))
+			{
+				//this hss shares columns with original chain, check to see if boundaries improved
+				boundaries_improved = true;
+				hss_for_match = i;
+				break;
+			}
+			
+		}
+	}
+	for( uint i = 0; i < cga_list.size(); i++)
+	{
+		
+		if ( boundaries_improved && i == hss_for_match )
+		{
+			//boundaries were improved, current match is extended original match
+			
+			//set to extend_left && extend_right again
+			//update original mte GappedMatchRecord
+			cout << "Extension worked!! Improved boundaries!" << endl;
+			cout << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
+			for( uint j = 0; j < multi; j++)
+			{
+				mte->SetLeftEnd(j,cga_list.at(i)->LeftEnd(j));
+				mte->SetLength(cga_list.at(i)->Length(j),j);
+			}
+			//now need to resolve overlaps based on new LeftEnd/RightEnds
+
+			//MatchRecord
+			vector<string> new_alignment;
+			mems::GetAlignment(*cga_list.at(i), seq_table, new_alignment);	// expects one seq_table entry per matching component
+			gnSequence myseq;
+			for( uint j = 0; j < new_alignment.size(); j++)
+				myseq += new_alignment.at(j);
+
+			gnFASSource::Write(myseq, "coolio2.txt" );
+			
+
+			mte->SetAlignment(new_alignment);
+			mte->SetAlignmentLength(new_alignment.at(0).size());
+			mte->ValidateMatches();
+
+			cout << "New boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl << endl;
+			//set to false for now...
+			//memory issues?
+			mte->extend_left = true;
+			mte->extend_right = true;
+		}
+				
+		//else if( !boundaries_improved && i == hss_for_match  )
+		else if( !boundaries_improved )
+		
+		{
+			//if hss_new.size() == 1
+			//no new homologous regions found, boundaries weren't improved..
+			//one wasted round of extending, could we have seen this coming??
+			//update original mte GappedMatchRecord
+			cout << "Extension failed.. boundaries unchanged.. could we have seen this coming??" << endl << endl;
+			mte->extend_left = false;
+			mte->extend_right = false;
+			break;
+		}
+		else if( novel_hss_regions_support )
+		{
+			//newly found homologous region
+			
+			UngappedMatchRecord* umr;
+			umr = new UngappedMatchRecord( cga_list.at(i)->Multiplicity(), cga_list.at(i)->AlignmentLength());
+			for( size_t seqI = 0; seqI < cga_list.at(i)->Multiplicity(); seqI++ )
+			{
+				umr->SetStart( seqI, cga_list.at(i)->Start( seqI ) );
+				umr->SetLength(  cga_list.at(i)->Length( seqI ), seqI );
+			}
+			if( i == 0 && i != hss_for_match  )
+			{			
+				
+				//append to final list, mark left side for extension
+				umr->extend_left = true;
+				umr->extend_right = false;
+			}
+			else if ( i == hss_new.size()-1 && i != hss_for_match  )
+			{	
+				
+				//append to final list, mark right side for extension
+				umr->extend_left = false;
+				umr->extend_right = true;
+			}
+			else
+			{
+				//some homologous segment in middle that cannot be extended further
+				//create GappedMatchRecord from CompactGappedAlignment and add to list
+				umr->extend_left = false;
+				umr->extend_right = false;
+
+			}
+			GappedMatchRecord* gmr;
+			gmr = new GappedMatchRecord(*umr);
+			
+			gmr = gmr->Copy();
+			umr->subsuming_match = gmr;
+			gmr->chained_matches.push_back( umr );
+			vector< size_t > component_map( mte->Multiplicity() );
+			for( size_t k = 0; k < component_map.size(); ++k )
+				component_map[i] = k;
+			gmr->chained_component_maps.push_back(component_map);
+			swap(umr->subsumption_component_map, component_map);	// swap avoids reallocation	
+		
+			//punt: update superset and subset links
+			/*
+			for( int dI = 1; dI > -2; dI -= 2 )
+			{
+				MatchLink& ij_link = getSuperset(M_i,dI);
+				if( ij_link.superset != NULL )
+				{
+					ij_link.subset = M_i;
+					unlinkSuperset(umr,dI);
+					int parity = M_i->Orientation(0) == ij_link.superset->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
+					getSubsets(ij_link.superset,-dI*parity).push_back(ij_link);
+				}
+				vector< MatchLink >& subsets = getSubsets(M_i,dI);
+				for( size_t subI = 0; subI < subsets.size(); ++subI )
+				{
+					subsets[subI].superset = M_i;
+					int parity = M_i->Orientation(subsets[subI].sub_to_super_map[0]) == subsets[subI].subset->Orientation(0) ? 1 : -1;
+					getSuperset(subsets[subI].subset, -dI*parity).superset = M_i;
+				}
+				getSubsets(umr,dI).clear();	// so that validate works...
+			}
+			*/
+			vector<string> new_alignment;
+			mems::GetAlignment(*cga_list.at(i), seq_table, new_alignment);	// expects one seq_table entry per matching component
+			gmr->SetAlignment(new_alignment);
+			gmr->SetAlignmentLength(new_alignment.at(0).size());
+
+			gmr->finalize(seq_table);
+			//push back M_i into final
+			//final.push_back(gmr);
+		}
+		
+		//what to do here?
+		//put into GappedMatchRecord?
+		//update final?
+		//store in new vector of CompactGappedAlignment?
+		//if in new vector means extended or want to keep?
+
+
+	}
+	
+}//tjt: match should be extended!
+
 int main( int argc, char* argv[] )
 {
 //	debug_interval = true;
@@ -543,30 +890,6 @@ int main( int argc, char* argv[] )
        //it->second+=1;	   
 	}
 	
-	int K = (int)pow(double(4.0),double(kmersize));
-	genome::Array<double> pu_arr(K);
-	double* pu = pu_arr.data;
-	for( size_t kI = 0; kI < K; kI++ )
-		pu[kI] = 1;	// add pseudocounts (laplace estimates) of 1 so that we don't end up with a 0 if some k-mer doesn't exist
-	int kcount = 0;
-    for( map<string, gnSeqI>::iterator iter = polyfreq.begin(); iter != polyfreq.end(); iter++ ) 
-	{
-		cout << (*iter).first << " occurs " << (*iter).second << " times" << endl;
-		//Background frequencies, calculate once from sequence string
-		//if doesnt appear in original sequenced, will not be stored
-		if((*iter).second > 0)
-			pu[kcount] = (float)(*iter).second/(float)sequence.size();
-		else
-			pu[kcount] = 0.0;
-		kcount++;
-
-    }
-
-	vector<float> nucFrequency;
-	nucFrequency.push_back(float(monofreq["A"])/float(sequence.size()));
-	nucFrequency.push_back(float(monofreq["T"])/float(sequence.size()));
-	nucFrequency.push_back(float(monofreq["G"])/float(sequence.size()));
-	nucFrequency.push_back(float(monofreq["C"])/float(sequence.size()));
 
 	//
 	// part 2, convert to match records
@@ -629,6 +952,10 @@ int main( int argc, char* argv[] )
 	//
 	vector< GappedMatchRecord* > extended_matches;	/**< The extended matches will be chains of UngappedMatchRecords */
 	size_t queue_end = procrastination_queue.size();
+
+	//for extension
+	PairwiseScoringScheme pss = PairwiseScoringScheme();
+
 	while( queue_end > 0 )
 	{
 		// pop the next match off the heap
@@ -717,7 +1044,13 @@ int main( int argc, char* argv[] )
 				M_i->chained_matches.push_back(M_j);
 				M_i->chained_component_maps.push_back(ij_link.sub_to_super_map);
 
+
 				//
+				//Trigger extension here(?) before proceeding..
+				//
+				//ExtendMatch(M_i, seedml.seq_table[0], pss, w);
+
+
 				// Link extension part 2:
 				// figure out whether any subsets between M_j and M_i got subsumed
 				for( size_t subtypeI = 0; subtypeI < 2; subtypeI++ )
@@ -1372,10 +1705,33 @@ int main( int argc, char* argv[] )
 	//if( gapped_alignment )
 	//addUnalignedIntervals( interval_list );
 	
-	// 
+
+	// part 9, extend chains
+	// 1) get maximal drop, call Aaron's function
+	
+	// 2) for each chain, check multiplicy and corresponding maximal drop
+	//    grab 5000nt(?) region on each side, send to MUSCLE
+	// 3) score via consensus, use cumulative column score, once score drops below maximal drop stop extension
+	//    if score doesnt drop after window size, grab more sequence
+	// 4) call Islands::findHssRandomWalk
+	// 5) crop regions
+	// 6) score resulting extended chains
+	 
 	// part 10, score matches using consensus
 	
-	
+	//tjt: punt for now, later read in this from command line!
+	//score_t matrix[4][4];
+	//readSubstitutionMatrix( sub_in, matrix );
+	//pss = PairwiseScoringScheme(matrix, pss.gap_open, pss.gap_extend);
+
+	//tjt: what should I do with this?
+	bool penalize_gaps = true;
+
+	std::map<int, vector< pair< int32, GappedMatchRecord* > > > multiplicity_map;
+	std::map<int, vector< pair< int32, std::string > > > multiplicity_map_consensus;
+
+	//PairwiseScoringScheme pss = PairwiseScoringScheme();
+
 	//create output stream
 	ostream* output;
  	ofstream aln_out_file;
@@ -1386,48 +1742,87 @@ int main( int argc, char* argv[] )
 		aln_out_file.open( outputfile.c_str() );
 		output = &aln_out_file;
 	}
-	vector< pair< double, GappedMatchRecord* > > scored( final.size() );
+	vector< pair< int32, GappedMatchRecord* > > scored( final.size() );
+	score_t signficance_threshold = 2727;
+	hss_list_t hss_list;
+
 	for( size_t fI = 0; fI < final.size(); fI++ )
-	{
-		
-	    vector<string> alignment;
+	{				
+		score_t score = 0;
+		std::vector< score_t > scores;
+		std::vector<std::string> alignment;
+		std::string consensusQ;
 		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
 		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
 		//send temporary output format to file if requested 
-		*output << "#procrastAlignment " << fI+1 << endl << *final.at(fI) << endl;
-
-		for( gnSeqI i = 0; i < alignment.size(); i++)
+		*output << "#procrastAlignment " << fI+1 << endl;
+		cout << "chain #:" << fI+1 << " length: " << alignment.at(0).size() << " multiplicity: " << final[fI]->Multiplicity() << endl;
+		
+		//let's start extending!
+		double extend_factor = 10.0;
+		vector<CompactGappedAlignment<>*> extended_chains;
+		//final[fI]->extend_right = false;
+		while (final[fI]->extend_right || final[fI]->extend_left )
 		{
 			
-			*output << alignment.at(i) << endl;
-			//continue;
+			//tjt: get preliminary consensus score, see if worth extending
+			//100*length*multiplicity
+			computeSPScore( alignment, pss, scores, score);
+			if( score < 3000 )
+			{	//not worth extending, skip
+				final[fI]->extend_right = false;
+				final[fI]->extend_left = false;
+				continue;
+			}
+			else
+			{
+				//extend current GappedMatchRecord
+				//if boundaries are improved, another round of extension is triggered
+				//any new homologous regions found are appended to the end of final
+				//any chains with unimproved boundaries are done
+				ExtendMatch(final[fI],seq_table, pss, w); 
+			}
 		}
-
-		//tjt: now each column in scores should be..
-
-		double score = 110.0;
 		
-		scored[fI] = make_pair( score, final[fI] );
 	}
-	std::sort( scored.begin(), scored.end() );
-	cout << "finished procrastination, time for work..." << endl;
+
+	//scored[fI] = make_pair( score, match_to_extend );
+	//multiplicity_map[match_to_extend->Multiplicity()].push_back( make_pair( score, match_to_extend ));
+	//multiplicity_map_consensus[match_to_extend->Multiplicity()].push_back( make_pair( score, consensusQ ));
+
+	//score matches again!
+	//call calculateSPScore/calculateConsensusScore on each chain
+	//std::sort( scored.begin(), scored.end() );
+	
 	double minscore = 0;
 
+	map<int, vector< pair< int32, GappedMatchRecord* > > >::iterator iter;   
 	// 
-	// part 11, report matches in scored order, highest multiplicity first?
+	// part 11, report matches in scored order, highest multiplicity first
 	//
-	if (0)
+	for( iter = multiplicity_map.begin(); iter != multiplicity_map.end(); iter++ ) 
 	{
-		for( size_t sI = 0; sI < scored.size(); ++sI )
+		if ( iter->first > 50 )
 		{
-			if ( scored[sI].first > minscore )
+			*output << "\nMultiplicity: " << iter->first << endl;
+			
+			std::sort( iter->second.begin(), iter->second.end() );
+			std::sort(  multiplicity_map_consensus[iter->first].begin(),  multiplicity_map_consensus[iter->first].end() );
+			for( size_t sI = 0; sI < iter->second.size(); ++sI )
 			{
-				cout << "Alignment length: " << scored[sI].second->AlignmentLength() << endl;
-				cout << "Score: " << scored[sI].first << endl;
-				cout << *scored[sI].second << endl;
+				if ( iter->second.at(sI).first > minscore )
+				{
+					*output << "  Consensus: " << multiplicity_map_consensus[iter->first].at(sI).second << endl;
+					*output << "    Score: " << iter->second.at(sI).first << endl;
+					*output << "    Alignment length: " << iter->second.at(sI).second->AlignmentLength() << endl;
+
+					//std::cout << *iter->second.at(sI).second << endl;
+				}
 			}
 		}
 	}
+
+	
 	// clean up
 	for( size_t eI = 0; eI < match_record_list.size(); ++eI )
 		match_record_list[eI]->Free();
