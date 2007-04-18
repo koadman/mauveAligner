@@ -58,6 +58,8 @@ public:
 	bool tandem;			/**< set to true if components of the match are chainable to each other (tandem repeats)*/
 	bool extended;			/**< set to false prior to extending this match */
 	bool dont_extend;
+	bool extend_left;
+	bool extend_right;
 	void clear()
 	{
 		subsuming_match = NULL;
@@ -66,6 +68,8 @@ public:
 		tandem = false;
 		extended = false;
 		dont_extend = false;
+		extend_right = true;
+		extend_left = true;
 	}
 };
 
