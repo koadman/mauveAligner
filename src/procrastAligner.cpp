@@ -402,7 +402,7 @@ public:
 };
 
 //void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
-void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w)
+void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
 {
 	//todo: remove alignment parameter
 	//      dont pass vector? 
@@ -424,6 +424,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	int extend_length_3 = 2*w;
 	int extend_length = min(extend_length_1, extend_length_3);
 
+	vector<int> left_extend_vector;
+	vector<int> right_extend_vector;
 	int left_extend_length = extend_length;
 	int right_extend_length = extend_length;
 
@@ -431,31 +433,77 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	for( gnSeqI j = 0; j < alignment.size(); j++)
 	{
 		//cout << mte->LeftEnd(j) << " " << mte->LeftEnd(j) - extend_length << " " << left_extend_length << endl;
+		if( mte->Orientation(j) == AbstractMatch::reverse )
+		{
+			
+			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
+				right_extend_vector.push_back(0);
 
-		if ( mte->LeftEnd(j) - extend_length > 4000000000u )
-		{
-			if( left_extend_length > mte->LeftEnd(j) )
-				left_extend_length = mte->LeftEnd(j);
+			else if ( mte->LeftEnd(j) - extend_length > 4000000000u )
+				right_extend_vector.push_back(mte->LeftEnd(j)-1);
+			else
+				right_extend_vector.push_back(extend_length);
+			
+
+			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
+				left_extend_vector.push_back(0);
+
+			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
+				left_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j)-1);
+			else
+				left_extend_vector.push_back(extend_length);
+		
+			
+	
 		}
-		if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
+		else
 		{
-			if( right_extend_length < seq_table[0]->length()-mte->RightEnd(j) )
-				right_extend_length = seq_table[0]->length()-mte->RightEnd(j);
-		}	
+
+			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
+				left_extend_vector.push_back(0);
+
+			else if ( mte->LeftEnd(j) - extend_length > 4000000000u )
+				left_extend_vector.push_back(mte->LeftEnd(j)-1);
+			else
+				left_extend_vector.push_back(extend_length);
+
+			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
+				right_extend_vector.push_back(0);
+
+			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
+				right_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j)-1);
+			else
+				right_extend_vector.push_back(extend_length);
+		
+			
+		}
+	}
+	for( gnSeqI j = 0; j < alignment.size(); j++)
+	{
+		if (left_extend_vector.at(j) < left_extend_length )
+			left_extend_length = left_extend_vector.at(j);
+		
+		if (right_extend_vector.at(j) < right_extend_length )
+			right_extend_length = right_extend_vector.at(j);
+
 	}
 	const gnFilter* rc_filter = gnFilter::DNAComplementFilter();
 	
 	std::vector<std::string> leftExtension( multi);
-	GappedAlignment leftside(multi,alignment.at(0).size());
+	GappedAlignment leftside(multi,left_extend_length);
 	std::vector<std::string> rightExtension( alignment.size() );
-	GappedAlignment rightside(multi,alignment.at(0).size());
+	GappedAlignment rightside(multi,right_extend_length);
 	vector< string > leftExtension_aln;
 	vector< string > rightExtension_aln;
 	score_t score = 0;
 	std::vector< score_t > scores;
 	int leftgaps = 0;
 	int rightgaps = 0;
-	if ( mte->extend_left && left_extend_length > 0 )
+
+	bool no_left = false;
+	bool no_right = false;
+
+	if ( mte->extend_left && left_extend_length > 0 && direction >= 0  )
 	{
 		// extract sequence data
 		
@@ -485,11 +533,15 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		leftgaps = leftExtension_aln.at(0).size()-leftExtension.at(0).size();
 
 	}
-	if (  mte->extend_right & right_extend_length > 0  )
+	else
+		no_left = true;
+	if (  mte->extend_right && right_extend_length > 0 && direction <= 0 )
 	{
 		
 		for( gnSeqI j = 0; j < alignment.size(); j++)
 		{
+			//cout << mte->RightEnd(j) << endl;
+
 			std::string right_seq = seq_table[0]->ToString( right_extend_length, mte->RightEnd(j)+1 );
 			rightside.SetLeftEnd(j,mte->RightEnd(j)+1 );
 			rightside.SetOrientation(j,AbstractMatch::forward);
@@ -508,17 +560,27 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		cout << "preparing to call MUSCLE on right region: " << right_extend_length << endl;
 		
 		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscle( rightExtension_aln, rightExtension );
-		
 		rightside.SetAlignment(rightExtension_aln);
 		rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
 		rightgaps = rightExtension_aln.at(0).size()-rightExtension.at(0).size();
 
 	}
+	else
+		no_right = true;
+
+	if( no_left && no_right)
+	{
+		//what are you even doing here?!?
+		cout << "Extension failed" << endl;
+		mte->extend_right = false;
+		mte->extend_left = false;
+		return;
+	}
 	for( gnSeqI j = 0; j < alignment.size(); j++)
 	{
-		if( mte->extend_left )
+		if(  !no_left )
 			alignment.at(j).insert(alignment.at(j).begin(),leftExtension_aln.at(j).begin(), leftExtension_aln.at(j).end());
-		if( mte->extend_right)
+		if( !no_right )
 			alignment.at(j).append(rightExtension_aln.at(j).begin(), rightExtension_aln.at(j).end());
 	}
 
@@ -538,9 +600,11 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	hss_list_t hss_new;
 	ComplementHss(alignment.at(0).size(),hss_list,hss_new);
 	vector< AbstractMatch* > mlist;
-	mlist.push_back(leftside.Copy());
+	if(!no_left)
+		mlist.push_back(leftside.Copy());
 	mlist.push_back(mte->Copy());
-	mlist.push_back(rightside.Copy());
+	if(!no_right)
+		mlist.push_back(rightside.Copy());
  
 	gnSequence myseq;
 	for( uint j = 0; j < multi; j++)
@@ -567,6 +631,14 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		hss_for_match = 0;
 	bool boundaries_improved = false;
 	vector< CompactGappedAlignment<>* > cga_list;
+	if( hss_new.size() == 0)
+	{
+		//no hss found!
+		cout << "Extension failed!" << endl;
+		mte->extend_left = false;
+		mte->extend_right = false;
+		return;
+	}
 	for( uint i = 0; i < hss_new.size(); i++)
 	{
 
@@ -613,7 +685,9 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			cout << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
 			for( uint j = 0; j < multi; j++)
 			{
-				mte->SetLeftEnd(j,cga_list.at(i)->LeftEnd(j));
+				//mte->SetLeftEnd(j,cga_list.at(i)->LeftEnd(j));
+				
+				mte->SetStart(j,cga_list.at(i)->Start(j));
 				mte->SetLength(cga_list.at(i)->Length(j),j);
 			}
 			//now need to resolve overlaps based on new LeftEnd/RightEnds
@@ -638,7 +712,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			mte->extend_left = true;
 			mte->extend_right = true;
 		}
-				
+
 		//else if( !boundaries_improved && i == hss_for_match  )
 		else if( !boundaries_improved )
 		
@@ -727,6 +801,11 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			gmr->finalize(seq_table);
 			//push back M_i into final
 			//final.push_back(gmr);
+		}
+		else
+		{
+			//set match 
+			cout << "Nothing doing for this hss..." << endl;
 		}
 		
 		//what to do here?
@@ -1476,7 +1555,7 @@ int main( int argc, char* argv[] )
 					if( M_j->extended == false )
 						continue;
 
-					size_t mult = 0;
+					size_t mult = 0;	// multiplicity of novel subset
 					for( size_t i = 0; i < cur_novel[gI].get<1>().size(); ++i )
 						if( cur_novel[gI].get<1>()[i] != (std::numeric_limits<size_t>::max)() )
 							mult++;
@@ -1567,6 +1646,7 @@ int main( int argc, char* argv[] )
 
 			if( last_linked == 0 )
 			{
+				//if we didnt link anything, try gapped extension!
 				direction -= 2;	// if we didn't extend with a superset or chainable then change directions
 			}
 
