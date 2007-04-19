@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib  ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib ..\..\libMems\lib\memsd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib  psapi.lib ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib ..\..\libMems\lib\memsd.lib"
 				OutputFile="$(OutDir)/progressiveMauved.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
@@ -551,14 +551,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\PairwiseMatchFinder.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\progressiveAligner.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\src\progressiveMauve.cpp"
 				>
 			</File>
@@ -574,26 +566,6 @@
 			>
 			<File
 				RelativePath="..\src\getopt.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\PairwiseMatchAdapter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\PairwiseMatchFinder.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\progressiveAligner.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\SeedOccurrenceList.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\TreeUtilities.h"
 				>
 			</File>
 			<File
