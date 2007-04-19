@@ -26,10 +26,11 @@
 #include "libMems/Islands.h"
 #include "libMems/MuscleInterface.h"
 #include "libMems/ClustalInterface.h"
+#include "libMems/Backbone.h"
 //#include "libMems/twister.h"
 
-#include "ProgressiveAligner.h"
-#include "PairwiseMatchFinder.h"
+#include "libMems/ProgressiveAligner.h"
+#include "libMems/PairwiseMatchFinder.h"
 #include "UniqueMatchFinder.h"
 
 
@@ -247,9 +248,9 @@ try{
 		ofstream bb_out( bb_fname.c_str() );
 		backbone_list_t bb_list;
 		if( opt_island_score.set )
-			applyIslands(iv_list, bb_list, getDefaultScoringScheme(), atoi( opt_island_score.arg_value.c_str() ) );
+			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), atoi( opt_island_score.arg_value.c_str() ) );
 		else
-			applyIslands(iv_list, bb_list, getDefaultScoringScheme());
+			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme());
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		ofstream bbcols_out( bbcols_fname.c_str() );
@@ -562,7 +563,7 @@ try{
 			if( opt_island_score.set )
 				island_score = atoi( opt_island_score.arg_value.c_str() );
 			backbone_list_t bb_list;
-			applyIslands(interval_list, bb_list, getDefaultScoringScheme(), island_score);
+			detectAndApplyBackbone(interval_list, bb_list, getDefaultScoringScheme(), island_score);
 			writeBackboneColumns( bbcols_out, bb_list );
 			if( opt_backbone_output.set )
 			{
