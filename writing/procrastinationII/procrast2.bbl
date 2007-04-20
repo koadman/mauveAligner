@@ -1,0 +1,121 @@
+\begin{thebibliography}{10}
+
+\bibitem{ref-pattern}
+Ma, B., Tromp, J., Li, M.:
+\newblock {Pattern{H}unter: faster and more sensitive homology search}.
+\newblock Bioinformatics \textbf{18} (2002)  440--445
+
+\bibitem{ref-chaos}
+Brudno, M., Morgenstern, B.:
+\newblock {Fast and sensitive alignment of large genomic sequences}.
+\newblock Proc IEEE Comput Soc Bioinform Conf \textbf{1} (2002)  138--147
+
+\bibitem{ref-yass}
+No\'{e}, L., Kucherov, G.:
+\newblock {Improved hit criteria for DNA local alignment}.
+\newblock BMC Bioinformatics \textbf{5} (2004)
+
+\bibitem{ref-kahveciMAP}
+Kahveci, T., Ljosa, V., Singh, A.K.:
+\newblock {Speeding up whole-genome alignment by indexing frequency vectors}.
+\newblock Bioinformatics \textbf{20} (2004)  2122--2134
+
+\bibitem{ref-orthomcl}
+Li, L., Stoeckert, C.J., Roos, D.S.:
+\newblock {OrthoMCL: identification of ortholog groups for eukaryotic genomes}.
+\newblock Genome Res \textbf{13} (2003)  2178--2189
+
+\bibitem{ref-arachne2}
+Jaffe, D.B., Butler, J., Gnerre, S., Mauceli, E., Lindblad-Toh, K., Mesirov,
+  J.P., Zody, M.C., Lander, E.S.:
+\newblock {Whole-genome sequence assembly for mammalian genomes: Arachne 2}.
+\newblock Genome Res \textbf{13} (2003)  91--96
+
+\bibitem{ref-ane}
+Ane, C., Sanderson, M.:
+\newblock {Missing the forest for the trees: phylogenetic compression and its
+  implications for inferring complex evolutionary histories}.
+\newblock Syst Biol \textbf{54} (2005)  I311--I317
+
+\bibitem{ref-454}
+Margulies, M., {55 other authors}:
+\newblock {Genome sequencing in microfabricated high-density picolitre
+  reactors}.
+\newblock Nature \textbf{437} (2005)  376--380
+
+\bibitem{ref-mauve}
+Darling, A.C.E., Mau, B., Blattner, F.R., Perna, N.T.:
+\newblock {Mauve: multiple alignment of conserved genomic sequence with
+  rearrangements}.
+\newblock Genome Res \textbf{14(7)} (2004)  1394--403.
+
+\bibitem{ref-mga}
+Hohl, M., Kurtz, S., Ohlebusch, E.:
+\newblock {Efficient multiple genome alignment}.
+\newblock Bioinformatics \textbf{18 Suppl 1} (2002)  S312--20.
+
+\bibitem{ref-mgcat}
+Treangen, T.J., Messeguer, X.:
+\newblock M-gcat: Interactively and efficiently constructing large-scale
+  multiple genome comparison frameworks in closely related species.
+\newblock BMC Bioinformatics \textbf{7} (2006)  433+
+
+\bibitem{ref-deweyReview}
+Dewey, C.N., Pachter, L.:
+\newblock Evolution at the nucleotide level: the problem of multiple
+  whole-genome alignment.
+\newblock Hum Mol Genet \textbf{15 Suppl 1} (2006)
+
+\bibitem{ref-otherSammethPaper}
+Sammeth, M., Heringa, J.:
+\newblock {Global multiple-sequence alignment with repeats}.
+\newblock Proteins (2006)
+
+\bibitem{ref-aba}
+Raphael, B., Zhi, D., Tang, H., Pevzner, P.:
+\newblock {A novel method for multiple alignment of sequences with repeated and
+  shuffled elements}.
+\newblock Genome Res \textbf{14(11)} (2004)  2336--46.
+
+\bibitem{ref-piler}
+Edgar, R.C., Myers, E.W.:
+\newblock {PILER: identification and classification of genomic repeats}.
+\newblock Bioinformatics \textbf{21 Suppl 1} (2005)
+
+\bibitem{ref-reputer}
+Kurtz, S., Ohlebusch, E., Schleiermacher, C., Stoye, J., Giegerich, R.:
+\newblock {Computation and visualization of degenerate repeats in complete
+  genomes}.
+\newblock Proc Intell Syst Mol Biol \textbf{8} (2000)  228--38.
+
+\bibitem{ref-repbase}
+Jurka, J., Kapitonov, V.V., Pavlicek, A., Klonowski, P., Kohany, O.,
+  Walichiewicz, J.:
+\newblock {Repbase Update, a database of eukaryotic repetitive elements}.
+\newblock Cytogenet Genome Res \textbf{110} (2005)  462--467
+
+\bibitem{ref-related1}
+Zhang, Y., Waterman, M.S.:
+\newblock {An Eulerian path approach to local multiple alignment for DNA
+  sequences}.
+\newblock PNAS \textbf{102} (2005)  1285–--90.
+
+\bibitem{ref-repeatgluer}
+Pevzner, P.A., Tang, H., Tesler, G.:
+\newblock De novo repeat classification and fragment assembly.
+\newblock Genome Res \textbf{14} (2004)  1786--1796
+
+\bibitem{ref-PhyloGibbs}
+Siddharthan, R., Siggia, E.D., van Nimwegen, E.:
+\newblock {Phylo{G}ibbs: a Gibbs sampling motif finder that incorporates
+  phylogeny}.
+\newblock PLoS Comput Biol \textbf{1} (2005)
+
+\bibitem{ref-procrast}
+Darling, A.C.E., Treangen, T.J., Zhang, L., Kuiken, C., Messeguer, X., Perna,
+  N.:
+\newblock {Procrastination leads to efficient filtration for local multiple
+  alignment.}
+\newblock Algorithms in Bioinformatics \textbf{4175} (2006)  126--137.
+
+\end{thebibliography}
