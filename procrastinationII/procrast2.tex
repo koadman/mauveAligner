@@ -1,0 +1,242 @@
+%
+% string matching writeup...
+%
+
+\documentclass{llncs}
+\pagestyle{empty}
+\usepackage{makeidx}  % allows for indexgeneration
+%
+\usepackage[dvips]{graphicx}    % needed for including graphics e.g. EPS, PS
+\usepackage{epsfig}
+\usepackage{url}
+\usepackage{pseudocode}
+\usepackage{comment}
+\usepackage{authblk}
+\usepackage{color}
+
+
+\begin{document}
+
+\frontmatter          % for the preliminaries
+%
+\pagestyle{headings}  % switches on printing of running heads
+
+\mainmatter              % start of the contributions
+%
+\title{procrastination II: beyond filtration}
+%
+\titlerunning{procrastination for local multiple alignment}  % abbreviated title (for running head)
+%                                     also used for the TOC unless
+%                                     \toctitle is used
+\author{Don Quijote}
+%
+\authorrunning{<Quijote> et al.}   % abbreviated author list (for running head)
+\institute{ Castilla La Mancha, Espa\~na }
+%
+%\institute{ Dept. of Computer Science,
+%Univ. of Wisconsin-Madison, USA\\
+%\email{darling@cs.wisc.edu},\\
+%\and Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain\\
+%\email{treangen@lsi.upc.edu},\\
+
+
+\maketitle
+
+
+\begin{abstract}
+We describe an efficient local multiple alignment 
+heuristic for the sensitive identification of 
+conserved and repetitive regions in one or more DNA
+sequences.  The GPL implementation of our algorithm in C++ is
+called \texttt{procrastAligner} and is freely available from
+\url{http://gel.ahabs.wisc.edu/procrastination}
+\end{abstract}
+
+
+\section{ Introduction }
+
+\subsection{Brief history \& overview of sequence alignment}
+\begin{itemize}
+
+\item Pairwise local sequence alignment has a long and fruitful history
+in computational biology and new approaches continue to be
+proposed~\cite{ref-pattern,ref-chaos,ref-yass,ref-kahveciMAP}.
+
+\item Local alignment can be used for orthology
+mapping~\cite{ref-orthomcl}, genome assembly~\cite{ref-arachne2},
+and information engineering tasks such as data
+compression~\cite{ref-ane}. 
+
+\item Recent advances in sequence data
+acquisition technology~\cite{ref-454} provide low-cost sequencing
+will continue to grow molecular sequence
+databases. 
+
+%motivation
+\item To cope with advances in data volume, corresponding
+advances in computational methods are necessary; thus we present
+an efficient method for local multiple alignment of DNA sequence.
+
+\end{itemize}
+
+\subsection{why multiple alignment?}
+\begin{itemize}
+
+\item Unlike pairwise alignment, local multiple alignment constructs a
+single multiple alignment for all occurrences of a motif in one or
+more sequences.  The motif occurrences may be identical or have
+degeneracy in the form of mismatches and indels.  
+
+\item local multiple alignments identify the basic repeating units in one or
+more sequences and can serve as a basis for downstream analysis
+tasks such as multiple genome
+alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global
+alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or
+repeat classification and analysis~\cite{ref-piler}. 
+
+\item Local multiple
+alignment differs from traditional pairwise methods for repeat
+analysis which either identify repeat families \textit{de
+novo}~\cite{ref-reputer} or using a database of known repeat
+motifs~\cite{ref-repbase}.
+
+\end{itemize}
+
+\subsection{related work on local multiple alignment}
+\begin{itemize}
+
+\item Eulerian path approach proposed by Zhang and Waterman~\cite{ref-related1}. 
+
+\item ABA, A-bruijn multiple alignment proposed by Raphael et al~\cite{ref-aba}. 
+
+\item RepeatGluer? Pevzner et al~\cite{ref-repeatgluer}. 
+
+\item anything else?
+
+
+\end{itemize}
+\subsection{what we offer/why we are different}
+\begin{itemize}
+
+%the gist
+\item Spaced Seeds$+$Procrastination$+$Extension$+$Simulations
+
+%limitations
+\item It
+is not designed to detect subtle motifs such as transcription factor
+binding sites in small, targeted sequence regions--stochastic
+methods are better suited for such tasks~\cite{ref-PhyloGibbs}. 
+
+
+\end{itemize}
+\section{Overview of the Method}\label{sec:overview}
+
+\subsection{Seed detection}
+\begin{itemize}
+
+\item palindromic spaced seeds, seed families?
+
+\item Our local multiple alignment method begins by generating
+a set of candidate multi-matches using \textit{palindromic} spaced
+seed patterns (~\cite{ref-procrast}).  
+
+\item The use of
+\textit{palindromic} seed patterns offers computational savings by
+allowing both strands of DNA to be processed simultaneously.
+
+\end{itemize}
+
+\subsection{Seed chaining and procrastination}
+\begin{itemize}
+\item briefly describe and review original procrastAlign algorithm
+\item point out that this current work is natural "extension" of previous work.
+\end{itemize}
+\subsection{Gapped Extension}
+\begin{itemize}
+\item After finding \& chaining seeds in input sequence, we would like to perform gapped
+extension to detect all surrounding homologous sequence. 
+\end{itemize}
+\subsubsection{Gapped alignment via MUSCLE}
+\begin{itemize}
+\item we employ MUSCLE to perform gapped alignment surrounding the chains
+
+\item we trigger gapped alignment if chain is above some minimum score threshold.
+idea is that extension is expensive, and so we need to minimize the number
+of gapped extensions that do not improve the boundaries of the chain.
+
+\item we grab 3*w nucleotides to the left/right of each chain. don't go past
+chain component boundaries, though. 
+
+\item we score the resulting gapped alignment via sum of pairs(computeSPScore)
+\item if we had a way to account for gaps in consensus, we could also 
+score this with the consensus sequence(see RepeatScout~\cite{ref-repeatscout})
+\item do we need to say something about the objective function?
+
+\end{itemize}
+
+\subsubsection{Random walk of score landscape to extend homology border}
+
+\begin{itemize}
+\item after scoring each column of the gapped extension, we would like
+to determine where the homology ends/begins in this region
+\item we do this by performing a random walk of the column score landscape
+\item we stop when we reach the record height
+\item we determine the record height by simulations(put in supplemental material?)
+\item all high scoring segments in the gapped extension are reported
+\item if boundaries of the original chain are improved, trigger another round of extension.
+\end{itemize}
+
+\subsubsection{Processing Novel homologous sequence}    
+\begin{itemize}
+\item novel homologous sequence can be found during gapped extension
+\item should briefly describe what we do with this 
+\end{itemize}
+\subsubsection{Define boundaries with pairwise homology test}
+\begin{itemize}
+\item our extension is not quite finished yet. Everything ok so far except that we could
+still be including non-homologous sequence in our extended chain(local multiple alignment).
+\item Define sets/subsets/boundaries with a pairwise homology test
+\item first, we unalign any non-homolgous sequence introduced during the extension process
+\item then, we define common boundaries among all sequences in the alignment
+\end{itemize}
+\subsection{local multiple alignment scoring}
+\begin{itemize}
+\item finally, we get a final score of our left/right extended chains using sum of pairs
+\item keep track of multiplicity, length(?)
+\end{itemize}
+\subsection{local multiple alignment significance via simulations}
+basically want to extend blast statistics to multiple local alignment. How?
+\begin{itemize}
+\item Extending Repseek simulations to multiple
+\item Tompa et al, estimating the parameters for multiple alignments
+\item will involve running procrastAlign with fixed parameters on sequences varying in composition and length
+\item also will have to take into account multiplicity
+\end{itemize}
+
+\subsection{Anything else?}
+\begin{itemize}
+\item detect mosaic structure of consensus repeat families, breaks
+    families into subset domains
+\item visualization and/or incorporation into multiple alignment 
+\end{itemize}
+
+\section{Results}
+We have created a program called \texttt{procrastAligner} for Linux,
+Windows, and Mac OS X that implements the described algorithm. Our
+open-source implementation is available as C++ source code licensed
+under the GPL.
+
+\section{ Discussion }
+
+\section{ Acknowledgements }
+AED was supported by NLM Training Grant 5T15LM007359-05. TJT was
+supported by Spanish Ministry MECD Grant TIN2004-03382 and AGAUR
+Training Grant FI-IQUC-2005. 
+
+
+\bibliographystyle{splncs}
+\small
+\bibliography{procrastination}
+
+
+\end{document}
