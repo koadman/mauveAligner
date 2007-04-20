@@ -26,7 +26,7 @@ using namespace genome;
 using namespace mems;
 
 int scoredropoff_matrix[10] = {0,0,4756,9144,13471,17981,25302,30945,38361,40754};
-
+int ccount = 0;
 /** A Match Position Entry stores a pointer to a match and its component for a given sequence coordinate */
 typedef std::pair< MatchRecord*, size_t >	MatchPositionEntry;
 /** the Match Position Lookup Table should be sized match the length of the sequence */
@@ -404,6 +404,7 @@ public:
 //void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
 void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
 {
+	ccount +=1;
 	//todo: remove alignment parameter
 	//      dont pass vector? 
 
@@ -413,6 +414,9 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	vector< string > alignment;
 	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
 			
+	if(ccount == 152 )
+		cout << endl;
+
 	//caculate extend length
 	// m = 0.48
 	// b = 500.04
@@ -429,10 +433,19 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	int left_extend_length = extend_length;
 	int right_extend_length = extend_length;
 
+	if ( mte->tandem )
+	{
+		mte->extend_left = false;
+		mte->extend_right = false;
+		cout << "No extension for tandem repeats.." << endl;	
+		return; //i'm scared of tandem repeats!
+	
+	}
 	//careful, if mte->LeftEnd(j) < extend_length, ToString() will be disappointed...
 	for( gnSeqI j = 0; j < alignment.size(); j++)
 	{
-		//cout << mte->LeftEnd(j) << " " << mte->LeftEnd(j) - extend_length << " " << left_extend_length << endl;
+		//now put check for curpos+extend_length<startpos of next match component..
+		 
 		if( mte->Orientation(j) == AbstractMatch::reverse )
 		{
 			
@@ -441,6 +454,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 			else if ( mte->LeftEnd(j) - extend_length > 4000000000u )
 				right_extend_vector.push_back(mte->LeftEnd(j)-1);
+			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
+				right_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
 			else
 				right_extend_vector.push_back(extend_length);
 			
@@ -450,6 +465,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
 				left_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j)-1);
+			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
+				left_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
 			else
 				left_extend_vector.push_back(extend_length);
 		
@@ -464,6 +481,9 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 			else if ( mte->LeftEnd(j) - extend_length > 4000000000u )
 				left_extend_vector.push_back(mte->LeftEnd(j)-1);
+			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
+				left_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
+			
 			else
 				left_extend_vector.push_back(extend_length);
 
@@ -472,6 +492,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
 				right_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j)-1);
+			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
+				right_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
 			else
 				right_extend_vector.push_back(extend_length);
 		
@@ -594,6 +616,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	else
 		signficance_threshold = 59.997*(x*x)+3395.408*x+11669.838;
 
+
 	hss_list_t hss_list;
 	findHssRandomWalkScoreVector(scores, signficance_threshold, hss_list, 0, 0);
 	
@@ -624,6 +647,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	//aln = dynamic_cast< GappedAlignment* >( iv_list[ ivI ].GetMatches()[0] );
 	//here: seq_ids getting mucked up??
 
+	
 	CompactGappedAlignment<> cga( iv );
 	
 	int hss_for_match = -1;
@@ -1088,6 +1112,8 @@ int main( int argc, char* argv[] )
 
 		extended_matches.push_back( M_i );
 		M_i->extended = true;
+		M_i->extend_left = true;
+		M_i->extend_right = true;
 
 //		if( M_i == (GappedMatchRecord*)0x012b7658 )
 //			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
@@ -1123,11 +1149,6 @@ int main( int argc, char* argv[] )
 				M_i->chained_matches.push_back(M_j);
 				M_i->chained_component_maps.push_back(ij_link.sub_to_super_map);
 
-
-				//
-				//Trigger extension here(?) before proceeding..
-				//
-				//ExtendMatch(M_i, seedml.seq_table[0], pss, w);
 
 
 				// Link extension part 2:
@@ -1646,12 +1667,27 @@ int main( int argc, char* argv[] )
 
 			if( last_linked == 0 )
 			{
-				//if we didnt link anything, try gapped extension!
 				direction -= 2;	// if we didn't extend with a superset or chainable then change directions
 			}
 
 		}	// end loop over leftward and rightward extension
 
+		//
+		// finalize the alignment -- this resolves overlapping components into a single gapped alignment
+		//
+		//tjt: need to send finalize seq_table for muscle alignment
+		M_i->finalize(seedml.seq_table);
+		vector< gnSequence* > seqtable( M_i->SeqCount(), seedml.seq_table[0] );
+		for( int direction = 1; direction > -2; direction -= 2 )
+		{	
+			while ( M_i->extend_left || M_i->extend_right)
+			{
+				if ((direction > 0 && M_i->extend_left )||(direction<0 && M_i->extend_right ))
+					ExtendMatch(M_i, seqtable, pss, w, direction);
+			}
+			M_i->extend_left = true;
+			M_i->extend_right = true;
+		}
 
 		//
 		// process deferred subsets
@@ -1742,12 +1778,7 @@ int main( int argc, char* argv[] )
 			subset_list.clear();
 		}
 
-		//
-		// finalize the alignment -- this resolves overlapping components into a single gapped alignment
-		//
-		//tjt: need to send finalize seq_table for muscle alignment
-		M_i->finalize(seedml.seq_table);
-
+		
 //		validate( extended_matches );
 //		validate( match_record_list );
 	}
@@ -1848,7 +1879,7 @@ int main( int argc, char* argv[] )
 			//tjt: get preliminary consensus score, see if worth extending
 			//100*length*multiplicity
 			computeSPScore( alignment, pss, scores, score);
-			if( score < 3000 )
+			if( score < 3000 || 1)
 			{	//not worth extending, skip
 				final[fI]->extend_right = false;
 				final[fI]->extend_left = false;
