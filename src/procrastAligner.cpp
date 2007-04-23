@@ -438,7 +438,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	{
 		mte->extend_left = false;
 		mte->extend_right = false;
-		cout << "No extension for tandem repeats.." << endl;	
+		cout << "Sorry, no extension for tandem repeats.." << endl << endl;	
 		return; //i'm scared of tandem repeats!
 	
 	}
@@ -825,7 +825,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		else
 		{
 			//set match 
-			cout << "Nothing doing for this backbone..." << endl;
+			//cout << "Nothing doing for this backbone..." << endl;
+			continue;
 		}
 		
 		//what to do here?
@@ -1053,8 +1054,10 @@ int main( int argc, char* argv[] )
 	//for extension
 	PairwiseScoringScheme pss = PairwiseScoringScheme();
 
+	int curI = 0;
 	while( queue_end > 0 )
 	{
+		curI +=1;
 		// pop the next match off the heap
 		std::pop_heap( procrastination_queue.begin(), procrastination_queue.begin()+queue_end, mhc );
 		queue_end--;
@@ -1123,6 +1126,8 @@ int main( int argc, char* argv[] )
 		int last_linked = 0;	// stores the group type that was chained.  1 == superset, 2 == chainable, 0 == none
 		vector< NeighborhoodGroup > left_deferred_subsets;
 		vector< NeighborhoodGroup > right_deferred_subsets;
+
+		
 		while( direction > -2 )
 		{
 			last_linked = 0;
@@ -1674,10 +1679,27 @@ int main( int argc, char* argv[] )
 		vector< gnSequence* > seqtable( M_i->SeqCount(), seedml.seq_table[0] );
 		for( int direction = 1; direction > -2; direction -= 2 )
 		{	
+			vector< string > alignment;
+			mems::GetAlignment(*M_i,seqtable, alignment);	// expects one seq_table entry per matching component
+			vector<score_t> scores;
+			score_t score = 0;
 			while ( M_i->extend_left || M_i->extend_right)
 			{
+				score = 0;
+				computeSPScore( alignment, pss, scores, score);
+				if( score < 10000 )
+				{	
+					cout << "Score: " << score << " .. this one not worth extending, skip it" << endl;
+					
+					M_i->extend_right = false;
+					M_i->extend_left = false;
+					continue;
+				}
 				if ((direction > 0 && M_i->extend_left )||(direction<0 && M_i->extend_right ))
+				{
+					cout << "Preparing to extend Chain #" << curI << endl;
 					ExtendMatch(M_i, seqtable, pss, w, direction);
+				}
 			}
 			M_i->extend_left = true;
 			M_i->extend_right = true;
@@ -1809,123 +1831,14 @@ int main( int argc, char* argv[] )
 	// finally add any unaligned regions to the interval list	
 	//if( gapped_alignment )
 	//addUnalignedIntervals( interval_list );
-	
-
-	// part 9, extend chains
-	// 1) get maximal drop, call Aaron's function
-	
-	// 2) for each chain, check multiplicy and corresponding maximal drop
-	//    grab 5000nt(?) region on each side, send to MUSCLE
-	// 3) score via consensus, use cumulative column score, once score drops below maximal drop stop extension
-	//    if score doesnt drop after window size, grab more sequence
-	// 4) call Islands::findHssRandomWalk
-	// 5) crop regions
-	// 6) score resulting extended chains
-	 
-	// part 10, score matches using consensus
-	
-	//tjt: punt for now, later read in this from command line!
-	//score_t matrix[4][4];
-	//readSubstitutionMatrix( sub_in, matrix );
-	//pss = PairwiseScoringScheme(matrix, pss.gap_open, pss.gap_extend);
-
-	//tjt: what should I do with this?
-	bool penalize_gaps = true;
-
-	std::map<int, vector< pair< int32, GappedMatchRecord* > > > multiplicity_map;
-	std::map<int, vector< pair< int32, std::string > > > multiplicity_map_consensus;
-
-	//PairwiseScoringScheme pss = PairwiseScoringScheme();
-
-	//create output stream
-	ostream* output;
- 	ofstream aln_out_file;
-	if(outputfile == "" || outputfile == "-")
-		output = &cout;
-	else
-	{
-		aln_out_file.open( outputfile.c_str() );
-		output = &aln_out_file;
-	}
-	vector< pair< int32, GappedMatchRecord* > > scored( final.size() );
-	score_t signficance_threshold = 2727;
-	hss_list_t hss_list;
-
-	for( size_t fI = 0; fI < final.size(); fI++ )
-	{				
-		score_t score = 0;
-		std::vector< score_t > scores;
-		std::vector<std::string> alignment;
-		std::string consensusQ;
-		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
-		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
-		//send temporary output format to file if requested 
-		*output << "#procrastAlignment " << fI+1 << endl;
-		cout << "chain #:" << fI+1 << " length: " << alignment.at(0).size() << " multiplicity: " << final[fI]->Multiplicity() << endl;
-		
-		//let's start extending!
-		double extend_factor = 10.0;
-		vector<CompactGappedAlignment<>*> extended_chains;
-		//final[fI]->extend_right = false;
-		while (final[fI]->extend_right || final[fI]->extend_left )
-		{
-			
-			//tjt: get preliminary consensus score, see if worth extending
-			//100*length*multiplicity
-			computeSPScore( alignment, pss, scores, score);
-			if( score < 3000 || 1)
-			{	//not worth extending, skip
-				final[fI]->extend_right = false;
-				final[fI]->extend_left = false;
-				continue;
-			}
-			else
-			{
-				//extend current GappedMatchRecord
-				//if boundaries are improved, another round of extension is triggered
-				//any new homologous regions found are appended to the end of final
-				//any chains with unimproved boundaries are done
-				ExtendMatch(final[fI],seq_table, pss, w); 
-			}
-		}
-		
-	}
-
-	//scored[fI] = make_pair( score, match_to_extend );
-	//multiplicity_map[match_to_extend->Multiplicity()].push_back( make_pair( score, match_to_extend ));
-	//multiplicity_map_consensus[match_to_extend->Multiplicity()].push_back( make_pair( score, consensusQ ));
 
 	//score matches again!
 	//call calculateSPScore/calculateConsensusScore on each chain
 	//std::sort( scored.begin(), scored.end() );
-	
-	double minscore = 0;
-
-	map<int, vector< pair< int32, GappedMatchRecord* > > >::iterator iter;   
+ 
 	// 
 	// part 11, report matches in scored order, highest multiplicity first
 	//
-	for( iter = multiplicity_map.begin(); iter != multiplicity_map.end(); iter++ ) 
-	{
-		if ( iter->first > 50 )
-		{
-			*output << "\nMultiplicity: " << iter->first << endl;
-			
-			std::sort( iter->second.begin(), iter->second.end() );
-			std::sort(  multiplicity_map_consensus[iter->first].begin(),  multiplicity_map_consensus[iter->first].end() );
-			for( size_t sI = 0; sI < iter->second.size(); ++sI )
-			{
-				if ( iter->second.at(sI).first > minscore )
-				{
-					*output << "  Consensus: " << multiplicity_map_consensus[iter->first].at(sI).second << endl;
-					*output << "    Score: " << iter->second.at(sI).first << endl;
-					*output << "    Alignment length: " << iter->second.at(sI).second->AlignmentLength() << endl;
-
-					//std::cout << *iter->second.at(sI).second << endl;
-				}
-			}
-		}
-	}
 
 	
 	// clean up
