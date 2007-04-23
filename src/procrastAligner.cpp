@@ -5,8 +5,8 @@
 #include "libMems/Aligner.h"
 #include "libMems/MuscleInterface.h"
 #include "libGenome/gnFASSource.h"
-
-#include "ProgressiveAligner.h"
+#include "libMems/Backbone.h"
+#include "libMems/ProgressiveAligner.h"
 
 #include <iostream>
 #include <algorithm>
@@ -606,22 +606,13 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			alignment.at(j).append(rightExtension_aln.at(j).begin(), rightExtension_aln.at(j).end());
 	}
 
-	computeSPScore( alignment, pss, scores, score);
-	
-	int x = multi;
-	double signficance_threshold = 0.0;
-	//2,3,4,5,6,7,8,9
-	if( x <= 9 )
-		signficance_threshold = scoredropoff_matrix[x];
-	else
-		signficance_threshold = 59.997*(x*x)+3395.408*x+11669.838;
+	gnSequence myseq;
+	for( uint j = 0; j < multi; j++)
+		myseq += alignment.at(j);
 
-
-	hss_list_t hss_list;
-	findHssRandomWalkScoreVector(scores, signficance_threshold, hss_list, 0, 0);
+	gnFASSource::Write(myseq, "coolio1.txt" );
 	
-	hss_list_t hss_new;
-	ComplementHss(alignment.at(0).size(),hss_list,hss_new);
+	
 	vector< AbstractMatch* > mlist;
 	if(!no_left)
 		mlist.push_back(leftside.Copy());
@@ -629,33 +620,41 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	if(!no_right)
 		mlist.push_back(rightside.Copy());
  
-	gnSequence myseq;
-	for( uint j = 0; j < multi; j++)
-		myseq += alignment.at(j);
-
-	gnFASSource::Write(myseq, "coolio1.txt" );
 	
 
+	
+	
 	//createInterval
 	Interval iv;
 	iv.SetMatches(mlist);
-
-	//vector<string>  tmpaln;
-	//mems::GetAlignment(iv, seq_table, tmpaln);	// expects one seq_table entry per matching component
-
-	uint compact_seq_count =  iv.Multiplicity();
-	//aln = dynamic_cast< GappedAlignment* >( iv_list[ ivI ].GetMatches()[0] );
-	//here: seq_ids getting mucked up??
-
-	
-	CompactGappedAlignment<> cga( iv );
-	
-	int hss_for_match = -1;
-	if (hss_new.size() == 1)
-		hss_for_match = 0;
-	bool boundaries_improved = false;
+	CompactGappedAlignment<>* cga = new CompactGappedAlignment<>( iv );
 	vector< CompactGappedAlignment<>* > cga_list;
-	if( hss_new.size() == 0)
+	CompactGappedAlignment<>* result;
+	//detectAndApplyBackbone
+	backbone_list_t bb_list;
+	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss);
+	cga->Free();
+	
+
+	vector<string> new_alignment;
+	mems::GetAlignment(*result, seq_table, new_alignment);	// expects one seq_table entry per matching component
+	gnSequence myseq2;
+	for( uint j = 0; j < new_alignment.size(); j++)
+		myseq2 += new_alignment.at(j);
+
+	gnFASSource::Write(myseq2, "coolio2.txt" );
+
+	//WARNING! approaching danger zone
+	//all code below needs to be revised per randomwalk to detectAndApplyBackbone change
+
+	cout << "Extension process temporarily out of order..." << endl;
+	mte->extend_left = false;
+	mte->extend_right = false;
+
+	return;
+	
+	bool boundaries_improved = false;
+	if( bb_list.at(0).size() == 0)
 	{
 		//no hss found!
 		cout << "Extension failed!" << endl;
@@ -663,7 +662,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		mte->extend_right = false;
 		return;
 	}
-	for( uint i = 0; i < hss_new.size(); i++)
+	for( uint i = 0; i < bb_list.at(0).size(); i++)
 	{
 
 		//CompactGappedAlignment<>* new_cga;
@@ -673,7 +672,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 		CompactGappedAlignment<> tmp_cga;
 		cga_list.push_back( tmp_cga.Copy() );
-		cga.copyRange(*(cga_list.back()),hss_new.at(i).left_col,hss_new.at(i).right_col-hss_new.at(i).left_col);
+		cga->copyRange(*(cga_list.back()),bb_list.at(0).at(i)->LeftEnd(i),bb_list.at(0).at(i)->Length(i));
 		if( cga_list.back()->LeftEnd(0) == NO_MATCH )
 		{
 			// this one must have been covering an invalid region (gaps aligned to gaps)
@@ -690,7 +689,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			{
 				//this hss shares columns with original chain, check to see if boundaries improved
 				boundaries_improved = true;
-				hss_for_match = i;
+				//hss_for_match = i;
 				break;
 			}
 			
@@ -699,7 +698,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	for( uint i = 0; i < cga_list.size(); i++)
 	{
 		
-		if ( boundaries_improved && i == hss_for_match )
+		if ( boundaries_improved)
 		{
 			//boundaries were improved, current match is extended original match
 			
@@ -707,6 +706,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			//update original mte GappedMatchRecord
 			cout << "Extension worked!! Improved boundaries!" << endl;
 			cout << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
+
+			
 			for( uint j = 0; j < multi; j++)
 			{
 				//mte->SetLeftEnd(j,cga_list.at(i)->LeftEnd(j));
@@ -761,14 +762,14 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 				umr->SetStart( seqI, cga_list.at(i)->Start( seqI ) );
 				umr->SetLength(  cga_list.at(i)->Length( seqI ), seqI );
 			}
-			if( i == 0 && i != hss_for_match  )
+			if( i == 0 && 0 )
 			{			
 				
 				//append to final list, mark left side for extension
 				umr->extend_left = true;
 				umr->extend_right = false;
 			}
-			else if ( i == hss_new.size()-1 && i != hss_for_match  )
+			else if ( 0  )
 			{	
 				
 				//append to final list, mark right side for extension
