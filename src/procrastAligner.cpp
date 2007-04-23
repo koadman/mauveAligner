@@ -410,6 +410,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 	//punt on this for now..
 	bool novel_hss_regions_support = false;
+	bool danger_zone_active = true;
 
 	vector< string > alignment;
 	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
@@ -449,55 +450,50 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		if( mte->Orientation(j) == AbstractMatch::reverse )
 		{
 			
+			//if leftend <= 0 set right extension to 0
 			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
 				right_extend_vector.push_back(0);
-
+			//if extend_length goes to far, set to maximum possible
 			else if ( mte->LeftEnd(j) - extend_length > 4000000000u )
 				right_extend_vector.push_back(mte->LeftEnd(j)-1);
+
+			//if we run into another match, don't extend into it
 			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
 				right_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
+			
+			//else everything ok to set to preset extend_length
 			else
 				right_extend_vector.push_back(extend_length);
 			
-
 			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
 				left_extend_vector.push_back(0);
-
 			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
 				left_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j)-1);
 			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
 				left_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
 			else
 				left_extend_vector.push_back(extend_length);
-		
-			
 	
 		}
 		else
 		{
-
 			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
 				left_extend_vector.push_back(0);
-
 			else if ( mte->LeftEnd(j) - extend_length > 4000000000u )
 				left_extend_vector.push_back(mte->LeftEnd(j)-1);
 			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
 				left_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
-			
 			else
 				left_extend_vector.push_back(extend_length);
 
 			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
 				right_extend_vector.push_back(0);
-
 			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
 				right_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j)-1);
 			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
 				right_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
 			else
-				right_extend_vector.push_back(extend_length);
-		
-			
+				right_extend_vector.push_back(extend_length);	
 		}
 	}
 	for( gnSeqI j = 0; j < alignment.size(); j++)
@@ -621,9 +617,6 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		mlist.push_back(rightside.Copy());
  
 	
-
-	
-	
 	//createInterval
 	Interval iv;
 	iv.SetMatches(mlist);
@@ -643,63 +636,66 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		myseq2 += new_alignment.at(j);
 
 	gnFASSource::Write(myseq2, "coolio2.txt" );
-
-	//WARNING! approaching danger zone
-	//all code below needs to be revised per randomwalk to detectAndApplyBackbone change
-
-	cout << "Extension process temporarily out of order..." << endl;
-	mte->extend_left = false;
-	mte->extend_right = false;
-
-	return;
 	
 	bool boundaries_improved = false;
 	if( bb_list.at(0).size() == 0)
 	{
-		//no hss found!
-		cout << "Extension failed!" << endl;
+		//no backbone segment found
+		cout << "Crikey!! no backbone found during extension..." << endl;
 		mte->extend_left = false;
 		mte->extend_right = false;
 		return;
 	}
+
+	int backbone_i = -1;
+	if (bb_list.at(0).size() == 1)
+		backbone_i = 0;
+	int invalid_matches = 0;
 	for( uint i = 0; i < bb_list.at(0).size(); i++)
 	{
 
-		//CompactGappedAlignment<>* new_cga;
-		//new_cga = new CompactGappedAlignment<>(iv.Multiplicity(),hss_new.at(i).right_col-hss_new.at(i).left_col);
-		//cga.copyRange(*new_cga,hss_new.at(i).left_col,hss_new.at(i).right_col-hss_new.at(i).left_col);
-		//cga_list.push_back(new_cga);
-
 		CompactGappedAlignment<> tmp_cga;
 		cga_list.push_back( tmp_cga.Copy() );
-		cga->copyRange(*(cga_list.back()),bb_list.at(0).at(i)->LeftEnd(i),bb_list.at(0).at(i)->Length(i));
+		//cout << bb_list.at(0).at(i)->LeftEnd(0) << " " <<  bb_list.at(0).at(i)->AlignmentLength() << endl;
+		result->copyRange(*(cga_list.back()),bb_list.at(0).at(i)->LeftEnd(0),bb_list.at(0).at(i)->AlignmentLength()-1);
 		if( cga_list.back()->LeftEnd(0) == NO_MATCH )
 		{
 			// this one must have been covering an invalid region (gaps aligned to gaps)
 			cga_list.back()->Free();
 			cga_list.erase( cga_list.end()-1 );
+			invalid_matches++;
 			continue;
 		}
 		
-		
-		for( uint j = 0; j < alignment.size(); j++)
-		{			
-			
-			if( cga_list.back()->LeftEnd(j) < mte->LeftEnd(j) && cga_list.back()->RightEnd(j)-1 >= mte->RightEnd(j) || cga_list.back()->LeftEnd(j) <= mte->LeftEnd(j) && cga_list.back()->RightEnd(j)-1 > mte->RightEnd(j))
-			{
-				//this hss shares columns with original chain, check to see if boundaries improved
-				boundaries_improved = true;
-				//hss_for_match = i;
-				break;
-			}
+		if( cga_list.back()->LeftEnd(0) < mte->LeftEnd(0) && cga_list.back()->LeftEnd(0) + cga_list.back()->Length() >= mte->RightEnd(0) || cga_list.back()->LeftEnd(0) <= mte->LeftEnd(0) && cga_list.back()->RightEnd(0)-1 > mte->RightEnd(0))
+		{
+			//yep, they were improved
+			boundaries_improved = true;
+			backbone_i = i-invalid_matches;
 			
 		}
+		
 	}
 	for( uint i = 0; i < cga_list.size(); i++)
 	{
+		//if cga_list.size() > 1, there are several backbones, possibly of varying multiplicity
+		//this is where things will start to get interesting
 		
-		if ( boundaries_improved)
+		if ( boundaries_improved && i == backbone_i )
 		{
+			if( cga_list.at(i)->Multiplicity() != mte->Multiplicity() )
+			{
+				//WARNING! approaching danger zone
+				//all code below needs to be revised per randomwalk to detectAndApplyBackbone change
+				if ( danger_zone_active )
+				{
+					cout << "Extension process temporarily out of order..." << endl;
+					mte->extend_left = false;
+					mte->extend_right = false;
+
+					return;
+				}
+			}
 			//boundaries were improved, current match is extended original match
 			
 			//set to extend_left && extend_right again
@@ -707,7 +703,6 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			cout << "Extension worked!! Improved boundaries!" << endl;
 			cout << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
 
-			
 			for( uint j = 0; j < multi; j++)
 			{
 				//mte->SetLeftEnd(j,cga_list.at(i)->LeftEnd(j));
@@ -762,14 +757,14 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 				umr->SetStart( seqI, cga_list.at(i)->Start( seqI ) );
 				umr->SetLength(  cga_list.at(i)->Length( seqI ), seqI );
 			}
-			if( i == 0 && 0 )
+			if( i == 0 && i != backbone_i )
 			{			
 				
 				//append to final list, mark left side for extension
 				umr->extend_left = true;
 				umr->extend_right = false;
 			}
-			else if ( 0  )
+			else if (  i == bb_list.at(0).size()-1 && i != backbone_i  )
 			{	
 				
 				//append to final list, mark right side for extension
@@ -830,7 +825,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		else
 		{
 			//set match 
-			cout << "Nothing doing for this hss..." << endl;
+			cout << "Nothing doing for this backbone..." << endl;
 		}
 		
 		//what to do here?
@@ -838,8 +833,6 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		//update final?
 		//store in new vector of CompactGappedAlignment?
 		//if in new vector means extended or want to keep?
-
-
 	}
 	
 }//tjt: match should be extended!
