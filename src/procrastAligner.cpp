@@ -427,7 +427,14 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	int extend_length_1 = ceil(-0.48*multi+500.04); 
 	int extend_length_2 = 10*mte->Length(0);
 	int extend_length_3 = 2*w;
-	int extend_length = min(extend_length_1, extend_length_3);
+//	int extend_length = min(extend_length_1, extend_length_3);
+	int extend_length = min(4*w, 200);	
+	// aced:  it seems we need to extend by (2 * (significance_threshold - gap_open) / gap_extend) nucleotides
+	// in order to accurately detect non-homology at the boundaries.  for the default scoring scheme, we need:
+	// 2 * (2727 - 400) / 35 = 130 nucleotides 
+	// hopefully this issue can be solved by combining the new minimal significant cluster detection 
+	// algorithm with a special indicator variable to detectAndApplyBackbone() that suggests we expect homology
+	// on the seed side and non-homology on the extension side
 
 	vector<int> left_extend_vector;
 	vector<int> right_extend_vector;
@@ -602,11 +609,12 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			alignment.at(j).append(rightExtension_aln.at(j).begin(), rightExtension_aln.at(j).end());
 	}
 
+
 	gnSequence myseq;
 	for( uint j = 0; j < multi; j++)
 		myseq += alignment.at(j);
 
-	gnFASSource::Write(myseq, "coolio1.txt" );
+	gnFASSource::Write(myseq, "coolio1.fasta" );
 	
 	
 	vector< AbstractMatch* > mlist;
@@ -616,7 +624,6 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	if(!no_right)
 		mlist.push_back(rightside.Copy());
  
-	
 	//createInterval
 	Interval iv;
 	iv.SetMatches(mlist);
@@ -627,7 +634,12 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	backbone_list_t bb_list;
 	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss);
 	cga->Free();
-	
+
+// aced: debug printing to get bb segments right
+//	for( size_t bbI = 0; bbI < bb_list[0].size(); bbI++ )
+//	{
+//		cout << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
+//	}
 
 	vector<string> new_alignment;
 	mems::GetAlignment(*result, seq_table, new_alignment);	// expects one seq_table entry per matching component
@@ -635,7 +647,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	for( uint j = 0; j < new_alignment.size(); j++)
 		myseq2 += new_alignment.at(j);
 
-	gnFASSource::Write(myseq2, "coolio2.txt" );
+	gnFASSource::Write(myseq2, "coolio2.fasta" );
 	
 	bool boundaries_improved = false;
 	if( bb_list.at(0).size() == 0)
