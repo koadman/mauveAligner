@@ -632,14 +632,14 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	CompactGappedAlignment<>* result;
 	//detectAndApplyBackbone
 	backbone_list_t bb_list;
+	// switch to this call once MSC detection works
+//	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, direction != 1, direction == 1 );
 	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss);
 	cga->Free();
 
 // aced: debug printing to get bb segments right
-//	for( size_t bbI = 0; bbI < bb_list[0].size(); bbI++ )
-//	{
-//		cout << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
-//	}
+	for( size_t bbI = 0; bb_list.size() > 0 && bbI < bb_list[0].size(); bbI++ )
+		cout << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
 
 	vector<string> new_alignment;
 	mems::GetAlignment(*result, seq_table, new_alignment);	// expects one seq_table entry per matching component
@@ -670,7 +670,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		cga_list.push_back( tmp_cga.Copy() );
 		//cout << bb_list.at(0).at(i)->LeftEnd(0) << " " <<  bb_list.at(0).at(i)->AlignmentLength() << endl;
 		result->copyRange(*(cga_list.back()),bb_list.at(0).at(i)->LeftEnd(0),bb_list.at(0).at(i)->AlignmentLength()-1);
-		if( cga_list.back()->LeftEnd(0) == NO_MATCH )
+		if( cga_list.back()->Multiplicity() == 0 )
 		{
 			// this one must have been covering an invalid region (gaps aligned to gaps)
 			cga_list.back()->Free();
@@ -678,8 +678,10 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			invalid_matches++;
 			continue;
 		}
-		
-		if( cga_list.back()->LeftEnd(0) < mte->LeftEnd(0) && cga_list.back()->LeftEnd(0) + cga_list.back()->Length() >= mte->RightEnd(0) || cga_list.back()->LeftEnd(0) <= mte->LeftEnd(0) && cga_list.back()->RightEnd(0)-1 > mte->RightEnd(0))
+
+		if( cga_list.size() > 0 &&
+			cga_list.back()->Multiplicity() == mte->Multiplicity() &&
+			cga_list.back()->LeftEnd(0) < mte->LeftEnd(0) && cga_list.back()->LeftEnd(0) + cga_list.back()->Length() >= mte->RightEnd(0) || cga_list.back()->LeftEnd(0) <= mte->LeftEnd(0) && cga_list.back()->RightEnd(0)-1 > mte->RightEnd(0))
 		{
 			//yep, they were improved
 			boundaries_improved = true;
