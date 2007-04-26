@@ -633,8 +633,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	//detectAndApplyBackbone
 	backbone_list_t bb_list;
 	// switch to this call once MSC detection works
-//	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, direction != 1, direction == 1 );
-	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss);
+	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, DEFAULT_ISLAND_SCORE_THRESHOLD, direction != 1, direction == 1 );
+//	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss);
 	cga->Free();
 
 // aced: debug printing to get bb segments right
