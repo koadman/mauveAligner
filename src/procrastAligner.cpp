@@ -650,7 +650,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	gnFASSource::Write(myseq2, "coolio2.fasta" );
 	
 	bool boundaries_improved = false;
-	if( bb_list.at(0).size() == 0)
+	if( bb_list.size() == 0 ||
+		bb_list.at(0).size() == 0)
 	{
 		//no backbone segment found
 		cout << "Crikey!! no backbone found during extension..." << endl;
