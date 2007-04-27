@@ -17,7 +17,8 @@ toMultiFastA getAlignmentWindows extractBackbone2 uniquifyTrees \
 countInPlaceInversions toGrimmFormat joinAlignmentFiles mauveToXMFA \
 stripGapColumns gappiness progressiveMauve progressiveMauveStatic \
 sortContigs extractBCITrees calculateBackboneCoverage2 createBackboneMFA \
-pairCompare procrastAligner scoreALU evd alignmentProjector
+pairCompare procrastAligner scoreALU evd alignmentProjector stripSubsetLCBs \
+projectAndStrip makeBadgerMatrix multiEVD randomGeneSample
 
 EXTRA_PROGRAMS = mauveMpatrol mauveEfence toGBKsequence multiToRawSequence unalign
 
@@ -211,4 +212,24 @@ evd_LDADD = $(LIBRARY_CL)
 alignmentProjector_SOURCES = alignmentProjector.cpp
 alignmentProjector_LDFLAGS = @STATIC_FLAG@
 alignmentProjector_LDADD = $(LIBRARY_CL)
+
+stripSubsetLCBs_SOURCES = stripSubsetLCBs.cpp
+stripSubsetLCBs_LDFLAGS = @STATIC_FLAG@
+stripSubsetLCBs_LDADD = $(LIBRARY_CL)
+
+projectAndStrip_SOURCES = projectAndStrip.cpp
+projectAndStrip_LDFLAGS = @STATIC_FLAG@
+projectAndStrip_LDADD = $(LIBRARY_CL)
+
+makeBadgerMatrix_SOURCES = makeBadgerMatrix.cpp
+makeBadgerMatrix_LDFLAGS = @STATIC_FLAG@
+makeBadgerMatrix_LDADD = $(LIBRARY_CL)
+
+multiEVD_SOURCES = multiEVD.cpp
+multiEVD_LDFLAGS = @STATIC_FLAG@
+multiEVD_LDADD = $(LIBRARY_CL)
+
+randomGeneSample_SOURCES = randomGeneSample.cpp
+randomGeneSample_LDFLAGS = @STATIC_FLAG@
+randomGeneSample_LDADD = $(LIBRARY_CL)
 
