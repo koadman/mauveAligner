@@ -132,7 +132,7 @@ public:
 	 * Call to indicate that all matches have been placed in the chained_matches list and can be 
 	 * converted to a gapped alignment
 	 */
-	void finalize(std::vector<genome::gnSequence *> seq_table);
+	void finalize(std::vector<genome::gnSequence *> seq_table );
 
 // methods inherited from AbstractGappedAlignment
 public:
@@ -263,18 +263,8 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		mems::AbstractMatch* m1 = chain.at(i);
 		mems::AbstractMatch* m2 = chain.at(i+1);
 
-		
-		/*  tjt: can't do base to dervied (AbstractMatch* to Match*) dynamic_cast since AbstractMatch is not polymorphic, its an Abstract base class
-		mems::Match* r_lend = dynamic_cast<mems::Match*>( chain.at(count));
-		mems::Match* r_rend = dynamic_cast<mems::Match*>( chain.at(count+1));
-		tjt: so let's try static_cast
-		const mems::Match* r_lend = static_cast< const mems::Match* >( m1 );
-		const mems::Match* r_rend = static_cast< const mems::Match* >( m2 );
-		*/
-
 		//  aed: muscle alignment happens here
 		//		 remember, aligning regions between each match component
-		//align_success = mems::MuscleInterface::getMuscleInterface().Align( *cr,  const_cast<mems::Match *>(r_lend) , const_cast<mems::Match *>(r_rend),  seq_table );
 		align_success = mems::MuscleInterface::getMuscleInterface().Align( *cr,  m1 , m2,  seq_table );
    
 
@@ -305,8 +295,7 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 			}
 			
 			// tjt: skip over newly inserted item
-			i++;
-			
+			i++;		
 		}
 		
 	}
@@ -320,12 +309,12 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		std::cerr << "matrix exception?\n";
 	}
 
+	
 
 	MatchRecord* mr = this->Copy();
 	SetMatches( chain );
 	//tjt: now chain should be empty
-	// don't keep a potentially huge tree of GappedMatchRecords.  instead, flatten to
-	// a single cga
+	// don't keep a potentially huge tree of GappedMatchRecords.  instead, flatten to a single cga
 	mems::CompactGappedAlignment<> tmpcga(*this);
 	chain.push_back(tmpcga.Copy());
 	SetMatches( chain );

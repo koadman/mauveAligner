@@ -14,7 +14,7 @@
 
 #include "MatchRecord.h"
 #include "SeedMatchEnumerator.h"
-#include "procrastUtilities.h"
+//#include "procrastUtilities.h"
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/program_options/cmdline.hpp>
@@ -25,6 +25,7 @@ using namespace std;
 using namespace genome;
 using namespace mems;
 
+enum rvalue { OK=0, FAILED=1, FIXME=110}; 
 int scoredropoff_matrix[10] = {0,0,4756,9144,13471,17981,25302,30945,38361,40754};
 int ccount = 0;
 /** A Match Position Entry stores a pointer to a match and its component for a given sequence coordinate */
@@ -402,7 +403,7 @@ public:
 };
 
 //void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
-void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
+int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
 {
 	ccount +=1;
 	//todo: remove alignment parameter
@@ -443,10 +444,9 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 	if ( mte->tandem )
 	{
-		mte->extend_left = false;
-		mte->extend_right = false;
-		cout << "Sorry, no extension for tandem repeats.." << endl << endl;	
-		return; //i'm scared of tandem repeats!
+		
+		cerr << "Sorry, no extension for tandem repeats.." << endl << endl;	
+		return FIXME;
 	
 	}
 	//careful, if mte->LeftEnd(j) < extend_length, ToString() will be disappointed...
@@ -525,10 +525,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	int leftgaps = 0;
 	int rightgaps = 0;
 
-	bool no_left = false;
-	bool no_right = false;
-
-	if ( mte->extend_left && left_extend_length > 0 && direction >= 0  )
+	if ( left_extend_length > 0 && direction == 1  )
 	{
 		// extract sequence data
 		
@@ -549,24 +546,26 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			leftExtension[j] = string(left_seq.begin(), left_seq.end());
 		}
 		bool align_success = false;
-
-		cout << "preparing to call MUSCLE on left region: " << left_extend_length << endl;
-		
-		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscle( leftExtension_aln, leftExtension );
-		leftside.SetAlignment(leftExtension_aln);
-		leftside.SetAlignmentLength(leftExtension_aln.at(0).size());
-		leftgaps = leftExtension_aln.at(0).size()-leftExtension.at(0).size();
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( leftExtension_aln, leftExtension );
+		if ( align_success )
+		{		
+			leftside.SetAlignment(leftExtension_aln);
+			leftside.SetAlignmentLength(leftExtension_aln.at(0).size());
+			leftgaps = leftExtension_aln.at(0).size()-leftExtension.at(0).size();
+		}
+		else
+		{
+			cerr << "Muscle failed" << endl;
+			return FAILED;
+		}
 
 	}
-	else
-		no_left = true;
-	if (  mte->extend_right && right_extend_length > 0 && direction <= 0 )
+	
+	else if ( right_extend_length > 0 && direction == -1 )
 	{
 		
 		for( gnSeqI j = 0; j < alignment.size(); j++)
 		{
-			//cout << mte->RightEnd(j) << endl;
-
 			std::string right_seq = seq_table[0]->ToString( right_extend_length, mte->RightEnd(j)+1 );
 			rightside.SetLeftEnd(j,mte->RightEnd(j)+1 );
 			rightside.SetOrientation(j,AbstractMatch::forward);
@@ -580,32 +579,33 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			rightside.SetLength(right_extend_length,j);
 			rightExtension[j] = string(right_seq.begin(), right_seq.end());
 		}
-		bool align_success = false;
-
-		cout << "preparing to call MUSCLE on right region: " << right_extend_length << endl;
-		
-		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscle( rightExtension_aln, rightExtension );
-		rightside.SetAlignment(rightExtension_aln);
-		rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
-		rightgaps = rightExtension_aln.at(0).size()-rightExtension.at(0).size();
+		bool align_success = false;		
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( rightExtension_aln, rightExtension );
+		if ( align_success )
+		{
+			rightside.SetAlignment(rightExtension_aln);
+			rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
+			rightgaps = rightExtension_aln.at(0).size()-rightExtension.at(0).size();
+		}
+		else
+		{
+			cerr << "Muscle failed" << endl;
+			return FAILED;
+		}
 
 	}
+	
 	else
-		no_right = true;
-
-	if( no_left && no_right)
 	{
 		//what are you even doing here?!?
-		cout << "Extension failed" << endl;
-		mte->extend_right = false;
-		mte->extend_left = false;
-		return;
+		cerr << "Extension failed" << endl;
+		return FAILED;
 	}
 	for( gnSeqI j = 0; j < alignment.size(); j++)
 	{
-		if(  !no_left )
+		if(  direction == 1 )
 			alignment.at(j).insert(alignment.at(j).begin(),leftExtension_aln.at(j).begin(), leftExtension_aln.at(j).end());
-		if( !no_right )
+		else if( direction == -1 )
 			alignment.at(j).append(rightExtension_aln.at(j).begin(), rightExtension_aln.at(j).end());
 	}
 
@@ -618,10 +618,10 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 	
 	
 	vector< AbstractMatch* > mlist;
-	if(!no_left)
+	if( direction == 1 )
 		mlist.push_back(leftside.Copy());
 	mlist.push_back(mte->Copy());
-	if(!no_right)
+	if( direction == -1 )
 		mlist.push_back(rightside.Copy());
  
 	//createInterval
@@ -639,7 +639,7 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 
 // aced: debug printing to get bb segments right
 	for( size_t bbI = 0; bb_list.size() > 0 && bbI < bb_list[0].size(); bbI++ )
-		cout << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
+		cerr << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
 
 	vector<string> new_alignment;
 	mems::GetAlignment(*result, seq_table, new_alignment);	// expects one seq_table entry per matching component
@@ -654,22 +654,21 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 		bb_list.at(0).size() == 0)
 	{
 		//no backbone segment found
-		cout << "Crikey!! no backbone found during extension..." << endl;
-		mte->extend_left = false;
-		mte->extend_right = false;
-		return;
+		cerr << "Crikey!! no backbone found during extension..." << endl;
+		return FAILED;
 	}
 
 	int backbone_i = -1;
 	if (bb_list.at(0).size() == 1)
 		backbone_i = 0;
 	int invalid_matches = 0;
+
+
 	for( uint i = 0; i < bb_list.at(0).size(); i++)
 	{
 
 		CompactGappedAlignment<> tmp_cga;
 		cga_list.push_back( tmp_cga.Copy() );
-		//cout << bb_list.at(0).at(i)->LeftEnd(0) << " " <<  bb_list.at(0).at(i)->AlignmentLength() << endl;
 		result->copyRange(*(cga_list.back()),bb_list.at(0).at(i)->LeftEnd(0),bb_list.at(0).at(i)->AlignmentLength()-1);
 		if( cga_list.back()->Multiplicity() == 0 )
 		{
@@ -679,23 +678,37 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			invalid_matches++;
 			continue;
 		}
-
-		if( cga_list.size() > 0 &&
-			cga_list.back()->Multiplicity() == mte->Multiplicity() &&
-			cga_list.back()->LeftEnd(0) < mte->LeftEnd(0) && cga_list.back()->LeftEnd(0) + cga_list.back()->Length() >= mte->RightEnd(0) || cga_list.back()->LeftEnd(0) <= mte->LeftEnd(0) && cga_list.back()->RightEnd(0)-1 > mte->RightEnd(0))
-		{
-			//yep, they were improved
-			boundaries_improved = true;
-			backbone_i = i-invalid_matches;
 			
+		for ( gnSeqI j = 0; j < alignment.size(); j++)
+		{
+
+			if( (cga_list.size() > 0 ) &&
+				(cga_list.back()->Multiplicity() == mte->Multiplicity() )&&
+				((cga_list.back()->LeftEnd(j) < mte->LeftEnd(j) && cga_list.back()->LeftEnd(j) + cga_list.back()->Length() >= mte->LeftEnd(j) +mte->Length()) || (cga_list.back()->LeftEnd(j) <= mte->LeftEnd(j) && cga_list.back()->LeftEnd(j) + cga_list.back()->Length() > mte->LeftEnd(j) + mte->Length())))
+			{
+				//yep, they were improved
+				boundaries_improved = true;
+				backbone_i = i-invalid_matches;
+				break;
+				
+			}
+			else if (0)
+			{
+				boundaries_improved = false;
+				break;
+			}
+
 		}
-		
 	}
+
+	//vector< gnSeqI > orig_leftend;
+	//vector< gnSeqI > orig_rightend;
+
 	for( uint i = 0; i < cga_list.size(); i++)
 	{
 		//if cga_list.size() > 1, there are several backbones, possibly of varying multiplicity
 		//this is where things will start to get interesting
-		
+
 		if ( boundaries_improved && i == backbone_i )
 		{
 			if( cga_list.at(i)->Multiplicity() != mte->Multiplicity() )
@@ -704,138 +717,79 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 				//all code below needs to be revised per randomwalk to detectAndApplyBackbone change
 				if ( danger_zone_active )
 				{
-					cout << "Extension process temporarily out of order..." << endl;
-					mte->extend_left = false;
-					mte->extend_right = false;
-
-					return;
+					cerr << "Extension process temporarily out of order..." << endl;
+					return FIXME;
 				}
 			}
 			//boundaries were improved, current match is extended original match
+			cerr << "Extension worked!! Improved boundaries!" << endl;
+			cerr << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->LeftEnd(0)+mte->Length() << endl;
+
 			
-			//set to extend_left && extend_right again
-			//update original mte GappedMatchRecord
-			cout << "Extension worked!! Improved boundaries!" << endl;
-			cout << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
-
-			for( uint j = 0; j < multi; j++)
+			vector< AbstractMatch* > matches( 1, cga_list.at(i));
+			//tjt: create a temp GMR to store data before clobbering mte with SetMatches()
+			GappedMatchRecord* tmp_mte(mte->Copy());
+			//clobber away
+			mte->SetMatches(matches);
+			//restore GMR data
+			mte->chained_matches.push_back(mte->Copy());
+			vector< size_t > component_map( tmp_mte->Multiplicity() );
+			for( size_t k = 0; k < component_map.size(); ++k )
+				component_map[k] = k;
+			mte->chained_component_maps.push_back(component_map);
+		
+			// update superset and subset links
+			for( int dI = 1; dI > -2; dI -= 2 )
 			{
-				//mte->SetLeftEnd(j,cga_list.at(i)->LeftEnd(j));
-				
-				mte->SetStart(j,cga_list.at(i)->Start(j));
-				mte->SetLength(cga_list.at(i)->Length(j),j);
+				MatchLink& ij_link = getSuperset(tmp_mte,dI);
+				if( ij_link.superset != NULL )
+				{
+					ij_link.subset = mte;
+					//unlinkSuperset(tmp_mte,dI);
+					int parity = mte->Orientation(0) == ij_link.superset->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
+					getSubsets(ij_link.superset,-dI*parity).push_back(ij_link);
+				}
+				vector< MatchLink >& subsets = getSubsets(tmp_mte,dI);
+				for( size_t subI = 0; subI < subsets.size(); ++subI )
+				{
+					subsets[subI].superset = mte;
+					int parity = mte->Orientation(subsets[subI].sub_to_super_map[0]) == subsets[subI].subset->Orientation(0) ? 1 : -1;
+					getSuperset(subsets[subI].subset, -dI*parity).superset = mte;
+				}
+				getSubsets(mte,dI).clear();	// so that validate works...
 			}
-			//now need to resolve overlaps based on new LeftEnd/RightEnds
-
-			//MatchRecord
+		
+			tmp_mte->Free();
+			//free(tmp_mte);
+			cerr << "New boundaries: " << mte->LeftEnd(0) << " " << mte->LeftEnd(0)+mte->Length() << endl << endl;
+	
+			//tjt: write alignment to file
 			vector<string> new_alignment;
-			mems::GetAlignment(*cga_list.at(i), seq_table, new_alignment);	// expects one seq_table entry per matching component
+			mems::GetAlignment(*mte, seq_table, new_alignment);	// expects one seq_table entry per matching component
 			gnSequence myseq;
 			for( uint j = 0; j < new_alignment.size(); j++)
 				myseq += new_alignment.at(j);
 
 			gnFASSource::Write(myseq, "coolio2.txt" );
 			
-
-			mte->SetAlignment(new_alignment);
-			mte->SetAlignmentLength(new_alignment.at(0).size());
-			mte->ValidateMatches();
-
-			cout << "New boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl << endl;
-			//set to false for now...
-			//memory issues?
-			mte->extend_left = true;
-			mte->extend_right = true;
+			return OK;
 		}
 
 		//else if( !boundaries_improved && i == hss_for_match  )
 		else if( !boundaries_improved )
 		
 		{
-			//if hss_new.size() == 1
 			//no new homologous regions found, boundaries weren't improved..
 			//one wasted round of extending, could we have seen this coming??
 			//update original mte GappedMatchRecord
-			cout << "Extension failed.. boundaries unchanged.. could we have seen this coming??" << endl << endl;
-			mte->extend_left = false;
-			mte->extend_right = false;
-			break;
+			cerr << "Extension failed.. boundaries unchanged.. could we have seen this coming??" << endl << endl;
+			return FAILED;
 		}
 		else if( novel_hss_regions_support )
 		{
 			//newly found homologous region
+			continue;
 			
-			UngappedMatchRecord* umr;
-			umr = new UngappedMatchRecord( cga_list.at(i)->Multiplicity(), cga_list.at(i)->AlignmentLength());
-			for( size_t seqI = 0; seqI < cga_list.at(i)->Multiplicity(); seqI++ )
-			{
-				umr->SetStart( seqI, cga_list.at(i)->Start( seqI ) );
-				umr->SetLength(  cga_list.at(i)->Length( seqI ), seqI );
-			}
-			if( i == 0 && i != backbone_i )
-			{			
-				
-				//append to final list, mark left side for extension
-				umr->extend_left = true;
-				umr->extend_right = false;
-			}
-			else if (  i == bb_list.at(0).size()-1 && i != backbone_i  )
-			{	
-				
-				//append to final list, mark right side for extension
-				umr->extend_left = false;
-				umr->extend_right = true;
-			}
-			else
-			{
-				//some homologous segment in middle that cannot be extended further
-				//create GappedMatchRecord from CompactGappedAlignment and add to list
-				umr->extend_left = false;
-				umr->extend_right = false;
-
-			}
-			GappedMatchRecord* gmr;
-			gmr = new GappedMatchRecord(*umr);
-			
-			gmr = gmr->Copy();
-			umr->subsuming_match = gmr;
-			gmr->chained_matches.push_back( umr );
-			vector< size_t > component_map( mte->Multiplicity() );
-			for( size_t k = 0; k < component_map.size(); ++k )
-				component_map[i] = k;
-			gmr->chained_component_maps.push_back(component_map);
-			swap(umr->subsumption_component_map, component_map);	// swap avoids reallocation	
-		
-			//punt: update superset and subset links
-			/*
-			for( int dI = 1; dI > -2; dI -= 2 )
-			{
-				MatchLink& ij_link = getSuperset(M_i,dI);
-				if( ij_link.superset != NULL )
-				{
-					ij_link.subset = M_i;
-					unlinkSuperset(umr,dI);
-					int parity = M_i->Orientation(0) == ij_link.superset->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
-					getSubsets(ij_link.superset,-dI*parity).push_back(ij_link);
-				}
-				vector< MatchLink >& subsets = getSubsets(M_i,dI);
-				for( size_t subI = 0; subI < subsets.size(); ++subI )
-				{
-					subsets[subI].superset = M_i;
-					int parity = M_i->Orientation(subsets[subI].sub_to_super_map[0]) == subsets[subI].subset->Orientation(0) ? 1 : -1;
-					getSuperset(subsets[subI].subset, -dI*parity).superset = M_i;
-				}
-				getSubsets(umr,dI).clear();	// so that validate works...
-			}
-			*/
-			vector<string> new_alignment;
-			mems::GetAlignment(*cga_list.at(i), seq_table, new_alignment);	// expects one seq_table entry per matching component
-			gmr->SetAlignment(new_alignment);
-			gmr->SetAlignmentLength(new_alignment.at(0).size());
-
-			gmr->finalize(seq_table);
-			//push back M_i into final
-			//final.push_back(gmr);
 		}
 		else
 		{
@@ -844,12 +798,8 @@ void ExtendMatch(GappedMatchRecord* mte, vector< gnSequence* >& seq_table, Pairw
 			continue;
 		}
 		
-		//what to do here?
-		//put into GappedMatchRecord?
-		//update final?
-		//store in new vector of CompactGappedAlignment?
-		//if in new vector means extended or want to keep?
 	}
+	return FAILED;
 	
 }//tjt: match should be extended!
 
@@ -964,7 +914,7 @@ int main( int argc, char* argv[] )
 	int64 seed = getSeed( seed_weight, seed_rank);
 	uint seed_size = getSeedLength( seed );
 	if( w == 0 )
-		w = seed_weight * 4;	// default value
+		w = seed_weight * 3;	// default value
 	
 	cout << "Using seed weight: " << seed_weight << " and w: " << w << endl;
 	SeedMatchEnumerator sme;
@@ -1073,11 +1023,11 @@ int main( int argc, char* argv[] )
 	while( queue_end > 0 )
 	{
 		curI +=1;
+		
 		// pop the next match off the heap
 		std::pop_heap( procrastination_queue.begin(), procrastination_queue.begin()+queue_end, mhc );
 		queue_end--;
 		MatchRecord* umr = *(procrastination_queue.begin() + queue_end);
-
 		// if the match has been subsumed then skip it
 		if( umr->subsuming_match != NULL )
 			continue;
@@ -1124,15 +1074,6 @@ int main( int argc, char* argv[] )
 
 		extended_matches.push_back( M_i );
 		M_i->extended = true;
-		M_i->extend_left = true;
-		M_i->extend_right = true;
-
-//		if( M_i == (GappedMatchRecord*)0x012b7658 )
-//			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
-//		if( M_i == (GappedMatchRecord*)0x0133ab78 )
-//			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
-//		if( M_i == (GappedMatchRecord*)0x00f57e88 )
-//			cout << "M_i:\n" << *(GappedMatchRecord*)M_i << endl;
 
 		// extend the match in each direction 
 		// if a superset exists use that first
@@ -1142,7 +1083,12 @@ int main( int argc, char* argv[] )
 		vector< NeighborhoodGroup > left_deferred_subsets;
 		vector< NeighborhoodGroup > right_deferred_subsets;
 
-		
+		int failed = 0;
+		score_t score = 0;
+		vector< gnSequence* > seqtable( M_i->SeqCount(), seedml.seq_table[0] );
+		vector< string > alignment;
+		vector<score_t> scores;
+
 		while( direction > -2 )
 		{
 			last_linked = 0;
@@ -1681,9 +1627,43 @@ int main( int argc, char* argv[] )
 
 			if( last_linked == 0 )
 			{
-				direction -= 2;	// if we didn't extend with a superset or chainable then change directions
-			}
+				
+				//finalize this match before performing extension
+				//perhaps should copy M_i to temp GMR first?
+				M_i->finalize(seqtable);
+				scores.clear();
+				alignment.clear();
+				failed = 0;
+				score = 0;
+				mems::GetAlignment(*M_i,seqtable, alignment);	// expects one seq_table entry per matching component
 
+				computeSPScore( alignment, pss, scores, score);
+				if( score < 0 )
+				{	
+					cerr << "Score: " << score << " .. this one not worth extending, skip it" << endl;
+					failed = true;
+				}
+				else
+				{
+					cerr << "Preparing to extend Chain #" << curI << endl;
+					cerr << "Direction = " << direction << endl;
+					failed = ExtendMatch(M_i, seqtable, pss, w, direction);
+				}
+				if (failed)
+				{
+					//end gapped extension and break out of the
+					//evil megaloop (or switch from left to right extension) whenever the
+					//extension fails.
+					direction -=2;
+				}
+				else
+				{
+					//update links appropriately, and we can take another round
+					//through the evil megaloop, possibly discovering additional chainable
+					//seeds or superset links.
+					continue;
+				}
+			}
 		}	// end loop over leftward and rightward extension
 
 		//
@@ -1691,35 +1671,7 @@ int main( int argc, char* argv[] )
 		//
 		//tjt: need to send finalize seq_table for muscle alignment
 		M_i->finalize(seedml.seq_table);
-		vector< gnSequence* > seqtable( M_i->SeqCount(), seedml.seq_table[0] );
-		for( int direction = 1; direction > -2; direction -= 2 )
-		{	
-			vector< string > alignment;
-			mems::GetAlignment(*M_i,seqtable, alignment);	// expects one seq_table entry per matching component
-			vector<score_t> scores;
-			score_t score = 0;
-			while ( M_i->extend_left || M_i->extend_right)
-			{
-				score = 0;
-				computeSPScore( alignment, pss, scores, score);
-				if( score < 10000 )
-				{	
-					cout << "Score: " << score << " .. this one not worth extending, skip it" << endl;
-					
-					M_i->extend_right = false;
-					M_i->extend_left = false;
-					continue;
-				}
-				if ((direction > 0 && M_i->extend_left )||(direction<0 && M_i->extend_right ))
-				{
-					cout << "Preparing to extend Chain #" << curI << endl;
-					ExtendMatch(M_i, seqtable, pss, w, direction);
-				}
-			}
-			M_i->extend_left = true;
-			M_i->extend_right = true;
-		}
-
+		
 		//
 		// process deferred subsets
 		//
@@ -1819,6 +1771,8 @@ int main( int argc, char* argv[] )
 	cout << "subset count: " << subset_count << endl;
 	cout << "novel subset count: " << novel_subset_count << endl;
 	
+	//write output!!!!!
+
 	// 
 	// part 9, create a final list of local multiple alignments (already done in extended_matches)
 	//
@@ -1842,8 +1796,47 @@ int main( int argc, char* argv[] )
 		}
 	}
 
+	// 
+	// part 10, score matches
 	
-	// finally add any unaligned regions to the interval list	
+	//create output stream
+	ostream* output;
+ 	ofstream aln_out_file;
+	if(outputfile == "" || outputfile == "-")
+		output = &cout;
+	else
+	{
+		aln_out_file.open( outputfile.c_str() );
+		output = &aln_out_file;
+	}
+	vector< pair< double, GappedMatchRecord* > > scored( final.size() );
+	vector<score_t> scores_final;
+	score_t score_final = 0;
+	for( size_t fI = 0; fI < final.size(); fI++ )
+	{
+		//entropy score here we go!
+	    vector<string> alignment;
+		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
+		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
+		//send temporary output format to file if requested 
+		*output << "#procrastAlignment " << fI+1 << endl << *final.at(fI) << endl;
+		computeSPScore( alignment, pss, scores_final, score_final);
+		scored[fI] = make_pair( score_final, final[fI] );
+	}
+	std::sort( scored.begin(), scored.end() );
+
+
+	// 
+	// part 11, report matches in scored order
+	//
+	for( size_t sI = 0; sI < scored.size(); ++sI )
+	{
+		cout << "Alignment length: " << scored[sI].second->AlignmentLength() << endl;
+		cout << "Score: " << scored[sI].first << endl;
+		cout << *scored[sI].second << endl;
+	}
+
+	// punt: part 12, finally add any unaligned regions to the interval list	
 	//if( gapped_alignment )
 	//addUnalignedIntervals( interval_list );
 
@@ -1851,10 +1844,6 @@ int main( int argc, char* argv[] )
 	//call calculateSPScore/calculateConsensusScore on each chain
 	//std::sort( scored.begin(), scored.end() );
  
-	// 
-	// part 11, report matches in scored order, highest multiplicity first
-	//
-
 	
 	// clean up
 	for( size_t eI = 0; eI < match_record_list.size(); ++eI )
