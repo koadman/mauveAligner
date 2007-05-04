@@ -61,18 +61,18 @@ Recent advances in sequence data acquisition technology~\cite{ref-454} have prov
 have fueled rapid growth in molecular sequence databases. A central task in comparative genomics is being able to accurately identify all homologous positions in one or more DNA sequences.  Sequence alignment is considered to be the main tool for this task, and specifically, pairwise local alignment has enjoyed a fruitful history in this context.
 
 \subsection{ Pairwise local alignment}
-Over two decades ago SW~\cite{ref-sw} introduced an algorithm for optimal pairwise local alignment requiring $O(mn)$ space and time for sequences of lengths $m,n$. While offering an optimal solution, this algorithm was not amenable for large DNA sequences. More recently, a heuristic for local multiple alignment that emphasized speed over sensitivity was presented in  BLAST~\cite{...}, which open the door for rapid homology detection. Several downstream applications have followed, including repeat detection, ...
+Over two decades ago SW~\cite{ref-sw} introduced an algorithm for optimal pairwise local alignment requiring $O(mn)$ space and time for sequences of lengths $m,n$. While offering an optimal solution for the substitution matrix and affine gap scoring formulation of alignment, this algorithm was not amenable for large DNA sequences. \textit{(some people will argue that parallelized versions of SW can be applied)} More recently, a heuristic for local multiple alignment that emphasized speed over sensitivity was presented in BLAST~\cite{...} \textit{(what's this citation?)}, which opened the door for rapid homology detection. Several downstream applications have followed, including repeat detection, ...
 
 \subsection{ From pairwise to multiple}
 The number of pairwise alignments grows O($n^{2}$) in the copy number of the potentially repetitive region. While this is ok in some cases, IS elements in microbes and Alu elements make local multiple alignment a more attractive option.
 Unlike pairwise alignment, local multiple alignment constructs a
 single multiple alignment for all occurrences of a motif in one or
 more sequences.  Also, local multiple alignments
-can identify the basic repeating units in one or more sequences and also 
+can identify the basic repeating units in one or more sequences and also
 serve as a basis for downstream analysis tasks such as multiple genome
 alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global
 alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or
-repeat classification and analysis~\cite{ref-piler}. 
+repeat classification and analysis~\cite{ref-piler}.
 
 \subsection{Previous work}
 RepeatScout~\cite{ref-repeatscout}, ABA, ...
@@ -101,14 +101,14 @@ RepeatScout~\cite{ref-repeatscout}, ABA, ...
 
 \item[2.1] Set extension direction(left or right)
 \item[2.2] Perform ungapped extension of all multi-matches to generate chains
-\item[2.3] Extend multi-matches in order of decreasing multiplicity 
+\item[2.3] Extend multi-matches in order of decreasing multiplicity
 \item[2.4] Extend each multi-match in current direction(left or right)
 \item[2.5] Procrastinate subsets
 \item[2.6] If current chain scores above threshold proceed to Step 3.
 \end{enumerate}
 \item[\textbf{3.}] \textbf{Trigger gapped extension}
 \begin{enumerate}
-\item[3.1] Perform gapped alignment on region spanning 4*w nucleotides 
+\item[3.1] Perform gapped alignment on region spanning 4*w nucleotides
 \item[3.2] Perform random walk on region to find all high scoring segments
 \end{enumerate}
 \item[\textbf{4.}] \textbf{Unalign non-homologous sequence}
@@ -143,10 +143,10 @@ finalize chains, i.e. remove overlaps and align gaps
  \end{minipage}
  \hfill
  \begin{minipage}[t]{.30\textwidth}
- \begin{flushleft}  
+ \begin{flushleft}
 \epsfig{file=./figures/flowchart.eps,width=1.8in}
 
-\end{flushleft}  
+\end{flushleft}
 \end{minipage}
 \hfill
 \end{center}
@@ -185,15 +185,15 @@ an ungapped alignment, or match, among subsequences in $\mathcal{S}$
 as an object $M$.  We refer the number of regions in $\mathcal{S}$
 matched by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. We denote
-a gapped alignment over an alphabet $\{A,C,G,T,-\}$ as $A$. 
+a gapped alignment over an alphabet $\{A,C,G,T,-\}$ as $A$.
 
-\subsection{Generating candidate multi-matches using a palindromic seed patterns.}
+\subsection{Generating candidate multi-matches using palindromic seed patterns}
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}. 
+As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
 
 \subsection{Maximal extension of all multi-matches}
 
-Once we have generated a list of multi-matches, we rely on our previously described method for efficient filtration method for maximal extension and chaining~\cite{ref-procrast}. 
+Once we have generated a list of multi-matches, we rely on our previously described method for efficient filtration method for maximal extension and chaining~\cite{ref-procrast}.
 
 
 \subsection{Gapped Extension of all chains}
@@ -202,7 +202,7 @@ extension to detect all surrounding homologous sequence. Finding boundaries of s
 
 
 \subsubsection{Gapped alignment via MUSCLE}
-We employ MUSCLE to perform gapped alignment in the regions surrounding the chains. We try extending 4*w nucleotides to the left/right of each chain. However, we only trigger gapped alignment if chain is above some minimum score threshold. This idea has been used in other local multiple alignment heuristics in order to minimize the number of gapped extensions that do not improve the boundaries of the chain. We score the resulting gapped alignment via sum of pairs. We continue to perform gapped alignment to the left/right) until we reach a score(calculated by sum of pairs) that has been previously determined via simulations to be non-homologous. i.e. a record height in the score signals the start of a stretch of non-homologous sequence.  If we improve our original seed boundaries we then trigger another round of extension, else we stop. 
+We employ MUSCLE to perform gapped alignment in the regions surrounding the chains. We try extending 4*w nucleotides to the left/right of each chain. However, we only trigger gapped alignment if chain is above some minimum score threshold. This idea has been used in other local multiple alignment heuristics in order to minimize the number of gapped extensions that do not improve the boundaries of the chain. We score the resulting gapped alignment via sum of pairs. We continue to perform gapped alignment to the left/right) until we reach a score(calculated by sum of pairs) that has been previously determined via simulations to be non-homologous. i.e. a record height in the score signals the start of a stretch of non-homologous sequence.  If we improve our original seed boundaries we then trigger another round of extension, else we stop.
 
 
 \subsubsection{Random walk to extend homology border}
@@ -232,7 +232,7 @@ still be including non-homologous sequence in our extended chain(local multiple 
 \item then, we define common boundaries among all sequences in the alignment
 \end{itemize}
 \subsection{Scoring the local multiple alignments}
-Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments. 
+Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments.
 
 \subsection{Assigning significance to the scores}
 FIXME
