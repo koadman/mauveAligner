@@ -14,7 +14,7 @@
 \usepackage{authblk}
 \usepackage{color}
 \usepackage{newalg}
-
+\usepackage{subfigure}
 
 \begin{document}
 \renewcommand{\labelenumi}{(\Alph{enumi})}
@@ -31,17 +31,14 @@
 \titlerunning{procrastination for local multiple alignment}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
 %                                     \toctitle is used
-\author{Don Quijote}
+\author{...}
+
+%\institute{ 
+%Algorithms and Genetics Group, Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain\\
+%\email{treangen@lsi.upc.edu},\\
+%}
 %
 \authorrunning{<Quijote> et al.}   % abbreviated author list (for running head)
-\institute{ Castilla La Mancha, Espa\~na }
-%
-%\institute{ Dept. of Computer Science,
-%Univ. of Wisconsin-Madison, USA\\
-%\email{darling@cs.wisc.edu},\\
-%\and Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain\\
-%\email{treangen@lsi.upc.edu},\\
-
 
 \maketitle
 
@@ -57,153 +54,84 @@ called \texttt{procrastAligner} and is freely available from
 
 \section{ Introduction }
 
-Recent advances in sequence data acquisition technology~\cite{ref-454} have provided low-cost sequencing which in turn has
-have fueled rapid growth in molecular sequence databases. A central task in comparative genomics is being able to accurately identify all homologous positions in one or more DNA sequences.  Sequence alignment is considered to be the main tool for this task, and specifically, pairwise local alignment has enjoyed a fruitful history in this context.
+A central task in comparative genomics is being able to accurately identify all homologous positions in one or more DNA sequences. Local sequence alignment has traditionally considered to be the main tool for this task, and specifically, heuristics such as BLAST~\cite{...} and RepeatMasker~\cite{...} have been long employed for this exact purpose. Initially, the focus was on pairwise homology relationships, that is, finding all possible pairs of homologous regions in the input sequence(s). Pairwise local alignment can be used for orthology mapping~\cite{ref-orthomcl}, repeat detection~\cite{repseek}, and more~\cite{more}. More recently, partly due to the recent surge in available sequence data~\cite{...}, there has been a desire to expand pairwise relationships to multiple by grouping all pairwise homologous regions into groups(blocks,piles)~\cite{...}. Even so, homology detection methods based around pairwise local alignment have a tough time handling inconsistency issues when attempting to glue or merge all pairwise relationships. Also, highly repetitive regions in the input sequences can cause problems in efficiency, as they must conduct $O(n^{2})$ pairwise comparisons for each of the repeated regions. Highly repetitive ALU repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in genomes. 
 
-\subsection{ Pairwise local alignment}
-Over two decades ago SW~\cite{ref-sw} introduced an algorithm for optimal pairwise local alignment requiring $O(mn)$ space and time for sequences of lengths $m,n$. While offering an optimal solution for the substitution matrix and affine gap scoring formulation of alignment, this algorithm was not amenable for large DNA sequences. \textit{(some people will argue that parallelized versions of SW can be applied)} More recently, a heuristic for local multiple alignment that emphasized speed over sensitivity was presented in BLAST~\cite{...} \textit{(what's this citation?)}, which opened the door for rapid homology detection. Several downstream applications have followed, including repeat detection, ...
+However, instead of aligning each pair of the repeat, a single local multiple alignment can be constructed for all of the copies of the repeated sequence. Local multiple alignments can thus be used to identify the basic repeating units in one or more sequences, as well as serve as a basis for downstream analysis tasks such as multiple genome alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or repeat classification and analysis~\cite{ref-piler}. Local multiple alignment also avoids dealing with consistency issues when try to resolve and merge boundaries of homology between all pairwise relationships. Finally, accuracy also benefits~\cite{...}cite a paper which shows multiple alignment is more accurate than pairwise alignment.  MUSCLE's iterative refinement procedure ensures
+a high-scoring alignment irrespective of guide tree.
 
-\subsection{ From pairwise to multiple}
-The number of pairwise alignments grows O($n^{2}$) in the copy number of the potentially repetitive region. While this is ok in some cases, IS elements in microbes and Alu elements make local multiple alignment a more attractive option.
-Unlike pairwise alignment, local multiple alignment constructs a
-single multiple alignment for all occurrences of a motif in one or
-more sequences.  Also, local multiple alignments
-can identify the basic repeating units in one or more sequences and also
-serve as a basis for downstream analysis tasks such as multiple genome
-alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global
-alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or
-repeat classification and analysis~\cite{ref-piler}.
+While lma offers many benefits over lpa, the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences. Practically this means that we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed in order to ensure efficiency. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Previous approaches have used X-drop~\cite{...} or related methods to reasonably limit this time consuming step. Our aim is to bridge this gap in efficiency by presenting a novel method for gapped extension for sensitive local multiple alignment.
 
-\subsection{Previous work}
-RepeatScout~\cite{ref-repeatscout}, ABA, ...
 
 %need for a new approach
 %To date~\cite{gold}, there are over 500 completed whole genomes in such databases, and in the next few years this number is %expected to reach nearly 3000. To cope with such increases in data volume, corresponding advances in computational methods are %necessary; thus we present an efficient heuristic for local multiple alignment. Our method is based around an efficient %heuristic for local multiple alignment, featuring a novel method for gapped extensions.
 \label{sec:overview}
 \section{A heuristic for local multiple alignment}
-\begin{figure}[t]
-\begin{center}
-\hfill
-\scriptsize
-\begin{minipage}[t]{.50\textwidth}
-\begin{flushleft}
 
-\begin{enumerate}
-\item[\textbf{1.}] \textbf{Detect seeds in DNA sequence(s).}
-\begin{enumerate}
+Our heuristic approach to local multiple alignment
+involves the following five steps:
+\begin{description}
+\item[Step 1:] Detect seeds in DNA sequence(s).
+\item[Step 2:] Chain multi-matches
+\item[Step 3:] Gapped extension of chains
+\item[Step 4:] Define homology borders with random walk statistics
+\item[Step 5:] Unalign non-homologous sequence
+\end{description}
 
-\item[1.1] Evaluate palindromic seed pattern at every position in input sequence
-\item[1.2] Extract all multi-matches(2 or more) from seeds
-\end{enumerate}
-%we now have matches
-\item[\textbf{2.}] \textbf{Maximal extension of multi-matches}
-\begin{enumerate}
-
-\item[2.1] Set extension direction(left or right)
-\item[2.2] Perform ungapped extension of all multi-matches to generate chains
-\item[2.3] Extend multi-matches in order of decreasing multiplicity
-\item[2.4] Extend each multi-match in current direction(left or right)
-\item[2.5] Procrastinate subsets
-\item[2.6] If current chain scores above threshold proceed to Step 3.
-\end{enumerate}
-\item[\textbf{3.}] \textbf{Trigger gapped extension}
-\begin{enumerate}
-\item[3.1] Perform gapped alignment on region spanning 4*w nucleotides
-\item[3.2] Perform random walk on region to find all high scoring segments
-\end{enumerate}
-\item[\textbf{4.}] \textbf{Unalign non-homologous sequence}
-\begin{enumerate}
-\item[4.1] FIXME pairwise homology predictions
-\end{enumerate}
-
-\item[\textbf{5.}] \textbf{Determine if boundaries have improved}
-\begin{enumerate}
-\item[5.1] If original chain boundaries are improved then
-return to Step 2, maintaining the current direction.
-
-\item[5.2] else stop extending in the current direction.
-\item[5.3] If finished extending in both directions, then
-finalize chains, i.e. remove overlaps and align gaps
-
-
-\end{enumerate}
-%we now have local multiple alignments
-\item[\textbf{6.}] \textbf{Scoring final local multiple alignments}
-\begin{enumerate}
-\item[6.1] FIXME
-\end{enumerate}
-\item[\textbf{7.}] \textbf{Assigning significance to local multiple alignments}
-\begin{enumerate}
-\item[7.1] FIXME
-\end{enumerate}
-
-\end{enumerate}
-
-\end{flushleft}
- \end{minipage}
- \hfill
- \begin{minipage}[t]{.30\textwidth}
- \begin{flushleft}
-\epsfig{file=./figures/flowchart.eps,width=1.8in}
-
-\end{flushleft}
-\end{minipage}
-\hfill
-\end{center}
-\caption{Overview of the method}
-\end{figure}
-\begin{figure}[t]
-\centering \epsfig{file=./figures/extension.eps,width=4.5in}
-\caption{.}
-
-\label{fig:string_matching}\vspace{-0.2cm}
-\end{figure}
-
-%maybe this could be useful...
-\begin{comment}
-\begin{algorithm}{Allocate-Object}{}
-\begin{IF}{free = \NIL}
-\ERROR{out of space}
-\ELSE
-x \= free \\
-free \= next[x] \\
-\RETURN x
-\end{IF}
-\end{algorithm}
-\end{comment}
-
-
-%\colorbox[named]{Gray}{adfa}
-
-
-
-\subsection{Notation}
+Before describing each step in more detail, we first need to define relevant terminology.
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous
 local multiple alignments on subsequences of $\mathcal{S}$. We denote
 an ungapped alignment, or match, among subsequences in $\mathcal{S}$
 as an object $M$.  We refer the number of regions in $\mathcal{S}$
 matched by a given match $M_i \in \mathbf{M}$ as the
-\textit{multiplicity} of $M_i$, denoted as $|M_i|$. We denote
-a gapped alignment over an alphabet $\{A,C,G,T,-\}$ as $A$.
+\textit{multiplicity} of $M_i$, denoted as $|M_i|$.   We assume as input a set of ungapped alignments
+$\mathbf{M}$.  We refer the number of regions in $\mathcal{S}$
+matched by a given match $M_i \in \mathbf{M}$ as the
+\textit{multiplicity} of $M_i$, denoted as $|M_i|$. When aligning DNA sequences, matches may
+occur on the forward or reverse complement strands. To account for
+this phenomenon we add an orientation value to each matching region 
+where 1 indicates a forward strand match and -1 for reverse.
 
-\subsection{Generating candidate multi-matches using palindromic seed patterns}
+Our algorithm has an important limitation on the matches in
+$\mathbf{M}$: no two matches $M_i$ and $M_j$ may have the same
+left-end coordinate, e.g. $M_i.L_x \neq M_j.L_y~\forall~i, j, x, y$
+except for the identity case when $i=j$ and $x=y$.  This constraint
+has been referred to by others as \textit{consistency} and
+\textit{transitivity}~\cite{ref-transitivity} of matches.  In the
+present work we only require consistency and transitivity of matches
+longer than the seed length, e.g. seed matches may overlap.
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
+We denote a gapped alignment over an alphabet $\{A,C,G,T,-\}$ as $A$. 
 
-\subsection{Maximal extension of all multi-matches}
+\begin{figure}[t]
+\begin{center}
+\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.2in}}
+\subfigure[Flowchart]{ \epsfig{file=./figures/flowchart.eps,width=1.39in}}
+\end{center}
+\caption{Overview of the method}
+\end{figure}
 
-Once we have generated a list of multi-matches, we rely on our previously described method for efficient filtration method for maximal extension and chaining~\cite{ref-procrast}.
+
+%\colorbox[named]{Gray}{adfa}
+
+\subsection{Detecting seeds using a palindromic seed patterns}
+
+As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}. 
+
+\subsection{Creating chains of multi-matches}
+
+Once we have generated a list of multi-matches, we rely on our previously described method for efficient filtration method for maximal extension and chaining~\cite{ref-procrast}. 
 
 
-\subsection{Gapped Extension of all chains}
+\subsection{Gapped extension of all chains}
 We would like to perform gapped
 extension to detect all surrounding homologous sequence. Finding boundaries of sequence homology is a difficult and unsolved problem. We here present a novel heuristic for estimating boundaries of sequence homology, and we are very meticulous to avoid classify non-homologous DNA positions as homologous.
 
 
 \subsubsection{Gapped alignment via MUSCLE}
-We employ MUSCLE to perform gapped alignment in the regions surrounding the chains. We try extending 4*w nucleotides to the left/right of each chain. However, we only trigger gapped alignment if chain is above some minimum score threshold. This idea has been used in other local multiple alignment heuristics in order to minimize the number of gapped extensions that do not improve the boundaries of the chain. We score the resulting gapped alignment via sum of pairs. We continue to perform gapped alignment to the left/right) until we reach a score(calculated by sum of pairs) that has been previously determined via simulations to be non-homologous. i.e. a record height in the score signals the start of a stretch of non-homologous sequence.  If we improve our original seed boundaries we then trigger another round of extension, else we stop.
+We employ MUSCLE to perform gapped alignment in the regions surrounding the chains. We try extending 4*w nucleotides to the left/right of each chain. However, we only trigger gapped alignment if chain is above some minimum score threshold. This idea has been used in other local multiple alignment heuristics in order to minimize the number of gapped extensions that do not improve the boundaries of the chain. We score the resulting gapped alignment via sum of pairs. We continue to perform gapped alignment to the left/right) until we reach a score(calculated by sum of pairs) that has been previously determined via simulations to be non-homologous. i.e. a record height in the score signals the start of a stretch of non-homologous sequence.  If we improve our original seed boundaries we then trigger another round of extension, else we stop. 
 
+\subsection{Calculating borders with random walk statistics}
 
 \subsubsection{Random walk to extend homology border}
 FIXME
@@ -231,12 +159,12 @@ still be including non-homologous sequence in our extended chain(local multiple 
 \item first, we unalign any non-homolgous sequence introduced during the extension process
 \item then, we define common boundaries among all sequences in the alignment
 \end{itemize}
-\subsection{Scoring the local multiple alignments}
-Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments.
 
-\subsection{Assigning significance to the scores}
-FIXME
-basically want to extend blast statistics to multiple local alignment. How?
+
+
+Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments. 
+
+Finally, we would like to extend blast statistics to multiple local alignment. How?
 \begin{itemize}
 \item Extending Repseek simulations to multiple
 \item Tompa et al, estimating the parameters for multiple alignments
@@ -251,14 +179,6 @@ Windows, and Mac OS X that implements the described algorithm. Our
 open-source implementation is available as C++ source code licensed
 under the GPL.
 
-\subsection{Limitations}
-%limitations
-\begin{itemize}
-\item Not really useful for detecting subtle motifs such as transcription factor
-binding sites in small, targeted sequence regions
-\item Memory bottleneck for large sequences
-\item palindromic spaced seeds not ideal for more diverged sequence.
-\end{itemize}
 
 \subsection{Comparison with previous version of procrastAligner I}
 \begin{table}[t]
@@ -267,7 +187,7 @@ binding sites in small, targeted sequence regions
 \hline Accession & Length & Rep & Family & Alu (bp) & Div, \% & Method & Sn \% & Sp \% & T (s) & Sw & $w$ \\
 \hline
 \hline AF435921 &  22 Kb &  28 & 10 & 261 (69) & 15.0 (6.4) & procrast & 100 & 95.9 & 1 & 9 & 27 \\
-\cline{7-12}                                            &&&&&& procrastII & 100 & 94.7 & - & 9 & 27 \\
+\cline{7-12}                                            &&&&&& procrastII & 100 & 97.0 & - & 9 & 27 \\
 \hline Z15025 &    38 Kb &  52 & 13 & 245 (85) & 15.7 (5.7) & procrast & 100 & 82.5 & 2 & 9 & 27 \\
 \cline{7-12}                                            &&&&&& procrastII & 100 & 77.5 & - & 9 & 27 \\
 \hline AC034110 & 167 Kb &  87 & 18 & 261 (72) & 12.2 (5.9) & procrast & 100 & 97.9 & 3 & 15 & 45\\
@@ -286,14 +206,18 @@ binding sites in small, targeted sequence regions
 \end{table}
 
  \subsection{Comparison with RepeatScount}
-\begin{itemize}
-\item Number and total length of repeat families in our RepeatScout
-library versus Repbase Update (Jurka, 1998, 2000) for human, mouse
-and rat. Taken from Table 2 from paper.
-\end{itemize}
+
+RepeatScout generates a repeat family consensus for all high frequency kmers via ungapped extension. As output, RepeatScout returns all families atleast 50nt long and occuring atleast 3 times in the input sequence(s). Once finished, RepeatScout uses RepeatMasker to locate all occurences of the repeat family in the input sequence(s).
+
+How can we compare this to procrastAligner? 
+
+
+\section{Discussion}
 
 \subsection{Comparison of gapped
 extension approaches}
+
+
 \begin{itemize}
 
 \item RepeatScout extends one nucleotide at a time
@@ -310,14 +234,6 @@ pairwise alignment.  MUSCLE's iterative refinement procedure ensures
 a high-scoring alignment irrespective of guide tree.
 
 \end{itemize}
-
-\subsection{Run on new data}
- \begin{itemize}
- \item Ocean metagenomic data(6.4 GB)
- \item Detecting large segmental duplications(dispersed \& tandem)
-\end{itemize}
-
-\section{Discussion}
 
 \section{ Acknowledgments }
 AED was supported by NLM Training Grant 5T15LM007359-05. TJT was
