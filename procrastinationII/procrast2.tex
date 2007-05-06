@@ -31,9 +31,9 @@
 \titlerunning{procrastination for local multiple alignment}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
 %                                     \toctitle is used
-\author{...}
+\author{Todd,Aaron,MarkRagan,Xavier,anybodyelse?}
 
-%\institute{ 
+%\institute{
 %Algorithms and Genetics Group, Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain\\
 %\email{treangen@lsi.upc.edu},\\
 %}
@@ -54,9 +54,11 @@ called \texttt{procrastAligner} and is freely available from
 
 \section{ Introduction }
 
-A central task in comparative genomics is being able to accurately identify all homologous positions in one or more DNA sequences. Local sequence alignment methods~\cite{blast,...} are considered to be the main tool for this task. The focus was on pairwise homology relationships, that is, detecting all possible pairs of homologous regions in the input sequence(s) via local pairwise alignment.  Local pairwise alignments can then be expanded to multiple relationships by grouping all pairwise homologous regions into groups(blocks,piles)~\cite{...}. Even so, multiple alignment methods based around pairwise local alignment experience several difficulties when attempting to create multiple relationships from pairwise. Local pairwise alignment has been demonstrated to be less accurate than local multple alignment~\cite{...}, especially when dealing with many DNA sequences. Also, highly repetitive regions in the input sequences can cause problems in efficiency, as they must conduct $O(n^{2})$ pairwise comparisons for each of the repeated regions.  Finally, methods based around pairwise local alignments often experience difficultly resolving inconsistencies when attempting to glue or merge all pairwise relationships. Highly repetitive ALU repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in genomes.
+The importance of accurate homology identification to comparative genomics can not be overestimated (cite Kumar 2006/7 GenomeResearch paper). To date, pairwise local sequence alignment methods~\cite{blast,ssearch...} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
 
-Local multiple alignment offers an alternative approach which inherently avoids some of the aforementioned difficulties. For example, instead of aligning all possible pairs of the repeat, a single local multiple alignment can be constructed. Local multiple alignments have also been shown to be more accurate pairwise local alignment when dealing with many input sequences~\cite{cite a paper which shows multiple alignment is more accurate than pairwise alignment}. Local multiple alignment also offers a better approach for resolving and merge boundaries of homology between all pairwise relationships.  As such, local multiple alignments identify the basic repeating units in one or
+Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{multiz,aba,dialign...}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multple alignment, especially when dealing with a large number of divergent sequences~\cite{MLAGANpaper,AuberGene,others?,...}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause particularly nasty efficiency problems for pairwise methods, as they must conduct $O(n^{2})$ pairwise comparisons for each of the repeated regions.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
+
+Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Instead of aligning all possible pairs of the repeat, a single local multiple alignment can be constructed. Local multiple alignments have also been shown to be more accurate pairwise local alignment when dealing with many input sequences~\cite{cite a paper which shows multiple alignment is more accurate than pairwise alignment}. Local multiple alignment also offers a better approach for resolving and merge boundaries of homology between all pairwise relationships.  As such, local multiple alignments identify the basic repeating units in one or
 more sequences and can serve as a basis for downstream analysis
 tasks such as multiple genome alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global
 alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or
@@ -74,7 +76,7 @@ FIXME.. this needs to be rewritten!
 
 TBA/MULTIZ finds a set of local multple alignments and projects them onto a reference sequence in order to build whole genome comparisons. However, TBA relies on multiz to build multiple relationships of sequence homology from local pairwise relationships using multiz. ABA ... Perhaps the most related approach is Eulerian path approach to local multiple alignment...
 
-CONSENSUS based approaches to local multiple alignment. Euler, RepeatScout. Has the advantage that it is relatively easy to find and construct local multiple alignments using the pairwise local alignment searches for the consensus sequences. Drawbacks?? 
+CONSENSUS based approaches to local multiple alignment. Euler, RepeatScout. Has the advantage that it is relatively easy to find and construct local multiple alignments using the pairwise local alignment searches for the consensus sequences. Drawbacks??
 
 looks like we are in a battle with RepeatScout and Eulerian path approach?
 
@@ -95,7 +97,7 @@ as an object $M$.  We refer the number of regions in $\mathcal{S}$
 matched by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
 matching region of $M_i$ as a \textit{component} of $M_i$. Note that
-$|M_i| \geq 2~\forall~M \in \mathbf{M}$. We will refer to a match $M$ with $M_i>1$ as a multi-match. 
+$|M_i| \geq 2~\forall~M \in \mathbf{M}$. We will refer to a match $M$ with $M_i>1$ as a multi-match.
 When aligning DNA sequences, matches may occur on the forward or reverse complement strands. To account for
 this phenomenon we add an orientation value to each matching region
 where 1 indicates a forward strand match and -1 for reverse.
@@ -132,7 +134,7 @@ can be divided into five independent steps:
 
 \subsection{Detecting seeds using a palindromic seed patterns}
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}. 
+As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
 
 \subsection{Creating chains of multi-matches}
 
@@ -176,7 +178,7 @@ Its worth mentioning that novel homologous sequence can be found during gapped e
 FIXME: should briefly describe what we do with this!
 
 
-Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments. 
+Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments.
 
 
 \section{Results}
@@ -210,7 +212,7 @@ AGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACA
 
 RepeatScout generates a repeat family consensus for all high frequency kmers via ungapped extension. As output, RepeatScout returns all families atleast 50nt long and occuring atleast 3 times in the input sequence(s). Once finished, RepeatScout uses RepeatMasker to locate all occurences of the repeat family in the input sequence(s).
 
-How can we compare this to procrastAligner? 
+How can we compare this to procrastAligner?
 
 
 \section{Discussion}
