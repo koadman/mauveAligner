@@ -99,7 +99,7 @@ Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous
 local multiple alignments on subsequences of $\mathcal{S}$. We denote
 an ungapped alignment, or match, among subsequences in $\mathcal{S}$
-as an object $M$.  We refer the number of regions in $\mathcal{S}$
+as an object $M$, and a set of such matches as $\mathbf{M}$.  We refer the number of regions in $\mathcal{S}$
 matched by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
 matching region of $M_i$ as a \textit{component} of $M_i$. Note that
@@ -132,13 +132,13 @@ can be divided into five independent steps:
 \subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.2in}}
 \subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.39in}}
 \end{center}
-\caption{Overview of the method, starting with an input sequence and ending with a set of local multiple alignments. First we (1) detect multi-matches in input sequence(s) using palindromic spaced seeds, then we perform (2)prioritized chaining of all multi-matches, next we induce (3) gapped extension of all high scoring chains. After gapped extension, we estimate the boundaries of homologous sequence using a random walk, and finally,(5) unalign any remaining non-homologous sequence using a pairwise homology test. }
+\caption{Overview of the method, starting with an input sequence and ending with a set of local multiple alignments. First we (1) detect multi-matches in input sequence(s) using palindromic spaced seeds, then we perform (2) prioritized chaining of all multi-matches.  The resulting chain contains two matches and three match components labeled 1, 2, and 3.  We then perform gapped alignment of the region between chained matches (3).   In step (4), we perform a gapped extension by computing a global multiple alignment on the regions to the left and right of each chain component.  The resulting alignment may contain non-homologous sequence, so in step (5) we apply random-walk statistics to detect poorly aligned regions indicative of unrelated sequence.  In step (5), heavily diverged homologous sequences may be incorrectly classified as nonhomologous.  Step (6) computes transitive homology relationships to ensure a consistent alignment and aid detection of divergent homologous sequences.  Finally, in step (7) we unalign regions found to be non-homologous.  If we find after step (7) that the alignment boundaries have been extended, we acquire additional flanking sequence and return to step (4) for another round of extension.}
 \end{figure}
 
 
 %\colorbox[named]{Gray}{adfa}
 
-\subsection{Detecting seeds using a palindromic seed patterns}
+\subsection{Detecting seed multi-matches}
 
 As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
 
@@ -169,15 +169,49 @@ Once we have finished the chaining process, we would like to score and evaluate 
 
 Now that we have decided to performed a gapped extension in the current direction, we use MUSCLE to align the left/right region immediately surrounding the chains. The size of the extension window we send to MUSCLE is the lesser of 4*w or 200 nucleotides. The reasoning by setting our minimum extension window to 200nt is closely related to how we determine homology borders. Since we will assume that the extension window we have decided to align with MUSCLE is homologous over its entire length, we use random walk statistics to correct our assumption.
 
-We start the random walk process by generating the path by scoring each column resulting gapped alignment via sum of pairs, using an inverted substitution matrix that rewards substitutions and indels, and penalizes matching nucleotides. Once generated, we start at our ladder point and take a step, 1nt at a time, to the left/right and keep track of the cumulative column score of our current position. We keep walking until we reach a cumulative score which is equal to our previously determined homology threshold(2727?). The idea is that, based on simulation data, this score represents a start of non-homologous sequence. FIXME!
+\subsection{Identifying non-homologous regions}
+
+The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are homologous.  When MUSCLE aligns partially or wholly unrelated sequences, the alignment scores in the unrelated region take on negative values, as dictated by the HOXD scoring matrix and associated substitution and gap open penalties.  Random-walk statistics require a cumulative score function that trends toward negative values, but seeded alignments are expected to have large positive scores on average.  Thus, we simply invert the scoring scheme so it assigns negative values to matches and positive values for substitutions and gaps to arrive at a score with a negative expected value for seeded alignments.
+
+When applying random walk statistics, we consider each pair of aligned sequences separately.  Given the scoring scheme, the cumulative sum of scores can be calculated for each pair of aligned nucleotides:
+
+\begin{equation}
+\label{eqn:scoresum}
+S_n^\theta(a) = \sum_{i=1}^{n} Score_\theta(a_i) = S_{n-1}^\theta(a) + Score_\theta(n), S_0^\theta = 0
+\end{equation}
+
+Since the expected value $E(\theta) < 0$, partial score sums generate transient random walks.  Random stopping times can be defined recursively as:
+\begin{equation}
+\label{eqn:stoppingtimes}
+\tau_0 = 0, \tau_1 = \min_i(S_i < S_0),\dots,\tau_{k+1} = \min_i(S_i < S_{\tau_k})
+\end{equation}
+where $S_n$ is defined as in Eqn.~\ref{eqn:scoresum}.  The random stopping times defined by $\tau$ form a strictly decreasing set of ladder points.  The horizontal distances (in alignment columns) between consecutive ladder points $\tau_{k+1}-\tau_{k}$ are referred to as ladder epochs.
+
+We refer to the maximum score achieved during the $k^{th}$ ladder epoch as the Local Record Height for that epoch, as defined by:
+\begin{equation}
+\mathrm{LRH}_k = \max_{\tau_{k-1}\leq t \leq \tau_k}(S_t - S_{t_{k-1}})
+\end{equation}
+FIXME: one of the previous should be arg\{max/min\} instead of \{max/min\}.  Note that $\mathrm{LRH}_k \geq 0$.  The number of ladder epochs in an alignment with $N$ columns is denoted as $\wedge(N)$.  The distribution of the maximum value in a sequence of local record heights generated on an alignment can be approximated by an Extreme Value Distribution (EVD) parameterized as:
+\begin{equation}
+\label{eqn:evd}
+Pr(\max_{j \leq \wedge(N)}(\mathrm{LRH}_j > x)) = \exp(-NKe^{-\mu x})
+\end{equation}
+Here $\mu$ is the positive solution of an equation involving the moment generating function that accounts for sequence composition and indel frequency:
+\begin{equation}
+mgf_\theta(\mu) = \sum_j \pi_j e^{\mu \theta\{j\}}
+\end{equation}
+For the HOXD substitution matrix and associated affine gap penalties this equation takes the form $mgf_\theta(\mu) = \pi_{A\leftrightarrow A}e^{91\mu} + \pi_{C\leftrightarrow C}e^{100\mu} + \pi_{G\leftrightarrow G}e^{100\mu} + \pi_{T\leftrightarrow T}e^{91\mu} + \pi_{A\leftrightarrow C}e^{-114\mu} + \pi_{A\leftrightarrow G}e^{-31\mu} + \pi_{A\leftrightarrow C}e^{-123\mu} + \pi_{C\leftrightarrow G}e^{-125\mu} + \pi_{C\leftrightarrow T}e^{-31\mu} +  \pi_{G\leftrightarrow T}e^{-114\mu} + \pi_{gapopen}e^{-400\mu} + \pi_{gapext}e^{-35\mu}$; where $\pi_j$ is the observed frequency of a column of type $j$ in the alignment.  FIXME: is this right and does it work correctly for gaps?
+
+We estimate the values of $K$ and $\wedge(N)$ from Equation~\ref{eqn:evd} by recording the maximum LRH values observed in each each of 10,000 simulations and then fitting the functional form of Equation~\ref{eqn:evd} to the resulting distribution of extreme values.  FIXME: need to incorporate Guillaume's GC content approximation here?
+
+Solving for $\mu$ and subsequent application of Equation~\ref{eqn:evd} enables us to deduce an approximate scoring threshold beyond which the ladder epoch in question contains non-homologous sequence with probability greater than a chosen value. 
+
+Although we can be nearly certain that ladder epochs with a LRH exceeding our significance threshold contain an alignment of non-homologous sequence, the exact columns where the transitions between homology and non-homology take place remain ambiguous.  To determine tight boundaries on the non-homologous region, we compute ladder points for the significant region in the forward and reverse direction and call the entire region between ladder points non-homologous.
+
+The result of applying the random-walk statistics is a prediction of non-homologous segments among each pair of aligned sequences.  The remaining regions are predicted as homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig:example}, steps 5 and 6 for an example. Regions found to be non-homologous are unaligned from each other.
 
 
-Gapped extension in the current directions not yet finished as we need to make sure we are not classifying non-homologous DNA positions as homologous in our extended chains.
-
-INSERT DETAILS ABOUT UNALIGNING NON-HOMOLOGOUS SEQUENCE HERE!
-
-
-If have reached the end of the extension window without going beyond our homology threshold, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, if we surpass the homology threshold we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
+\textbf{FIXME}: we can exceed the threshold and still improve boundaries.  If have reached the end of the extension window without going beyond our homology threshold, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, if we surpass the homology threshold we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
 \subsubsection{Processing Novel homologous sequence}
 Its worth mentioning that novel homologous sequence can be found during gapped extension.
@@ -256,7 +290,7 @@ Finally, we would like to extend blast statistics to multiple local alignment. H
 \end{itemize}
 
 \section{ Acknowledgments }
-AED was supported by NLM Training Grant 5T15LM007359-05. TJT was
+AED was supported by NSF grant DBI-0630765. TJT was
 supported by Spanish Ministry MECD Grant TIN2004-03382 and AGAUR
 Training Grant FI-IQUC-2005.
 
