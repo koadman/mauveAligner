@@ -31,22 +31,25 @@
 \titlerunning{procrastination for local multiple alignment}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
 %                                     \toctitle is used
-\author{Todd,Aaron,MarkRagan,Xavier,anybodyelse?}
+\author{Todd J. Treangen\inst{1}, Aaron E. Darling\inst{2}, Guillaume Achaz\inst{3}, Mark A. Ragan\inst{2}, Xavier Messeguer\inst{1} }
 
-%\institute{
-%Algorithms and Genetics Group, Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain\\
+\institute{
+Algorithms and Genetics Group, Dept. of Computer Science, \\Technical Univ. of Catalonia, Barcelona, Spain\\
 %\email{treangen@lsi.upc.edu},\\
-%}
+\and ARC Centre in Bioinformatics and Institute for Molecular Bioscience, \\Univ. of Queensland, Brisbane, Australia\\
+%\email{a.darling@imb.uq.edu.au} \\
+\and Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6, Paris, France \\
+}
 %
-\authorrunning{<Quijote> et al.}   % abbreviated author list (for running head)
+\authorrunning{Treangen et al.}   % abbreviated author list (for running head)
 
 \maketitle
 
 
 \begin{abstract}
 The identification of homologous DNA via sequence alignment is a basic building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences.  The GPL implementation of our algorithm in C++ is
-called \texttt{procrastAligner} and is freely available from
-\url{http://gel.ahabs.wisc.edu/procrastination}
+called \texttt{procrastAligner} and is freely available from:\\\url{http://alggen.lsi.upc.es/recerca/align/procrastination/}
+
 \end{abstract}
 
 
@@ -54,29 +57,19 @@ called \texttt{procrastAligner} and is freely available from
 
 \section{ Introduction }
 
-The importance of accurate homology identification to comparative genomics can not be overestimated (cite Kumar 2006/7 GenomeResearch paper). To date, pairwise local sequence alignment methods~\cite{blast,ssearch...} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
+The importance of accurate homology identification to comparative genomics can not be overestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blast, ref-ssearch,...} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
 
-Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{multiz,repeatgluer,aba,dialign...}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multiple alignment, especially when dealing with a large number of divergent sequences~\cite{MLAGANpaper,AuberGene,others?,...}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause particularly nasty efficiency problems for pairwise methods, as they must conduct $O(n^{2})$ pairwise comparisons for each of the repeated regions.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
+Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,...}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multiple alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause particularly nasty efficiency problems for pairwise methods, as they must conduct $O(n^{2})$ pairwise comparisons for each of the repeated regions.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
-Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable (cite wang and jiang), progressive alignment heuristics offer excellent speed and accuracy (cite Clustal), especially when combined with tree-independent (is that the right term?) iterative refinement(cite MUSCLE). Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment?   In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.
+Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw} especially when combined with tree-independent (is that the right term?) iterative refinement~\cite{ref-muscle}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment?   In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.
 
 We present a novel heuristic for directly computing local multiple alignments that exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We apply random walk statistics to detect any such non-homologous regions embedded in the global multiple alignment.  Non-homologous regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.  The remainder of this manuscript presents details of our computational approach, an evaluation of the accuracy of our method on synthetic datasets, and an application to ??? genome data.
 
 
-FIXME: what to do with the rest of this stuff?
-Local multiple alignment also offers a better approach for resolving boundaries of homology between all pairwise relationships (citation?  evidence?).  As such, local multiple alignments identify the basic repeating units in one or
-more sequences and can serve as a basis for downstream analysis
-tasks such as multiple genome alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global
-alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or
-repeat classification and analysis~\cite{ref-piler}. Say something about how repeats are important, abudundant, and that they need to be accurately identified.
 
-FIXME.. what am I trying to say here??
 
-Due to the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel method for gapped extension for sensitive local multiple alignment.
-
+\begin{comment}
 %related methods
-
-Related methods to our approach include TBA/MULTIZ, RepeatScout(well not really...), ABA(are you sure?),  and the Eulerian path approach to local multiple alignment.
 
 FIXME.. this needs to be rewritten!
 
@@ -85,10 +78,7 @@ TBA/MULTIZ finds a set of local multple alignments and projects them onto a refe
 CONSENSUS based approaches to local multiple alignment. Euler, RepeatScout. Has the advantage that it is relatively easy to find and construct local multiple alignments using the pairwise local alignment searches for the consensus sequences. Drawbacks??
 
 looks like we are in a battle with RepeatScout and Eulerian path approach?
-
-%
-
-
+\end{comment}
 
 %need for a new approach
 %To date~\cite{gold}, there are over 500 completed whole genomes in such databases, and in the next few years this number is %expected to reach nearly 3000. To cope with such increases in data volume, corresponding advances in computational methods are %necessary; thus we present an efficient heuristic for local multiple alignment. Our method is based around an efficient %heuristic for local multiple alignment, featuring a novel method for gapped extensions.
@@ -118,6 +108,7 @@ has been referred to by others as \textit{consistency} and
 We denote a gapped alignment over an alphabet $\{A,C,G,T,-\}$ as $A$. FIXME: what more do we need to say about gapped alignments?
 
 \section{A heuristic for local multiple alignment}
+Due to the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
 
 Our heuristic for local multiple alignment
 can be divided into five independent steps:
@@ -127,10 +118,11 @@ can be divided into five independent steps:
 (4) estimation of homologous sequence boundaries using random walk statistics
 (5) unalignment of all non-homologous sequence in local multiple alignment
 
-\begin{figure}[t]
+\begin{figure}
 \begin{center}
-\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.2in}}
-\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.39in}}
+\epsfig{file=./figures/extension.eps,width=3.8in}
+%\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
+%\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.7in}}
 \end{center}
 \caption{Overview of the method, starting with an input sequence and ending with a set of local multiple alignments. First we (1) detect multi-matches in input sequence(s) using palindromic spaced seeds, then we perform (2) prioritized chaining of all multi-matches.  The resulting chain contains two matches and three match components labeled 1, 2, and 3.  We then perform gapped alignment of the region between chained matches (3).   In step (4), we perform a gapped extension by computing a global multiple alignment on the regions to the left and right of each chain component.  The resulting alignment may contain non-homologous sequence, so in step (5) we apply random-walk statistics to detect poorly aligned regions indicative of unrelated sequence.  In step (5), heavily diverged homologous sequences may be incorrectly classified as nonhomologous.  Step (6) computes transitive homology relationships to ensure a consistent alignment and aid detection of divergent homologous sequences.  Finally, in step (7) we unalign regions found to be non-homologous.  If we find after step (7) that the alignment boundaries have been extended, we acquire additional flanking sequence and return to step (4) for another round of extension.}
 \end{figure}
@@ -151,14 +143,13 @@ our method chains matches in order of decreasing multiplicity--we
 extend the highest multiplicity matches first. When a match can no
 longer be chained without including a gap larger than $w$
 characters, our method identifies the neighboring \textit{subset}
-matches within $w$ characters, i.e. the light gray seed in
-Figure~\ref{fig:simple_extension}. We then \textit{link} each
+matches within $w$ characters. We then \textit{link} each
 neighboring subset match to the chained match. We refer to the
 chained match as a \textit{superset} match. Rather than immediately
 extend the subset match(es), we \textit{procrastinate} and extend
 the subset match later when it has the highest multiplicity of any
 match waiting to be extended. When chaining a match with a linked
-superset (light gray in Figure~\ref{fig:simple_extension}), we
+superse, we
 immediately include the entire region covered by the linked superset
 match--obviating the need to re-examine sequence already covered by
 a previous match extension.
@@ -204,7 +195,7 @@ For the HOXD substitution matrix and associated affine gap penalties this equati
 
 We estimate the values of $K$ and $\wedge(N)$ from Equation~\ref{eqn:evd} by recording the maximum LRH values observed in each each of 10,000 simulations and then fitting the functional form of Equation~\ref{eqn:evd} to the resulting distribution of extreme values.  FIXME: need to incorporate Guillaume's GC content approximation here?
 
-Solving for $\mu$ and subsequent application of Equation~\ref{eqn:evd} enables us to deduce an approximate scoring threshold beyond which the ladder epoch in question contains non-homologous sequence with probability greater than a chosen value. 
+Solving for $\mu$ and subsequent application of Equation~\ref{eqn:evd} enables us to deduce an approximate scoring threshold beyond which the ladder epoch in question contains non-homologous sequence with probability greater than a chosen value.
 
 Although we can be nearly certain that ladder epochs with a LRH exceeding our significance threshold contain an alignment of non-homologous sequence, the exact columns where the transitions between homology and non-homology take place remain ambiguous.  To determine tight boundaries on the non-homologous region, we compute ladder points for the significant region in the forward and reverse direction and call the entire region between ladder points non-homologous.
 
@@ -217,11 +208,9 @@ The result of applying the random-walk statistics is a prediction of non-homolog
 Its worth mentioning that novel homologous sequence can be found during gapped extension.
 FIXME: should briefly describe what we do with this!
 
-
-Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. This list could be potentially overwhelming, and even at this point, we still need a way of selecting only the highly significant alignments.
-
-
 \section{Results}
+Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. 
+
 We have created a program called \texttt{procrastAligner} for Linux,
 Windows, and Mac OS X that implements the described algorithm. Our
 open-source implementation is available as C++ source code licensed
@@ -247,6 +236,21 @@ AGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACA
 \normalsize
 \caption{Partial alignment of Alu-Sc subfamily found in \emph{H. sapiens} C1 esterase inhibitor gene. Each row represents an aligned ALU.}.
 \end{figure}
+
+\subsection{Hepatitis C alignment}
+Using a manually curated alignment of 144
+Hepatitis C virus genome sequences~\cite{ref-hcvdb}, we measure the
+anchoring sensitivity of our method as the fraction of pairwise
+positions aligned in the correct alignment that are also present in
+\texttt{procrastAligner} chains.  We measure positive predictive
+value as the number of match component pairs that contain correctly
+aligned positions out of the total number of match component pairs.
+\texttt{procrastAligner} may generate legitimate matches in the
+repeat regions of a single genome.  The PPV score penalizes
+\texttt{procrastAligner} for identifying such legitimate repeats,
+which subsequent genome alignment would have to disambiguate.  Using
+a seed size of $9$ and $w=27$, \texttt{procrastAligner} has a
+sensitivity of 63\% and PPV of 67\%.
 
 \subsection{Comparison with RepeatScount}
 
@@ -282,11 +286,12 @@ a high-scoring alignment irrespective of guide tree.
 
 Finally, we would like to extend blast statistics to multiple local alignment. How?
 \begin{itemize}
-\item Extending Repseek simulations to multiple
+\item we need a way of selecting only the highly significant alignments.
+\item Extending Repseek simulations to multiple?
 \item Tompa et al, estimating the parameters for multiple alignments
+\item Zhang and Waterman statistics?
 \item will involve running procrastAlign with fixed parameters on sequences varying in composition and length
-\item also will have to take into account multiplicity
-\item FIXME: fill in more details on Monday
+\item also will have to take into account multiplicity(?)
 \end{itemize}
 
 \section{ Acknowledgments }
