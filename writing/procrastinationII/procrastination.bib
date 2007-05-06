@@ -356,6 +356,21 @@ a direct comparison of the genomic DNA sequences of
  genome comparison; multiple alignment; efficient algorithms; graph
  algorithms; suffix trees."}
 
+@article{Kumar07,
+author = {Kumar, Sudhir and Filipski, Alan},
+title = {{Multiple sequence alignment: In pursuit of homologous DNA positions}},
+journal = {Genome Res.},
+volume = {17},
+number = {2},
+pages = {127-135},
+doi = {10.1101/gr.5232407},
+year = {2007},
+abstract = {DNA sequence alignment is a prerequisite to virtually all comparative genomic analyses, including the identification of conserved sequence motifs, estimation of evolutionary divergence between sequences, and inference of historical relationships among genes and species. While it is mere common sense that inaccuracies in multiple sequence alignments can have detrimental effects on downstream analyses, it is important to know the extent to which the inferences drawn from these alignments are robust to errors and biases inherent in all sequence alignments. A survey of investigations into strengths and weaknesses of sequence alignments reveals, as expected, that alignment quality is generally poor for two distantly related sequences and can often be improved by adding additional sequences as stepping stones between distantly related species. Errors in sequence alignment are also found to have a significant negative effect on subsequent inference of sequence divergence, phylogenetic trees, and conserved motifs. However, our understanding of alignment biases remains rudimentary, and sequence alignment procedures continue to be used somewhat like benign formatting operations to make sequences equal in length. Because of the central role these alignments now play in our endeavors to establish the tree of life and to identify important parts of genomes through evolutionary functional genomics, we see a need for increased community effort to investigate influences of alignment bias on the accuracy of large-scale comparative genomics.
+},
+URL = {http://www.genome.org/cgi/content/abstract/17/2/127},
+eprint = {http://www.genome.org/cgi/reprint/17/2/127.pdf}
+}
+
 @article{ref-repeatgluer,
 	abstract = {Repetitive sequences make up a significant fraction of almost any genome, and an important and still open question in bioinformatics is how to represent all repeats in DNA sequences. We propose a new approach to repeat classification that represents all repeats in a genome as a mosaic of sub-repeats. Our key algorithmic idea also leads to new approaches to multiple alignment and fragment assembly. In particular, we show that our FragmentGluer assembler improves on Phrap and ARACHNE in assembly of BACs and bacterial genomes.},
 	address = {Department of Computer Science and Engineering, University of California, San Diego, La Jolla, California 92093, USA.},
@@ -440,6 +455,15 @@ annote = "The repetitive structure of genomic DNA holds many secrets to be
     volume = {21 Suppl 1},
     year = {2005}
 }
+%BLAST
+@ARTICLE{ref-blast,
+  author = "S. F. Altschul and W. Gish and W. Miller and E. W. Meyers and D. J. Lipman",
+  title = "Basic Local Alignment Search Tool.",
+  journal = "Journal of Molecular Biology",
+  volume = 215,
+  number = 3,
+  pages = "403--410",
+  year = 1990 }
 
 @ARTICLE{ref-aba, author = "Raphael,, Benjamin and Zhi,, Degui and
 Tang,, Haixu and Pevzner,, Pavel", journal = "Genome Res", pages =
@@ -463,6 +487,86 @@ alignment
  genomic sequences that contain duplications and inversions."#"We provide
  several examples illustrating the applications of ABA."}
 
+ @article{ref-aubergene,
+	abstract = {MOTIVATION: The accumulation of genome sequences will only accelerate in the coming years. We aim to use this abundance of data to improve the quality of genomic alignments and devise a method which is capable of detecting regions evolving under weak or no evolutionary constraints. RESULTS: We describe a genome alignment program AuberGene, which explores the idea of transitivity of local alignments. Assessment of the program was done based on a 2 Mbp genomic region containing the CFTR gene of 13 species. In this region, we can identify 53% of human sequence sharing common ancestry with mouse, as compared with 44% found using the usual pairwise alignment. Between human and tetraodon 93 orthologous exons are found, as compared with 77 detected by the pairwise human-tetraodon comparison. AuberGene allows the user to (1) identify distant, previously undetected, conserved orthogonal regions such as ORFs or regulatory regions; (2) identify neutrally evolving regions in related species which are often overlooked by other alignment programs; (3) recognize false orthologous genomic regions. The increased sensitivity of the method is not obtained at the cost of reduced specificity. Our results suggest that, over the CFTR region, human shares 10% more sequence with mouse than previously thought ( approximately 50%, instead of 40% found with the pairwise alignment). AVAILABILITY: The source code and tracks for UCSC Genome Browser generated with the program are available from http://www.ibivu.cs.vu.nl/programs/aubergenewww. CONTACT: heringa@cs.vu.nl.},
+	address = {Centre for Integrative Bioinformatics VU (IBIVU), Faculty of Sciences and Faculty of Earth and Life Sciences, Vrije Universiteit De Boelelaan 1081A, 1081 HV Amsterdam, The Netherlands.},
+	author = {Szklarczyk, R.  and Heringa, J. },
+	citeulike-article-id = {735699},
+	issn = {1367-4803},
+	journal = {Bioinformatics},
+	keywords = {no-tag},
+	month = {June},
+	number = {12},
+	pages = {1431--1436},
+	priority = {3},
+	title = {AuberGene--a sensitive genome alignment tool.},
+	url = {http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve\&db=pubmed\&dopt=Abstract\&list_uids=16606686},
+	volume = {22},
+	year = {2006}
+}
+
+
+ @article{ref-wangjiang,
+	abstract = {We study the computational complexity of two popular problems in multiple sequence alignment: multiple alignment with SP-score and multiple tree alignment. It is shown that the first problem is NP-complete and the second is MAX SNP-hard. The complexity of tree alignment with a given phylogeny is also considered.},
+	address = {Department of Electrical and Computer Engineering, McMaster University, Hamilton, Ontario, Canada.},
+	author = {Wang, L.  and Jiang, T. },
+	citeulike-article-id = {1280740},
+	issn = {1066-5277},
+	journal = {J Comput Biol},
+	keywords = {no-tag},
+	number = {4},
+	pages = {337--348},
+	priority = {3},
+	title = {On the complexity of multiple sequence alignment.},
+	url = {http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve\&db=pubmed\&dopt=Abstract\&list_uids=8790475},
+	volume = {1},
+	year = {1994}
+}
+
+@ARTICLE{ref-muscle,
+  author = "Edgar, R.C.",
+  title = "\hbox{MUSCLE}: \hbox{M}ultiple sequence alignment with high accuracy and high throughput",
+  journal = "Nucleic Acids Res.",
+  volume = 32,
+  number = 5,
+  year = 2004 }
+
+@ARTICLE{ref-clustalw,
+  author = "J. D. Thompson and D. G. Higgins and T.J. Gibson",
+  title = "\hbox{CLUSTAL W}: improving the sensitivity of progressive multiple sequence alignment through sequence weighting, position specific gap penalties and weight matrix choice.",
+  journal = "Nucleic Acids Res.",
+  volume = 22,
+  number = 22,
+  pages = "4673--80",
+  year = 1994 }
+
+@ARTICLE{ref-mlagan,
+  author = "M. Brudno and Do and C. B. Do and G. M. Cooper and M. F. Kim and E. Davydov and NISC Comparative Sequencing Program and E. D. Green and A. Sidow and S. Batzoglou",
+  title = "\hbox{LAGAN} and \hbox{Multi-LAGAN}: efficient tools for large-scale multiple alignment of genomic DNA",
+  journal = "Genome Res.",
+  volume = 13,
+  number = 4,
+  pages = "721--731",
+  year = 2003 }
+
+
+@ARTICLE{ref-dialign,
+  author = "B. Morgenstern and K. French and A. Dress and T. Werner",
+  title = "\hbox{DIALIGN}: finding local similarities by multiple sequence alignment.",
+  journal = "Bionformatics",
+  volume = 14,
+  pages = "290--294",
+  year = 1998 }
+
+
+@ARTICLE{ref-tba,
+  author = "M. Blanchette and W.J. Kent and C. Riemer and L. Elnitski and A. F.A. Smit and K. M. Roskin and R. Baertsch
+            and K. Rosenbloom and H. Clawson and E.D. Green and D. Haussler and W. Miller",
+  title = "Aligning Multiple Genomic Sequences with the Threaded Blockset Aligner",
+  journal = "Genome Res.",
+  volume = 14,
+  pages = "708--715",
+  year = 2004 }
 
 @article{ref-keich05,
     abstract = {MOTIVATION: The efficient and accurate computation of P-values is an essential requirement for motif-finding and alignment tools. We show that the approximation algorithms used in two popular motif-finding programs, MEME and Consensus, can fail to accurately compute the P-value. RESULTS: We present two new algorithms: one for the evaluation of the P-values of a range of motif scores, and a faster one for the evaluation of the P-value of a single motif score. Both exhibit more reliability than existing algorithms, and the latter algorithm is comparable in speed to the fastest existing method. AVAILABILITY: The algorithms described in this paper are available from http://www.cs.cornell.edu/~keich},
