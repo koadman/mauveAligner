@@ -241,24 +241,15 @@ AGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACA
 \subsection{Hepatitis C alignment}
 Using a manually curated alignment of 144
 Hepatitis C virus genome sequences~\cite{ref-hcvdb}, we measure the
-anchoring sensitivity of our method as the fraction of pairwise
+alignment sensitivity of our method as the fraction of pairwise
 positions aligned in the correct alignment that are also present in
-\texttt{procrastAligner} chains.  We measure positive predictive
-value as the number of match component pairs that contain correctly
-aligned positions out of the total number of match component pairs.
-\texttt{procrastAligner} may generate legitimate matches in the
-repeat regions of a single genome.  The PPV score penalizes
-\texttt{procrastAligner} for identifying such legitimate repeats,
-which subsequent genome alignment would have to disambiguate.  Using
-a seed size of $9$ and $w=27$, \texttt{procrastAligner} has a
-sensitivity of 63\% and PPV of 67\%.
+\texttt{procrastAligner} local multiple alignments.  
 
-\subsection{Comparison with RepeatScount}
+\subsection{Comparison of gapped extension with RepeatScount, HomologMiner}
+We generated 5 different motifs of varying lengths and inserted mutated copies(randomly determined) of each pattern into microbial genomes. We then compared the three methods ability to retrieve each mutated motif.
 
-RepeatScout generates a repeat family consensus for all high frequency kmers via ungapped extension. As output, RepeatScout returns all families atleast 50nt long and occuring atleast 3 times in the input sequence(s). Once finished, RepeatScout uses RepeatMasker to locate all occurences of the repeat family in the input sequence(s).
-
-How can we compare this to procrastAligner?
-
+\subsection{Comparison of Alu repeats with the Eulerian path approach}
+necessary? 
 
 \section{Discussion}
 \subsubsection{Comparison of gapped
