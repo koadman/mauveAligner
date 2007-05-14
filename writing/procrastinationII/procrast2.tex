@@ -1,12 +1,25 @@
-%
-% string matching writeup...
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Full Paper LaTeX2e Template for ``Genome Informatics 2003''        %
+% Universal Academy Press, Inc.                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\documentclass{llncs}
-\pagestyle{empty}
+%%%%%%%%%%%%%%%%%%%  Read General Remarks  %%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1. 11pt fonts should be used.                                      %
+% 2. When special style files are used (e.g. epsf.sty),              %
+%    please send the style files together.                           %
+% 3. Even if color images are used, only black/white images          %
+%    will be used for publication.                                   %
+% 4. If you want to include figures in your article, please          %
+%    use graphicx.sty or graphics.sty. You can take these macros     %
+%    from our site in the same directory.(graphics.tar.gz)           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%  BEGIN Do not change  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[twoside,11pt]{article}
+\usepackage{graphicx}
 \usepackage{makeidx}  % allows for indexgeneration
 %
-\usepackage[dvips]{graphicx}    % needed for including graphics e.g. EPS, PS
+%\usepackage[dvips]{graphicx}    % needed for including graphics e.g. EPS, PS
 \usepackage{epsfig}
 \usepackage{url}
 \usepackage{pseudocode}
@@ -15,48 +28,122 @@
 \usepackage{color}
 \usepackage{newalg}
 \usepackage{subfigure}
+\setlength{\topmargin}{-1cm}
+\setlength{\oddsidemargin}{-0.5cm}
+\setlength{\evensidemargin}{-0.5cm}
+\setlength{\textwidth}{17cm}
+\setlength{\textheight}{24cm}
+\pagestyle{myheadings}
+\author{}
+\date{}
+\setcounter{page}{1}
+%%%%%  END Do not change %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{document}
-\renewcommand{\labelenumi}{(\Alph{enumi})}
-\renewcommand{\labelenumii}{(\alph{enumii})}
-
-\frontmatter          % for the preliminaries
-%
-\pagestyle{headings}  % switches on printing of running heads
-
-\mainmatter              % start of the contributions
-%
-\title{Bridging the gap: improving local multiple alignment with gapped extension.}
-%
-\titlerunning{procrastination for local multiple alignment}  % abbreviated title (for running head)
-%                                     also used for the TOC unless
-%                                     \toctitle is used
-\author{Todd J. Treangen\inst{1}$^\dag$, Aaron E. Darling\inst{2}$^\dag$, Guillaume Achaz\inst{3}, Mark A. Ragan\inst{2}, Xavier Messeguer\inst{1} }
-
-\institute{
-Algorithms and Genetics Group, Dept. of Computer Science, \\Technical Univ. of Catalonia, Barcelona, Spain\\
-%\email{treangen@lsi.upc.edu},\\
-\and ARC Centre in Bioinformatics and Institute for Molecular Bioscience, \\Univ. of Queensland, Brisbane, Australia\\
-%\email{a.darling@imb.uq.edu.au} \\
-\and Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6, Paris, France \\
-$^\dag$ These authors contributed equally to this work
+%%%%%%%%%%%%%%%%%%%     \title    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\bf
+Bridging the gap: improving local multiple alignment with gapped extension.
 }
-%
-\authorrunning{Treangen et al.}   % abbreviated author list (for running head)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%   \markboth    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\markboth{Treangen {\em et al.}}
+         {Improving local multiple alignment with gapped extension}
+% First  parameter: Single author         -> LastName1
+%                   Two authors           -> LastName 1 and LastName2
+%                   More than two authors -> LastName1 {\em et al.}
+% Second parameter: Provide a short running head with length not
+%                   greater than 45 letters.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%  BEGIN Do not change  %%%%%
+\begin{document}
 \maketitle
+\thispagestyle{myheadings}
+\vspace{-1.8cm}
+%%%%%  END Do not change %%%%%%%%
+
+%%%%%%%%%% Author(s) and Email Address(es) %%%%%%%%%%%%%%%
+% Remark: When paper is single authored, the affiliation %
+%         need not be footmarked.                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+%\begin{tabular}[t]{c}                      % One person in one line
+\begin{tabular}[t]{c@{\extracolsep{2em}}c}  % two persons in one line
+%\begin{tabular}[t]{c@{\extracolsep{2em}}c@{\extracolsep{2em}}c}
+                                            % three persons in one line
+  \bf    Todd  Treangen\footnotemark[1]
+ &\bf    Aaron E. Darling\footnotemark[2]
+
+\\
+  \small\tt treangen@lsi.upc.edu
+ &\small\tt a.darling@imb.uq.edu.au
+%&\small\tt lastname3@disorder.chem.wsu.edu
+\end{tabular}
+\smallskip
+
+%%%%%%%%%%%%% More Authors, if any %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{tabular}[t]{c}                        % 1 person/line
+%\begin{tabular}[t]{c@{\extracolsep{2em}}c}  % 2 persons/line
+\begin{tabular}[t]{c@{\extracolsep{2em}}c@{\extracolsep{2em}}c}
+                                             % 3 persons/line
+  \bf    Guillaume Achaz\footnotemark[3]
+&\bf    Mark A. Ragan\footnotemark[2]
+&\bf    Xavier Messeguer\footnotemark[1]
+%&\bf    FirstName5 MiddleName5 LastName5\footnotemark[3]
+%&\bf    FirstName6             LastName6\footnotemark[3]
+
+\\
+\small\tt achaz@closun.snv.jussieu.fr
+&\small\tt m.ragan@imb.uq.edu.au
+&\small\tt peypoch@lsi.upc.edu
+\end{tabular}
+\smallskip
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+
+%%%%%%%%%%%%%%%%%%% Affiliation(s) %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{small}
+\begin{tabular}{rl}
+\footnotemark[1] & \parbox[t]{13cm}{
+%%%%%%%%%% Affiliation for footnotemark[1] %%%%%%%%%%%%%%%%%%%%
+Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}\\
+\footnotemark[2] & \parbox[t]{13cm}{
+%%%%%%%%%% Affiliation for footnotemark[2] %%%%%%%%%%%%%%%%%%%%
+Institute for Molecular Bioscience,
+Univ. of Queensland, Brisbane, Australia
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}\\
+\footnotemark[3] & \parbox[t]{13cm}{
+%%%%%%%%%% Affiliation for footnotemark[3] %%%%%%%%%%%%%%%%%%%%
+Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6, Paris, France
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}\\
+\end{tabular}
+\end{small}
+\bigskip
+\end{center}
+
+%%%%%%%%%%%%%%%%%%     Abstract   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 The identification of homologous DNA via sequence alignment is a basic building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences.  The GPL implementation of our algorithm in C++ is
-called \texttt{procrastAligner} and is freely available from:\\\url{http://alggen.lsi.upc.es/recerca/align/procrastination/}
+called \texttt{procrastAligner} and is freely available from: \url{http://alggen.lsi.upc.es/recerca/align/procrastination/}
 
 \end{abstract}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\noindent {\bf Keywords:}
+%%%%%%%%%%%%%%%%%%%%%%%%  Keywords %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+sequence alignment
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
-
-\section{ Introduction }
+%%% BEGIN CONTENTS %%%
+\section{Introduction}
 
 The importance of accurate homology identification to comparative genomics can not be overestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blast, ref-ssearch,...} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
 
@@ -68,21 +155,6 @@ We present a novel heuristic for directly computing local multiple alignments th
 
 
 
-
-\begin{comment}
-%related methods
-
-FIXME.. this needs to be rewritten!
-
-TBA/MULTIZ finds a set of local multple alignments and projects them onto a reference sequence in order to build whole genome comparisons. However, TBA relies on multiz to build multiple relationships of sequence homology from local pairwise relationships using multiz. ABA ... Perhaps the most related approach is Eulerian path approach to local multiple alignment...
-
-CONSENSUS based approaches to local multiple alignment. Euler, RepeatScout. Has the advantage that it is relatively easy to find and construct local multiple alignments using the pairwise local alignment searches for the consensus sequences. Drawbacks??
-
-looks like we are in a battle with RepeatScout and Eulerian path approach?
-\end{comment}
-
-%need for a new approach
-%To date~\cite{gold}, there are over 500 completed whole genomes in such databases, and in the next few years this number is %expected to reach nearly 3000. To cope with such increases in data volume, corresponding advances in computational methods are %necessary; thus we present an efficient heuristic for local multiple alignment. Our method is based around an efficient %heuristic for local multiple alignment, featuring a novel method for gapped extensions.
 \label{sec:overview}
 \section{Definitions and Notation}
 
@@ -121,7 +193,7 @@ can be divided into five independent steps:
 
 \begin{figure}
 \begin{center}
-\epsfig{file=./figures/extension.eps,width=3.8in}
+\epsfig{file=./figures/extension.eps,width=5.0in}
 %\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
 %\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.7in}}
 \end{center}
@@ -210,7 +282,7 @@ Its worth mentioning that novel homologous sequence can be found during gapped e
 FIXME: should briefly describe what we do with this!
 
 \section{Results}
-Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments. 
+Ideally, once our algorithm finishes we will have a complete listing of all homologous local mulitple alignments.
 
 We have created a program called \texttt{procrastAligner} for Linux,
 Windows, and Mac OS X that implements the described algorithm. Our
@@ -220,16 +292,17 @@ under the GPL.
 \begin{figure}[t]
 \scriptsize
 \begin{verbatim}
-GGGAGGATTGCTTGAACCTG--------GAGATTCAAGTGAGCTGAGATTGCACCACTGCATTCCAGCCTGGGC--AACAAAGCAAGACTCT-
-AGGAGAATTGCTTGAACCTGGGAG-GCGGAGGTTGCAGTGAGCCGAGATGACGCCACTGCACTCCAGCCTGGGC--GACAGAGCA--------
-AGGAGAATCGCTTGAACCCAAGAGAGTGAAGGTTGCAGTGAGCTGAGATCATGCCACTTCACTCCAGCCTGAGTGAAACAGC-----------
-AGGAGAATAACTTCAACCTGGGAG-ACAGAGGTTGCAGTCAGCTGAGATCGCACCACTGCATTCCAGCCTGGGT--GACAGACCGAGACTCTG
-AGGAGAACTGCTTGAACTCGGGAG-GCAGAGATTGCAGTGAGCTGAGATCATGTCAATGCACTGCAGCTTGAGT--GACAGAGTG--------
-AGGAGAATCGCTTGAACCTGGGAG-GCAGAGGTTACAGAGAGCTGGGATTGTGCCACTGCACTCCGGCCTGGGC--AACAGAATG--------
-A-CAGAATCACTTGAACCTGGGAG-GCAGAGGTTACAGTGAGCCAAAATCGCGCCACTGCACTCCAACCTGGGC--AACACAGCAA-------
-AGGAGAATTGCTTGAACCCGGGAG-GTGGAGGCTGCAGTGAGCCGAGATCATGCCACTGCACTCCAGCCT-GGT--GACAGAGCGAGA-----
-AGGAGAATTGTTTGAACCCAGGAG-GCGGAGGCTGCAGTGAGCCGAGATTGTGTCACTGTACTCCAGCCTGGGCAAGACAGAG----------
-AGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACAGAGAGA-------
+CAGCTACTTGGGAGGCAGAGGTGGGAGGATTGCTTGAACCTG--------GAGATTCAAGTGAGCTGAGATTGCACCACTGCATTCCAGCCTGGGC--AACAAAGCAAGACTCT-
+CAGCTATTCAGGAGGCTGAGGCAGGAGAATTGCTTGAACCTGGGAG-GCGGAGGTTGCAGTGAGCCGAGATGACGCCACTGCACTCCAGCCTGGGC--GACAGAGCA--------
+CAACTACTCAGGAGGCTGAGGCAGGAGAATCGCTTGAACCCAAGAGAGTGAAGGTTGCAGTGAGCTGAGATCATGCCACTTCACTCCAGCCTGAGTGAAACAGC-----------
+CAGC------------------AGGAGAATAACTTCAACCTGGGAG-ACAGAGGTTGCAGTCAGCTGAGATCGCACCACTGCATTCCAGCCTGGGT--GACAGACCGAGACTCTG
+CAGCTACTTGGGAGGCTGAGGCAGGAGAACTGCTTGAACTCGGGAG-GCAGAGATTGCAGTGAGCTGAGATCATGTCAATGCACTGCAGCTTGAGT--GACAGAGTG--------
+CAGCTACTAGGGAGGCTAAGGCAGGAGAATCGCTTGAACCTGGGAG-GCAGAGGTTACAGAGAGCTGGGATTGTGCCACTGCACTCCGGCCTGGGC--AACAGAATG--------
+CAGCTACTCAGGATGCTAAGGCA-CAGAATCACTTGAACCTGGGAG-GCAGAGGTTACAGTGAGCCAAAATCGCGCCACTGCACTCCAACCTGGGC--AACACAGCAA-------
+CAGCTACTCAGGAGGCTGAGGCAGGAGAATTGCTTGAACCCGGGAG-GTGGAGGCTGCAGTGAGCCGAGATCATGCCACTGCACTCCAGCCT-GGT--GACAGAGCGAGA-----
+CAGCTACTCGGGAGGCTGAGACAGGAGAATTGTTTGAACCCAGGAG-GCGGAGGCTGCAGTGAGCCGAGATTGTGTCACTGTACTCCAGCCTGGGCAAGACAGAG----------
+CTGCTACTCAGGAAGCTGAGGCAGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACAGAGAGA-------
+
 *  ** *    ** ***           ***  *   * ****    **     **  * * * *    *  *      *
 
 \end{verbatim}
@@ -243,13 +316,13 @@ Using a manually curated alignment of 144
 Hepatitis C virus genome sequences~\cite{ref-hcvdb}, we measure the
 alignment sensitivity of our method as the fraction of pairwise
 positions aligned in the correct alignment that are also present in
-\texttt{procrastAligner} local multiple alignments.  
+\texttt{procrastAligner} local multiple alignments.
 
 \subsection{Comparison of gapped extension with RepeatScount, HomologMiner}
 We generated 5 different motifs of varying lengths and inserted mutated copies(randomly determined) of each pattern into microbial genomes. We then compared the three methods ability to retrieve each mutated motif.
 
 \subsection{Comparison of Alu repeats with the Eulerian path approach}
-necessary? 
+necessary?
 
 \section{Discussion}
 \subsubsection{Comparison of gapped
@@ -297,3 +370,18 @@ Training Grant FI-IQUC-2005.
 
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
