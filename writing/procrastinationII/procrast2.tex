@@ -24,6 +24,7 @@
 \usepackage{url}
 \usepackage{pseudocode}
 \usepackage{comment}
+\usepackage{array}
 \usepackage{authblk}
 \usepackage{color}
 \usepackage{newalg}
@@ -162,9 +163,35 @@ Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous
 local multiple alignments on subsequences of $\mathcal{S}$. We denote
 an ungapped alignment, or match, among subsequences in $\mathcal{S}$
-as an object $M$, and a set of such matches as $\mathbf{M}$. 
+as an object $M$, and a set of such matches as $\mathbf{M}$.  
+We refer the number of regions in $\mathcal{S}$
+matched by a given match $M_i \in \mathbf{M}$ as the
+\textit{multiplicity} of $M_i$, denoted as $|M_i|$. There is a limitation on the matches in
+$\mathbf{M}$, no two matches $M_i$ and $M_j$ may have the same
+left-end coordinate.  This constraint has been referred to by others as \textit{consistency} and
+\textit{transitivity}~\cite{ref-transitivity} of matches.  In the
+present work we only require consistency and transitivity of matches
+longer than the seed length, e.g. seed matches may overlap. We denote a gapped alignment, or local alignment, among subsequences in $\mathcal{S}$ as $A$, and a set of gapped alignments as $\mathbf{A}$.  In practice, each $A_i$ in $\mathbf{A}$ is constructed via
+at least one $M_i$ in $\mathbf{M}$. When $|M_i|>2$,$|A_i|>2$ we refer to $M_i$,$A_i$ as
+a multi-match and a multiple local alignment, respectively.  The sum of pairs objective function used is defined as follows:\\
+%\begin{equation}
 
-FIXME: what more do we need to say about gapped alignments?
+$$
+\begin{array}{l}
+f(i,0) = 0,\\
+f(0,j) = 0,\\
+\end{array}
+f(i,j)= \max\left\{\begin{array}{l}
+f(i,j) = f(i-1,j-1)+\mu_{ij},\\
+f(i,j-1) - \gamma\\
+f(i-1,j)-\gamma\\
+0 \\
+\end{array}\right.
+$$
+\begin{center}
+$\mu_{ij}$ is the mismatch score between positions $i,j$ in $\mathcal{S}$.  $\gamma$ is the fixed gap penalty.
+\end{center}
+%\end{equation}
 
 \section{A heuristic for local multiple alignment}
 Due to the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
@@ -316,14 +343,15 @@ Comparison with EulerAlign, HomologMiner, MultiZ, and RepeatScout??
 We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
 the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed heuristic for gapped extension, we have inserted mutated copies of randomly generated patterns into \emph{Mycoplasma Genitalium}. \emph{Mycoplasma Genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method. Specifically, we used a 6 step processs to generate and insert artificially generated DNA patterns into the genome is as follows. First, we randomly chose a pattern length, between 20nt and 200nt. Then, we randomly choose a nucleotide for each column of the pattern. After we have generated the pattern, we then randomly selected a multiplicity/copy number for the pattern (between 20 and 300 copies). We configured the process to make it less likely for larger patterns to have higher multiplicities, and vice versa. Then, we randomly mutated each copy of the pattern using substitutions and indels. The substitution and indel frequency were configure to 0.0x. Afterwards, we randomly placed each copy either on the forward or reverse strand. Finally, we randomly selected the minimum distance between any two copies (between 100-1000nt). Again, we made it more likely for smaller patterns to be located further apart, and larger patterns closer together. We then used \texttt{procrastAligner} to find all significant multiple local alignments in the modified genome of \emph{Mycoplasma Genitalium} and recorded whether it was able to fully recover all mutated copies of the  artificially generated pattern. Then we compared \texttt{procrastAligner}'s performace to that of two  related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}, by evaluating each program's ability to accurately recover the inserted patterns via their multiple local alignment heuristic. Results of this experiment are reported in Table~\ref{tab-results}.
 
-\begin{table}[t]
+\begin{table}[t!]
 \scriptsize
   \centering
-\begin{tabular}{lccccccccccc}
+\begin{tabular}{|lccccc|rccccc|}
 \hline ID & Length & Copies & Indels & Subs & Inversions & Method & Sn \% & Sp \% & T (s) & Sw & $w$ \\
 \hline
-\hline Pattern1 &  49 nt &  42 & 1 & 1 & 0 & EulerAlign & - & - & 324 & 9 & - \\
-\cline{7-12}                                            &&&&&& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
+\hline Pattern1 &  49 nt &  42 & 1 & 1 & 0 & EulerAlign & 100 & 97.3 & 324 & 9 & - \\
+%&&&&&                                           & MultiZ & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c|}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT}& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
 \hline Pattern2 &   - &  - & - & - & - & EulerAlign & - & - & - & - & -  \\
 \cline{7-12}                                            &&&&&& procrastAlign & - &- & - & - & -\\
 \hline Pattern3 & - &  - & - & - & - & EulerAlign & - & -& - & - & - \\
@@ -332,6 +360,7 @@ the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed 
 \cline{7-12}                                            &&&&&& procrastAlign & - &- & - & - &- \\
 \hline Pattern5 & - & - & - & - & - & EulerAlign & -& -& - & - & - \\
 \cline{7-12}                                            &&&&&& procrastAlign & - & - &- & - & - \\
+\hline
 \end{tabular}
 \vspace{0.1cm}
   \caption{Performance of \texttt{procrastAlign} and the Eulerian path approach on Alu repeats.
@@ -343,27 +372,10 @@ the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed 
   of \texttt{procrastAlign} was computed as described in the text.}
   \label{table:alu}
 \end{table}
-\begin{comment}
-\begin{table}[t]
-\begin{center}
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
-\hline  &\multicolumn{2}{|c|}{Sequence} &\multicolumn{3}{|c|}{Pattern} &\multicolumn{3}{|c|}{Found}  \\
-\hline Method & Accession & length(Kb) & Id & length(bp) & copies &  Sn \% & T (s) & k\\ 
-\hline procrast   & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
-          & - & 22 & M2 & 96 & 110 & 99.0 & 120 & 11 \\
-   
-\hline EulerAlign & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
-          & - & 22 & M2 & 96 & 110 & 99.0 & 120 & 11 \\
 
-\hline
 
-\end{tabular}
 
-\caption{Results}
-\label{tab-results}
-\end{center}
-\end{table}
-\end{comment}
+
 
 \subsection{Hepatitis C alignment}
 %Not sure if can finish in time..
@@ -371,17 +383,32 @@ Using a manually curated alignment of 144
 Hepatitis C virus genome sequences~\cite{ref-hcvdb}, we measure the
 alignment sensitivity of our method as the fraction of pairwise
 positions aligned in the correct alignment that are also present in
-\texttt{procrastAligner} local multiple alignments.
+\texttt{procrastAligner} local multiple alignments. We compared our result to that of progressiveMauve and MultiZ.
 
-FIXME: include?
 
 \section{Discussion}
 We have presented a sensitive and efficient heuristic for local multiple alignment.  
 We have extended previous results by converting chains of ungapped alignments into to multiple local alignments. We do so via a novel heuristic for directly computing local multiple alignments that utilizes the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We apply random walk statistics to detect any such non-homologous regions embedded in the global multiple alignment.
 Present results have demonstrated both high sensitivity and specificity on aligning Alu
-sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments. The preliminary results of our significance assessment indicates a promising avenue of further research.
+sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments. 
+
+While we view the statistical significance proposal a preliminary, thus far the results of our significance assessment indicates a promising avenue of further research. 
 
 
+
+\begin{table}[t!]
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\hline Method & Accession & length(Kb) & Id & length(bp) & copies &  Sn \% & T (s) & k\\
+\hline procrastAligner   & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
+\hline progressiveMauve & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
+\hline multiz & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
+\hline
+\end{tabular}
+\caption{Hepatitis C multiple alignment comparison.}
+\label{tab-results}
+\end{center}
+\end{table}
 
 \section{ Acknowledgments }
 AED was supported by NSF grant DBI-0630765. TJT was
