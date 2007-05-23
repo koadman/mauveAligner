@@ -148,7 +148,7 @@ sequence alignment
 
 The importance of accurate homology identification to comparative genomics can not be overestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blast, ref-ssearch} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
 
-Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multiple alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause particularly nasty efficiency problems for pairwise methods, as they must conduct $O(n^{2})$ pairwise comparisons for each of the repeated regions.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
+Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multiple alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause particularly nasty efficiency problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
 Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment?   In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.
 
@@ -160,10 +160,11 @@ We present a novel heuristic for directly computing local multiple alignments th
 \section{Definitions and Notation}
 
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
-defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous
+defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous nucleotides in $\mathcal{S}$.
+Since we assume that homology is a transitive property, all 
 local multiple alignments on subsequences of $\mathcal{S}$. We denote
 an ungapped alignment, or match, among subsequences in $\mathcal{S}$
-as an object $M$, and a set of such matches as $\mathbf{M}$.  
+as an object $M$, and a set of such matches as $\mathbf{M}$.
 We refer the number of regions in $\mathcal{S}$
 matched by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. There is a limitation on the matches in
@@ -173,7 +174,9 @@ left-end coordinate.  This constraint has been referred to by others as \textit{
 present work we only require consistency and transitivity of matches
 longer than the seed length, e.g. seed matches may overlap. We denote a gapped alignment, or local alignment, among subsequences in $\mathcal{S}$ as $A$, and a set of gapped alignments as $\mathbf{A}$.  In practice, each $A_i$ in $\mathbf{A}$ is constructed via
 at least one $M_i$ in $\mathbf{M}$. When $|M_i|>2$,$|A_i|>2$ we refer to $M_i$,$A_i$ as
-a multi-match and a multiple local alignment, respectively.  The sum of pairs objective function used is defined as follows:\\
+a multi-match and a multiple local alignment, respectively.  
+
+The sum of pairs objective function used is defined as follows:\\
 %\begin{equation}
 
 $$
@@ -194,7 +197,7 @@ $\mu_{ij}$ is the mismatch score between positions $i,j$ in $\mathcal{S}$.  $\ga
 %\end{equation}
 
 \section{A heuristic for local multiple alignment}
-Due to the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
+Because the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
 
 Our heuristic for local multiple alignment, as depicted in Figure~\ref{fig-main},
 can be divided into five independent steps:
@@ -310,7 +313,7 @@ The result of applying the random-walk statistics is a prediction of non-homolog
 FIXME: insert statistics here!
 
 \section{Results}
-We have created a program called \texttt{procrastAligner} for Linux,Windows, and Mac OS X that implements the described algorithm. Our
+We have created a program called \texttt{procrastAligner} for Linux, Windows, and Mac OS X that implements the described algorithm. Our
 open-source implementation is available as C++ source code licensed under the GPL. As input, \texttt{procrastAligner} accepts FastA and multi-FastA DNA sequences. As output, the program returns a XMFA formatted file of all significant local multiple alignments. Figure~\ref{fig-align} shows an example local multiple alignment generated with \texttt{procrastAligner}.
 
 
@@ -327,7 +330,7 @@ CAGCTACTCAGGATGCTAAGGCA-CAGAATCACTTGAACCTGGGAG-GCAGAGGTTACAGTGAGCCAAAATCGCGCCACT
 CAGCTACTCAGGAGGCTGAGGCAGGAGAATTGCTTGAACCCGGGAG-GTGGAGGCTGCAGTGAGCCGAGATCATGCCACTGCACTCCAGCCT-GGT--GACAGAGCGAGA-----
 CAGCTACTCGGGAGGCTGAGACAGGAGAATTGTTTGAACCCAGGAG-GCGGAGGCTGCAGTGAGCCGAGATTGTGTCACTGTACTCCAGCCTGGGCAAGACAGAG----------
 CTGCTACTCAGGAAGCTGAGGCAGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACAGAGAGA-------
-*  *                     ** **   ** ***            *   *  * * * *    *  *   ** *  *  **            * * 
+*  *                     ** **   ** ***            *   *  * * * *    *  *   ** *  *  **            * *
 \end{verbatim}
 \vspace{-0.5cm}
 \normalsize
@@ -341,7 +344,9 @@ Comparison with EulerAlign, HomologMiner, MultiZ, and RepeatScout??
 
 
 We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
-the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed heuristic for gapped extension, we have inserted mutated copies of randomly generated patterns into \emph{Mycoplasma Genitalium}. \emph{Mycoplasma Genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method. Specifically, we used a 6 step processs to generate and insert artificially generated DNA patterns into the genome is as follows. First, we randomly chose a pattern length, between 20nt and 200nt. Then, we randomly choose a nucleotide for each column of the pattern. After we have generated the pattern, we then randomly selected a multiplicity/copy number for the pattern (between 20 and 300 copies). We configured the process to make it less likely for larger patterns to have higher multiplicities, and vice versa. Then, we randomly mutated each copy of the pattern using substitutions and indels. The substitution and indel frequency were configure to 0.0x. Afterwards, we randomly placed each copy either on the forward or reverse strand. Finally, we randomly selected the minimum distance between any two copies (between 100-1000nt). Again, we made it more likely for smaller patterns to be located further apart, and larger patterns closer together. We then used \texttt{procrastAligner} to find all significant multiple local alignments in the modified genome of \emph{Mycoplasma Genitalium} and recorded whether it was able to fully recover all mutated copies of the  artificially generated pattern. Then we compared \texttt{procrastAligner}'s performace to that of two  related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}, by evaluating each program's ability to accurately recover the inserted patterns via their multiple local alignment heuristic. Results of this experiment are reported in Table~\ref{tab-results}.
+the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed heuristic for gapped extension, we have inserted mutated copies of randomly generated patterns into \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method. Specifically, we used a 6 step process to generate and insert artificially generated DNA patterns into the genome is as follows. First, we randomly choose a pattern length, between 20nt and 200nt (\textbf{is this random from a uniform distribution of lengths?}). Then, we randomly choose a nucleotide for each column of the pattern (\textbf{what is the background frequency of A/C/G/T?}). After we have generated the pattern, we then randomly selected a multiplicity/copy number for the pattern (between 20 and 300 copies). We configured the process to make it less likely for larger patterns to have higher multiplicities, and vice versa \textbf{give the equation}. Then, we randomly mutated each copy of the pattern using substitutions and indels. The substitution and indel frequency were configured to 0.0x. Afterwards, we randomly placed each copy either on the forward or reverse strand. Finally, we randomly selected the minimum distance between any two copies (between 100-1000nt)\textbf{uniform distribution?}. Again, we made it more likely for smaller patterns to be located further apart, and larger patterns closer together\textbf{why?}. We then used \texttt{procrastAligner} to find all significant multiple local alignments in the modified genome of \emph{M. genitalium} and recorded whether it was able to fully recover all mutated copies of the  artificially generated pattern. Then we compared \texttt{procrastAligner}'s performance to that of two related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}, by evaluating each program's ability to accurately recover the inserted patterns via their multiple local alignment heuristic. Results of this experiment are reported in Table~\ref{tab-results}.
+
+\textbf{note from AED:}\textit{Another possibility would be to generate, say, 10 patterns for each multiplicity between 20 and 300 (or 2 and 300), then plot the change in sensitivity/specificity as a function of multiplicity.  It would also be nice to see how Sn/Sp vary as a function of sequence divergence.  For example, we could try a range from 0 substitutions per site (no divergence) to 1 or 2 substitutions per site.  Since we're modeling all sites to be equally likely to accept a substitution, we would expect procrastAligner to totally break down before we get to 1 substitution per site.  A common refinement to these models assumes that some sites are more likely to mutate than others, and this is typically modeled using a gamma distribution (aka gamma-distributed rate heterogeneity).}
 
 \begin{table}[t!]
 \scriptsize
@@ -387,12 +392,12 @@ positions aligned in the correct alignment that are also present in
 
 
 \section{Discussion}
-We have presented a sensitive and efficient heuristic for local multiple alignment.  
+We have presented a sensitive and efficient heuristic for local multiple alignment.
 We have extended previous results by converting chains of ungapped alignments into to multiple local alignments. We do so via a novel heuristic for directly computing local multiple alignments that utilizes the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We apply random walk statistics to detect any such non-homologous regions embedded in the global multiple alignment.
 Present results have demonstrated both high sensitivity and specificity on aligning Alu
-sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments. 
+sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments.
 
-While we view the statistical significance proposal a preliminary, thus far the results of our significance assessment indicates a promising avenue of further research. 
+While we view the statistical significance proposal a preliminary, thus far the results of our significance assessment indicates a promising avenue of further research.
 
 
 
