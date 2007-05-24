@@ -179,7 +179,7 @@ longer than the seed length, e.g. seed matches may overlap. We denote a gapped a
 at least one $M_i$ in $\mathbf{M}$. When $|M_i|>2$,$|A_i|>2$ we refer to $M_i$,$A_i$ as
 a multi-match and a multiple local alignment, respectively. The sum of pairs objective function used is defined as follows:\\
 %\begin{equation}
-
+\begin{figure}[h!]
 $$
 \begin{array}{l}
 f(i,0) = 0,\\
@@ -194,8 +194,12 @@ f(i-1,j)-\gamma\\
 $$
 \begin{center}
 $\mu_{ij}$ is the mismatch score between positions $i,j$ in $\mathcal{S}$.  $\gamma$ is the fixed gap penalty.
+
 \end{center}
 %\end{equation}
+
+\label{ref-sop}
+\end{figure}
 
 \section{A heuristic for local multiple alignment}
 Because the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
@@ -256,7 +260,7 @@ superset, we immediately include the entire region covered by the linked superse
 match--obviating the need to re-examine sequence already covered by
 a previous match extension.
 
-Once we have finished the chaining process, we performed gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We then score and evaluate them in order make a decision whether its worth spending computational resources on gapped extension. We require each possible pair of the unextended local multiple alignment to exceed a configurable score threshold $t$, which is by default set to $r*2000$. We can also require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used. This idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.
+Once we have finished the chaining process, we performed gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We then score and evaluate them in order make a decision whether its worth spending computational resources on gapped extension. The score is calculated over the entire chain as specified by the Sum of Pairs objective function using a HOXD scoring matrix and associated substitution and gap open penalties. We require each possible pair of the unextended local multiple alignment to exceed a configurable score threshold $t$, which is by default set to $r*2000$. We can also require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used. This idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.
 
 \subsection{Gapped extension of high scoring chains}
 
@@ -295,27 +299,24 @@ mgf_\theta(\mu) = \sum_j \pi_j e^{\mu \theta\{j\}}
 \end{equation}
 For the HOXD substitution matrix and associated affine gap penalties this equation takes the form $mgf_\theta(\mu) = \pi_{A\leftrightarrow A}e^{91\mu} + \pi_{C\leftrightarrow C}e^{100\mu} + \pi_{G\leftrightarrow G}e^{100\mu} + \pi_{T\leftrightarrow T}e^{91\mu} + \pi_{A\leftrightarrow C}e^{-114\mu} + \pi_{A\leftrightarrow G}e^{-31\mu} + \pi_{A\leftrightarrow C}e^{-123\mu} + \pi_{C\leftrightarrow G}e^{-125\mu} + \pi_{C\leftrightarrow T}e^{-31\mu} +  \pi_{G\leftrightarrow T}e^{-114\mu} + \pi_{gapopen}e^{-400\mu} + \pi_{gapext}e^{-35\mu}$; where $\pi_j$ is the observed frequency of a column of type $j$ in the alignment.  FIXME: is this right and does it work correctly for gaps?
 
-We estimate the values of $K$ and $\wedge(N)$ from Equation~\ref{eqn:evd} by recording the maximum LRH values observed in each of 10,000 simulations and then fitting the functional form of Equation~\ref{eqn:evd} to the resulting distribution of extreme values.  FIXME: need to incorporate Guillaume's GC content approximation here?
+We estimate the values of $K$ and $\wedge(N)$ from Equation~\ref{eqn:evd} by recording the maximum LRH values observed in each each of 10,000 simulations and then fitting the functional form of Equation~\ref{eqn:evd} to the resulting distribution of extreme values.  FIXME: need to incorporate Guillaume's GC content approximation here?
 
 Solving for $\mu$ and subsequent application of Equation~\ref{eqn:evd} enables us to deduce an approximate scoring threshold beyond which the ladder epoch in question contains non-homologous sequence with probability greater than a chosen value.
 
 Although we can be nearly certain that ladder epochs with a LRH exceeding our significance threshold contain an alignment of non-homologous sequence, the exact columns where the transitions between homology and non-homology take place remain ambiguous.  To determine tight boundaries on the non-homologous region, we compute ladder points for the significant region in the forward and reverse direction and call the entire region between ladder points non-homologous.
 
-The result of applying the random-walk statistics is a prediction of non-homologous segments among each pair of aligned sequences.  The remaining regions are predicted as homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig:example}, steps 5 and 6 for an example. Regions found to be non-homologous are unaligned from each other.
+The result of applying the random-walk statistics is a prediction of non-homologous segments among each pair of aligned sequences.  The remaining regions are predicted as homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig:main}, steps 5 and 6 for an example. Regions found to be non-homologous are unaligned from each other.
 
 
 \textbf{FIXME}: we can exceed the threshold and still improve boundaries.  If have reached the end of the extension window without going beyond our homology threshold, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, if we surpass the homology threshold we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
-
-%\subsubsection{Processing Novel homologous sequence}
-%Its worth mentioning that novel homologous sequence can be found during gapped extension.
-%FIXME: should briefly describe what we do with this!
 
 \subsection{Assigning significance to local multiple alignments}
 FIXME: insert statistics here!
 
 
 
-\section{Retrieval of randomly generated motifs}
+\section{Results}
+\subsection{Retrieval of randomly generated patterns}
 %describe and present results(table)
 \begin{table}[b]
 \scriptsize
