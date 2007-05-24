@@ -73,8 +73,8 @@ Bridging the gap: improving local multiple alignment with gapped extension.
 \begin{tabular}[t]{c@{\extracolsep{2em}}c}  % two persons in one line
 %\begin{tabular}[t]{c@{\extracolsep{2em}}c@{\extracolsep{2em}}c}
                                             % three persons in one line
-  \bf    Todd  Treangen\footnotemark[1]
- &\bf    Aaron E. Darling\footnotemark[2]
+  \bf    Todd  Treangen\footnotemark[1]$^\dag$
+ &\bf    Aaron E. Darling\footnotemark[2]$^\dag$
 
 \\
   \small\tt treangen@lsi.upc.edu
@@ -122,9 +122,12 @@ Univ. of Queensland, Brisbane, Australia
 %%%%%%%%%% Affiliation for footnotemark[3] %%%%%%%%%%%%%%%%%%%%
 Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6, Paris, France
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-}\\
+\\$^\dag$ These authors contributed equally to this work \\}\\
+
+
 \end{tabular}
 \end{small}
+
 \bigskip
 \end{center}
 
@@ -161,7 +164,7 @@ We present a novel heuristic for directly computing local multiple alignments th
 
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous nucleotides in $\mathcal{S}$.
-Since we assume that homology is a transitive property, all 
+Since we assume that homology is a transitive property, all
 local multiple alignments on subsequences of $\mathcal{S}$. We denote
 an ungapped alignment, or match, among subsequences in $\mathcal{S}$
 as an object $M$, and a set of such matches as $\mathbf{M}$.
@@ -174,9 +177,7 @@ left-end coordinate.  This constraint has been referred to by others as \textit{
 present work we only require consistency and transitivity of matches
 longer than the seed length, e.g. seed matches may overlap. We denote a gapped alignment, or local alignment, among subsequences in $\mathcal{S}$ as $A$, and a set of gapped alignments as $\mathbf{A}$.  In practice, each $A_i$ in $\mathbf{A}$ is constructed via
 at least one $M_i$ in $\mathbf{M}$. When $|M_i|>2$,$|A_i|>2$ we refer to $M_i$,$A_i$ as
-a multi-match and a multiple local alignment, respectively.  
-
-The sum of pairs objective function used is defined as follows:\\
+a multi-match and a multiple local alignment, respectively. The sum of pairs objective function used is defined as follows:\\
 %\begin{equation}
 
 $$
@@ -218,7 +219,7 @@ pattern is used at each sequence position.}
 \label{fig-seeds}\vspace{-0.2cm}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[p]
 \begin{center}
 \epsfig{file=./figures/extension.eps,width=5.0in}
 %\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
@@ -231,17 +232,18 @@ pattern is used at each sequence position.}
 
 %\colorbox[named]{Gray}{adfa}
 
-\subsection{Detecting seed multi-matches}
+\subsection{Detecting seeds and multi-matches}
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches (see Figure~\ref{fig-seeds}).  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
+As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The many advantages of using spaced seeds for sensitive homology detection have been well documented~\cite{ref-spacedseeds, ref-pattern}. The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches (see Figure~\ref{fig-seeds}).   The lexicographically-lesser of the forward and reverse complement
+subsequence induced by the seed pattern is hashed to identify multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}. Additionally, the use of \textit{palindromic} seed patterns offers computational savings by allowing both strands of DNA to be processed simultaneously.
 
 \subsection{Creating chains of multi-matches}
 
-Once we have generated a list of multi-matches, we rely on our previously described method for efficiently filtration method for chaining ~\cite{ref-procrast}. A brief review of the method follows(for additional details refer to the manuscript).
-
-In order to chain over each region of sequence $\mathcal{O}(1)$ times,
+Once we have generated a list of multi-matches, we rely on our previously described method for efficiently filtration method for chaining ~\cite{ref-procrast}. A brief review of the method follows. In order to chain over each region of sequence $\mathcal{O}(1)$ times,
 our method chains matches in order of decreasing multiplicity--we
-extend the highest multiplicity matches first. When a match can no
+extend the highest multiplicity matches first. We first chain all matches
+with the same multiplicity within $w$
+characters. Then a match can no
 longer be chained without including a gap larger than $w$
 characters, our method identifies the neighboring \textit{subset}
 matches within $w$ characters. We then \textit{link} each
@@ -250,16 +252,15 @@ chained match as a \textit{superset} match. Rather than immediately
 extend the subset match(es), we \textit{procrastinate} and extend
 the subset match later when it has the highest multiplicity of any
 match waiting to be extended. When chaining a match with a linked
-superse, we
-immediately include the entire region covered by the linked superset
+superset, we immediately include the entire region covered by the linked superset
 match--obviating the need to re-examine sequence already covered by
 a previous match extension.
 
-Once we have finished the chaining process, we would like to score and evaluate the chained multi-matches to make a decision whether its worth spending computational resources on gapped extension. This idea has been used in other local multiple alignment heuristics~\cite{...} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.
+Once we have finished the chaining process, we performed gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We then score and evaluate them in order make a decision whether its worth spending computational resources on gapped extension. We require each possible pair of the unextended local multiple alignment to exceed a configurable score threshold $t$, which is by default set to $r*2000$. We can also require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used. This idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.
 
 \subsection{Gapped extension of high scoring chains}
 
-Now that we have decided to performed a gapped extension in the current direction, we use MUSCLE to align the left/right region immediately surrounding the chains. The size of the extension window we send to MUSCLE is the lesser of 4*w or 200 nucleotides. The reasoning by setting our minimum extension window to 200nt is closely related to how we determine homology borders. Since we will assume that the extension window we have decided to align with MUSCLE is homologous over its entire length, we use random walk statistics to correct our assumption.
+To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is the lesser of 4*w or 200 nucleotides. The reasoning by setting our minimum extension window to 200nt is closely related to how we determine homology borders. Since we will assume that the extension window we have decided to align with MUSCLE is homologous over its entire length, we use random walk statistics to correct our assumption.
 
 \subsection{Identifying non-homologous regions}
 
@@ -294,7 +295,7 @@ mgf_\theta(\mu) = \sum_j \pi_j e^{\mu \theta\{j\}}
 \end{equation}
 For the HOXD substitution matrix and associated affine gap penalties this equation takes the form $mgf_\theta(\mu) = \pi_{A\leftrightarrow A}e^{91\mu} + \pi_{C\leftrightarrow C}e^{100\mu} + \pi_{G\leftrightarrow G}e^{100\mu} + \pi_{T\leftrightarrow T}e^{91\mu} + \pi_{A\leftrightarrow C}e^{-114\mu} + \pi_{A\leftrightarrow G}e^{-31\mu} + \pi_{A\leftrightarrow C}e^{-123\mu} + \pi_{C\leftrightarrow G}e^{-125\mu} + \pi_{C\leftrightarrow T}e^{-31\mu} +  \pi_{G\leftrightarrow T}e^{-114\mu} + \pi_{gapopen}e^{-400\mu} + \pi_{gapext}e^{-35\mu}$; where $\pi_j$ is the observed frequency of a column of type $j$ in the alignment.  FIXME: is this right and does it work correctly for gaps?
 
-We estimate the values of $K$ and $\wedge(N)$ from Equation~\ref{eqn:evd} by recording the maximum LRH values observed in each each of 10,000 simulations and then fitting the functional form of Equation~\ref{eqn:evd} to the resulting distribution of extreme values.  FIXME: need to incorporate Guillaume's GC content approximation here?
+We estimate the values of $K$ and $\wedge(N)$ from Equation~\ref{eqn:evd} by recording the maximum LRH values observed in each of 10,000 simulations and then fitting the functional form of Equation~\ref{eqn:evd} to the resulting distribution of extreme values.  FIXME: need to incorporate Guillaume's GC content approximation here?
 
 Solving for $\mu$ and subsequent application of Equation~\ref{eqn:evd} enables us to deduce an approximate scoring threshold beyond which the ladder epoch in question contains non-homologous sequence with probability greater than a chosen value.
 
@@ -312,10 +313,55 @@ The result of applying the random-walk statistics is a prediction of non-homolog
 \subsection{Assigning significance to local multiple alignments}
 FIXME: insert statistics here!
 
-\section{Results}
-We have created a program called \texttt{procrastAligner} for Linux, Windows, and Mac OS X that implements the described algorithm. Our
-open-source implementation is available as C++ source code licensed under the GPL. As input, \texttt{procrastAligner} accepts FastA and multi-FastA DNA sequences. As output, the program returns a XMFA formatted file of all significant local multiple alignments. Figure~\ref{fig-align} shows an example local multiple alignment generated with \texttt{procrastAligner}.
 
+
+\section{Retrieval of randomly generated motifs}
+%describe and present results(table)
+\begin{table}[b]
+\scriptsize
+  \centering
+\begin{tabular}{|lccccc||rccccc|}
+\hline ID & Length & Copies & Indels & Substitutions & Inversions & Method & Sn \% & Sp \% & T (s) & Sw & $w$ \\
+\hline
+\hline \textbf{Pattern1} &  49 nt &  42 & 1 & 1 & 0 & EulerAlign & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT} & HomologMiner & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c||}{\tiny }& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
+\hline \textbf{Pattern2} &   - &  - & - & - & - & EulerAlign & - & - & - & - & -  \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT} & HomologMiner & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c||}{\tiny }& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
+\hline \textbf{Pattern3} & - &  - & - & - & - & EulerAlign & - & -& - & - & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT} & HomologMiner & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT}& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
+\hline \textbf{Pattern4} & - & - & - & - & - & EulerAlign & -& -& - & - & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT} & HomologMiner & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT}& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
+\hline \textbf{Pattern5} & - & - & - & - & - & EulerAlign & -& -& - & - & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT} & HomologMiner & 100 & 97.3 & 324 & 9 & - \\
+\multicolumn{6}{|c||}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT}& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
+\hline
+\end{tabular}
+\vspace{0.1cm}
+ \label{tab-results}
+  \caption{}
+ 
+\end{table}
+We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
+the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed heuristic for gapped extension, we compare \texttt{procrastAligner}'s performance to that of two related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}. For this comparison we have inserted mutated copies of randomly generated patterns into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method~\cite{ref-mycoplasma}. We generated and insert artificially generated DNA patterns into the genome as follows. To evaluate sensitivity and specificity of the methods as a function of multiplicity we generated 10 patterns for each multiplicity between 2 and 300. We next chose a pattern length for each multiplicity (larger pattern lengths for lower multiplicities and vice versa) using the following exponential equation distribution of lengths: $l = -200e^{-0.03r}$ , where $r$ is pattern multiplicity and $l$ the calculated length.
+
+To better approximate Then, we populated the pattern with nucleotides at each position of the pattern by using a background nucleotide frequency equivalent to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Then, we randomly mutated each copy of the pattern following a star tree topology. Some positions in the pattern were taken to be more likely to contain mutations by using a gamma-distributed rate heterogeneity. The distance between each mutation and length of indels were calculated using a Poisson distribution. Sequence divergence was varied from 0 substitutions per site (i.e. no divergence) to 1 substitution per site, allowing us also to analyze sensitivity and specificity of each method as a function of sequence divergence. Afterwards, we assigned an orientation to each copy by selecting either the forward or reverse strand.
+Finally,
+
+Now that the pattern and all copies are ready to be inserted into the sequence, we randomly selected the minimum distance between any two copies (between 100-1000nt) following a uniform distribution and inserted each copy into the genome.  We started the analysis by simply recording each method's ability to recover all mutated copies of the  artificially generated pattern. If a copy of the pattern was found, it was recorded as a hit, else miss. We also used each method to find all significant multiple local alignments in the modified genome of \emph{M. genitalium} and recorded their respective sensitivity and specificity as a function of multiplicity and sequence divergences. Results of this experiment are reported in Table~\ref{tab-results}. Parameters for each program are listed below.
+
+\begin{center}
+\begin{description}
+\item[\texttt{procrastAligner}:] \texttt{--z=9 --w=30}
+\item[\texttt{EulerAlign}:]     \texttt{ -k 9 -l -i 50}
+\item[\texttt{HomologMiner}:]    \texttt{-F -S}
+
+\end{description}
+\end{center}
+\section{Discussion}
 
 \begin{figure}[t]
 \scriptsize
@@ -337,83 +383,13 @@ CTGCTACTCAGGAAGCTGAGGCAGGAGAATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATT
 \caption{Partial alignment of Alu-Sc subfamily found in \emph{H. sapiens} C1 esterase inhibitor gene. Each row represents an aligned ALU.}.
 \label{fig-align}
 \end{figure}
-
-\subsection{Retrieval of randomly generated motifs}
-%describe and present results(table)
-Comparison with EulerAlign, HomologMiner, MultiZ, and RepeatScout??
-
-
-We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
-the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed heuristic for gapped extension, we have inserted mutated copies of randomly generated patterns into \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method. Specifically, we used a 6 step process to generate and insert artificially generated DNA patterns into the genome is as follows. First, we randomly choose a pattern length, between 20nt and 200nt (\textbf{is this random from a uniform distribution of lengths?}). Then, we randomly choose a nucleotide for each column of the pattern (\textbf{what is the background frequency of A/C/G/T?}). After we have generated the pattern, we then randomly selected a multiplicity/copy number for the pattern (between 20 and 300 copies). We configured the process to make it less likely for larger patterns to have higher multiplicities, and vice versa \textbf{give the equation}. Then, we randomly mutated each copy of the pattern using substitutions and indels. The substitution and indel frequency were configured to 0.0x. Afterwards, we randomly placed each copy either on the forward or reverse strand. Finally, we randomly selected the minimum distance between any two copies (between 100-1000nt)\textbf{uniform distribution?}. Again, we made it more likely for smaller patterns to be located further apart, and larger patterns closer together\textbf{why?}. We then used \texttt{procrastAligner} to find all significant multiple local alignments in the modified genome of \emph{M. genitalium} and recorded whether it was able to fully recover all mutated copies of the  artificially generated pattern. Then we compared \texttt{procrastAligner}'s performance to that of two related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}, by evaluating each program's ability to accurately recover the inserted patterns via their multiple local alignment heuristic. Results of this experiment are reported in Table~\ref{tab-results}.
-
-\textbf{note from AED:}\textit{Another possibility would be to generate, say, 10 patterns for each multiplicity between 20 and 300 (or 2 and 300), then plot the change in sensitivity/specificity as a function of multiplicity.  It would also be nice to see how Sn/Sp vary as a function of sequence divergence.  For example, we could try a range from 0 substitutions per site (no divergence) to 1 or 2 substitutions per site.  Since we're modeling all sites to be equally likely to accept a substitution, we would expect procrastAligner to totally break down before we get to 1 substitution per site.  A common refinement to these models assumes that some sites are more likely to mutate than others, and this is typically modeled using a gamma distribution (aka gamma-distributed rate heterogeneity).}
-
-\begin{table}[t!]
-\scriptsize
-  \centering
-\begin{tabular}{|lccccc|rccccc|}
-\hline ID & Length & Copies & Indels & Subs & Inversions & Method & Sn \% & Sp \% & T (s) & Sw & $w$ \\
-\hline
-\hline Pattern1 &  49 nt &  42 & 1 & 1 & 0 & EulerAlign & 100 & 97.3 & 324 & 9 & - \\
-%&&&&&                                           & MultiZ & 100 & 97.3 & 324 & 9 & - \\
-\multicolumn{6}{|c|}{\tiny ATCCTAGTCTAGAATTATTTATTCAGTTAGTTTCTACGAAGATGAACAAT}& procrastAlign & 100 & 93.6 & 188 & 9 & 33 \\
-\hline Pattern2 &   - &  - & - & - & - & EulerAlign & - & - & - & - & -  \\
-\cline{7-12}                                            &&&&&& procrastAlign & - &- & - & - & -\\
-\hline Pattern3 & - &  - & - & - & - & EulerAlign & - & -& - & - & - \\
-\cline{7-12}                                            &&&&&& procrastAlign & -& - & -& - & - \\
-\hline Pattern4 & - & - & - & - & - & EulerAlign & -& -& - & - & - \\
-\cline{7-12}                                            &&&&&& procrastAlign & - &- & - & - &- \\
-\hline Pattern5 & - & - & - & - & - & EulerAlign & -& -& - & - & - \\
-\cline{7-12}                                            &&&&&& procrastAlign & - & - &- & - & - \\
-\hline
-\end{tabular}
-\vspace{0.1cm}
-  \caption{Performance of \texttt{procrastAlign} and the Eulerian path approach on Alu repeats.
-  Rep: total number of Alu elements; Family: number of Alu
-  families; Alu: average Alu length in bp (S.D.); Div: average Alu divergence (S.D.);
-   Sn: sensitivity; Sp: specificity; T: compute time; Sw: palindromic seed weight; $w$: max gap size.  Alus were
-  identified by RepeatMasker~\cite{ref-repbase}. We report data for the fast
-  version of the Eulerian path method as given by Table~1 of ~\cite{ref-related1}. Sensitivity and specificity
-  of \texttt{procrastAlign} was computed as described in the text.}
-  \label{table:alu}
-\end{table}
-
-
-
-
-
-\subsection{Hepatitis C alignment}
-%Not sure if can finish in time..
-Using a manually curated alignment of 144
-Hepatitis C virus genome sequences~\cite{ref-hcvdb}, we measure the
-alignment sensitivity of our method as the fraction of pairwise
-positions aligned in the correct alignment that are also present in
-\texttt{procrastAligner} local multiple alignments. We compared our result to that of progressiveMauve and MultiZ.
-
-
-\section{Discussion}
 We have presented a sensitive and efficient heuristic for local multiple alignment.
 We have extended previous results by converting chains of ungapped alignments into to multiple local alignments. We do so via a novel heuristic for directly computing local multiple alignments that utilizes the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We apply random walk statistics to detect any such non-homologous regions embedded in the global multiple alignment.
 Present results have demonstrated both high sensitivity and specificity on aligning Alu
-sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments.
+sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments.While we view the statistical significance proposal a preliminary, thus far the results of our significance assessment indicates a promising avenue of further research.
 
-While we view the statistical significance proposal a preliminary, thus far the results of our significance assessment indicates a promising avenue of further research.
-
-
-
-\begin{table}[t!]
-\begin{center}
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
-\hline Method & Accession & length(Kb) & Id & length(bp) & copies &  Sn \% & T (s) & k\\
-\hline procrastAligner   & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
-\hline progressiveMauve & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
-\hline multiz & - & 22 & M1 & 96 & 110 & 99.0 & 120 & 11 \\
-\hline
-\end{tabular}
-\caption{Hepatitis C multiple alignment comparison.}
-\label{tab-results}
-\end{center}
-\end{table}
+\section{Implementation}
+We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL. As input, \texttt{procrastAligner} accepts FastA and multi-FastA DNA sequences. As output, the program returns a XMFA formatted file of all significant local multiple alignments. Figure~\ref{fig-align} shows an example local multiple alignment generated with \texttt{procrastAligner}.
 
 \section{ Acknowledgments }
 AED was supported by NSF grant DBI-0630765. TJT was
