@@ -136,6 +136,8 @@ int main( int argc, char* argv[] )
 	// pick a gene at random from the first genome, extract the alignment, and write it to a file
 	for( size_t geneI = 0; geneI < genes.size(); geneI++ )
 	{
+		if( geneI == 156 )
+			cerr << "watchme\n";
 		// is this gene part of N-way backbone?
 		gnLocation loc = genes[geneI]->GetLocation(0);
 		int64 lend = loc.GetFirst();
@@ -177,13 +179,21 @@ int main( int argc, char* argv[] )
 		{
 			if( input_ivs[ivI].Start(sgI) != NO_MATCH )
 			{
-				gnLocation loc1;
-				loc1.SetStart( input_ivs[ivI].LeftEnd(sgI) );
-				loc1.SetEnd( input_ivs[ivI].RightEnd(sgI) );
-				gnLocation intloc = loc1.GetIntersection( loc, gnLocation::determinedRegions );
-				size_t diff = intloc.GetEnd()-intloc.GetStart();
-				if( diff > 0 )
-					iv_overlap.push_back( make_pair( diff, ivI ) );
+				size_t inter_size = 0;
+				for( size_t bbI = 0; bbI < nway_bb.size(); bbI++ )
+				{
+					gnLocation loc1;
+					loc1.SetStart( input_ivs[ivI].LeftEnd(sgI) );
+					loc1.SetEnd( input_ivs[ivI].RightEnd(sgI) );
+					gnLocation loc2;
+					loc2.SetStart( abs(backbone[nway_bb[bbI]][sgI].first) );
+					loc2.SetEnd( abs(backbone[nway_bb[bbI]][sgI].second) );
+					gnLocation intloc = loc1.GetIntersection( loc2, gnLocation::determinedRegions );
+					gnLocation intloc2 = intloc.GetIntersection( loc, gnLocation::determinedRegions );
+					inter_size += intloc2.GetEnd() - intloc2.GetStart();
+				}
+				if( inter_size > 0 )
+					iv_overlap.push_back( make_pair( inter_size, ivI ) );
 			}
 		}
 		bool partial_rr = false;
@@ -208,6 +218,8 @@ int main( int argc, char* argv[] )
 		gnLocation intloc = loc1.GetIntersection( loc, gnLocation::determinedRegions );
 		gnSeqI lcol = iv_cga.SeqPosToColumn( sgI, intloc.GetStart() );
 		gnSeqI rcol = iv_cga.SeqPosToColumn( sgI, intloc.GetEnd() );
+		if( rcol < lcol )
+			swap( rcol, lcol );	// handle reverse complement
 		iv_cga.copyRange(col_cga, lcol, rcol-lcol + 1);
 		vector< string > aln;
 		GetAlignment( col_cga, input_ivs.seq_table, aln );
@@ -241,7 +253,16 @@ int main( int argc, char* argv[] )
 				if( int_feats[featI]->GetName() == "CDS" )
 				{
 					gnLocation l = seqloc.GetIntersection( int_feats[featI]->GetLocation(0), gnLocation::determinedRegions );
-					overlap_frac.push_back( make_pair( l.GetEnd() - l.GetStart(), featI ) );
+					size_t max_bb = 0;
+					for( size_t bbI = 0; bbI < nway_bb.size(); bbI++ )
+					{
+						gnLocation bbloc;
+						bbloc.SetBounds( abs(backbone[nway_bb[bbI]][seqI].first), abs(backbone[nway_bb[bbI]][seqI].second) );
+						gnLocation l2 = bbloc.GetIntersection( l, gnLocation::determinedRegions );
+						if( l2.GetEnd() - l2.GetStart() > max_bb )
+							max_bb = l2.GetEnd() - l2.GetStart();
+					}
+					overlap_frac.push_back( make_pair( max_bb, featI ) );
 				}else
 					delete int_feats[featI];
 			}
@@ -255,6 +276,8 @@ int main( int argc, char* argv[] )
 
 		if( ocds_count == seq_count )
 		{
+			if( ortho_count == 88 )
+				cerr << "watchme\n";
 			ortho_out << ortho_count;
 			for( size_t i = 0; i < seq_count; i++ )
 			{
