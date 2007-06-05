@@ -344,7 +344,7 @@ FIXME: insert statistics here!
 \vspace{0.1cm}
  \label{tab-results}
   \caption{}
- 
+
 \end{table}
 We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
 the human genome~\cite{ref-procrast}. To highlight the benefits of our proposed heuristic for gapped extension, we compare \texttt{procrastAligner}'s performance to that of two related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}. For this comparison we have inserted mutated copies of randomly generated patterns into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method~\cite{ref-mycoplasma}. We generated and inserted DNA patterns into the genome as follows. To evaluate sensitivity and specificity of the methods as a function of multiplicity we generated 10 patterns for each multiplicity between 2 and 300. To generate each pattern, we first randomly determined a length for each multiplicity (larger pattern lengths for lower multiplicities and vice versa) using the following exponential equation: $l = 200e^{-0.01r}$ , where $r$ is pattern multiplicity and $l$ the calculated length.
