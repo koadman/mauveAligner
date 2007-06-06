@@ -60,20 +60,12 @@ public:
 	}
 };
 
-/** defines a multiplicity heap ordering */
-class MultiplicityHeapCompare
-{
-public:
-	bool operator()( const MatchRecord* a, const MatchRecord* b )
-	{
-		return a->Multiplicity() < b->Multiplicity();
-	}
-};
+
 bool scorecmp( pair< double, GappedMatchRecord* > a, pair< double, GappedMatchRecord* > b ) 
 {
    return a.first > b.first;
  }
-/** The subset record contains the subset pointer, the component map to the superset, and a vector of distances */
+/** The NeighborhoodGroup contains the MatchRecord pointer, the component map to the match being extended (M_i), and a vector of distances to M_i*/
 typedef boost::tuple< MatchRecord*, std::vector< size_t >, std::vector< size_t > > NeighborhoodGroup;
 
 class NeighborhoodGroupComponentCompare
@@ -369,7 +361,7 @@ void createNeighborhoodGroupList( vector< NeighborhoodGroup >& group_list, vecto
 		swap( group_list[gI].get<2>(), distances );
 	}
 
-	NeighborhoodGroupCompare src;
+	static NeighborhoodGroupCompare src;
 	std::sort( group_list.begin(), group_list.end(), src );
 }
 
@@ -771,6 +763,607 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	
 }//tjt: match should be extended!
 
+
+/**
+ * Performs a superset link extension on M_i
+ */
+void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_linked, 
+						   vector< NeighborhoodGroup >& left_deferred_subsets, 
+						   vector< NeighborhoodGroup >& right_deferred_subsets )
+{
+	// update the left end and look for another superset to chain with
+	// then extend all the way to that match
+	MatchRecord* M_j = getSuperset(M_i, direction).superset;
+	MatchLink ij_link = getSuperset(M_i, direction);	// make a copy for safekeeping
+	int ij_parity = M_i->Orientation(0) == M_j->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
+
+	//
+	// Link extension part 1: 
+	// extend M_i to include M_j, add M_j to the chained matches
+	bool changed = extendRange( M_i, M_j, ij_link.sub_to_super_map );
+	M_i->chained_matches.push_back(M_j);
+	M_i->chained_component_maps.push_back(ij_link.sub_to_super_map);
+
+
+
+	// Link extension part 2:
+	// figure out whether any subsets between M_j and M_i got subsumed
+	for( size_t subtypeI = 0; subtypeI < 2; subtypeI++ )
+	{
+		vector< MatchLink >* mjsubs;
+		if( subtypeI == 0 )
+			mjsubs = &getSubsets(M_j, -direction*ij_parity);
+		else
+			mjsubs = &getExtraSubsets(M_j, -direction*ij_parity);
+		vector< MatchLink >& mj_otherside_subsets = *mjsubs;
+
+		for( size_t leftI = 0; leftI < mj_otherside_subsets.size(); ++leftI )
+		{
+			if( subtypeI == 0 )
+				checkLink( mj_otherside_subsets[leftI] );
+			MatchLink& jk_link = mj_otherside_subsets[leftI];
+			boost::dynamic_bitset<> intersect = ij_link.super_component_list & jk_link.super_component_list;
+			MatchRecord* M_k = jk_link.subset;
+			if( M_k == M_i )
+				continue;	// been there, chained that.
+			size_t inter_size = intersect.count();
+			if( inter_size < 2 )
+				continue;	// no match
+			if( inter_size >= M_i->Multiplicity() || M_k->Multiplicity() != inter_size )
+				continue;
+
+			// has this guy already been subsumed?  if so then just skip him
+			if( M_k->subsuming_match != NULL )
+			{
+				if( subtypeI != 1 )
+					breakHere(); // this should only happen with extra subsets
+				mj_otherside_subsets.erase(mj_otherside_subsets.begin()+leftI, mj_otherside_subsets.begin()+leftI+1 );
+				leftI--;
+				continue;
+			}
+
+			// M_k is a subset relative to M_i
+			int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
+			int ik_parity = ij_parity * jk_parity;
+
+			vector< size_t > component_map( M_k->Multiplicity() );
+			remapComponents(jk_link.sub_to_super_map, M_j->Multiplicity(), ij_link.sub_to_super_map, component_map );
+
+			NeighborhoodGroup sr = boost::make_tuple( M_k, component_map, vector<size_t>( M_k->Multiplicity(), 0 ) );
+			// defer it until we're done extending
+			selectList( left_deferred_subsets, right_deferred_subsets, -direction ).push_back( sr );
+		}
+	}
+
+	//
+	// Link extension part 3:
+	// classify outgoing links that share components with M_i
+	unlinkSuperset(M_i,direction);
+	vector< size_t > supersets;
+	vector< size_t > chainable;
+	vector< size_t > subsets;
+	vector< size_t > novel_subsets;
+	vector< MatchLink >& mj_subsets = getSubsets(M_j, direction*ij_parity);
+	for( size_t leftI = 0; leftI < mj_subsets.size(); ++leftI )
+	{
+		checkLink( mj_subsets[leftI] );
+		boost::dynamic_bitset<> intersect = ij_link.super_component_list & mj_subsets[leftI].super_component_list;
+		MatchRecord* M_k = mj_subsets[leftI].subset;
+		if( M_k == M_i )
+			continue;	// been there, chained that.
+		size_t inter_size = intersect.count();
+		if( inter_size < 2 )
+			continue;	// no match
+			// M_k is a superset relative to M_i
+		if( inter_size == M_i->Multiplicity() && M_k->Multiplicity() > inter_size )
+			supersets.push_back(leftI);
+		else if( inter_size == M_i->Multiplicity() && M_k->Multiplicity() == inter_size )
+			chainable.push_back(leftI);
+		else if( inter_size < M_i->Multiplicity() && M_k->Multiplicity() == inter_size )
+			subsets.push_back(leftI);
+		else
+			novel_subsets.push_back(leftI);
+	}
+
+	if( supersets.size() > 0 )
+	{
+//#4018
+		cerr << "something is wrong, we should never have supersets during link extension!\n";
+		breakHere();
+	}
+
+	for( size_t cI = 0; cI < chainable.size(); ++cI )
+	{
+		if( chainable.size() > 1 )
+		{
+			cerr << "bad news bruthah\n";
+			genome::breakHere();
+		}
+		// chain with this guy
+		MatchLink& jk_link = mj_subsets[chainable[cI]];
+		MatchRecord* M_k = jk_link.subset;
+		if( M_k->extended )
+		{
+			cerr << "extensor crap\n";
+			breakHere();
+		}
+		if( M_k == M_i )
+		{
+			cerr << "crap\n";
+			breakHere();
+		}
+
+		// update boundary coordinates
+		vector< size_t > component_map( M_i->Multiplicity() );
+		remapComponents(ij_link.sub_to_super_map, M_j->Multiplicity(), jk_link.sub_to_super_map, component_map );
+		bool changed = extendRange( M_i, M_k, component_map );
+		if( changed )
+			last_linked = 2;
+
+		// unlink from superset
+		int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
+		unlinkSuperset(M_k,-direction*ij_parity*jk_parity);
+		// set subsuming match ptrs
+		M_k->subsuming_match = M_i;
+		M_k->subsumption_component_map = component_map;
+		M_i->chained_matches.push_back( M_k );
+		M_i->chained_component_maps.push_back( component_map );
+
+		// compensate for the deletion in subsets
+		for( size_t subI = 0; subI < chainable.size(); subI++ )
+			if( chainable[subI] > chainable[cI] )
+				chainable[subI]--;
+		for( size_t subI = 0; subI < subsets.size(); subI++ )
+			if( subsets[subI] > chainable[cI] )
+				subsets[subI]--;
+
+		// inherit M_k's outward superset and stop chaining here
+		if( getSuperset( M_k, direction*ij_parity*jk_parity ).superset != NULL )
+		{
+			inheritSuperset( M_i, M_k, direction, ij_parity*jk_parity );
+			last_linked = 2;
+			break;
+		}
+	}
+
+	// process subsets
+	for( size_t sI = 0; sI < subsets.size(); ++sI )
+	{
+		// change M_k to point at M_i
+		MatchLink& jk_link = mj_subsets[subsets[sI]];
+		MatchRecord* M_k = jk_link.subset;
+		int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
+		int ik_parity = ij_parity * jk_parity;
+
+		vector< size_t > component_map( M_k->Multiplicity() );
+		remapComponents(jk_link.sub_to_super_map, M_j->Multiplicity(), ij_link.sub_to_super_map, component_map );
+		// rebuild the superset component list
+		boost::dynamic_bitset<> comp_list(M_i->Multiplicity(), false);
+		for( size_t compI = 0; compI < component_map.size(); ++compI )
+			if(component_map[compI] != (std::numeric_limits<size_t>::max)())
+				comp_list.set(component_map[compI]);
+		unlinkSuperset(M_k,-1*direction*ik_parity);
+
+		// add to the deferred subsets list
+		NeighborhoodGroup sr = boost::make_tuple( M_k, component_map, vector<size_t>( M_k->Multiplicity(), 0 ) );
+		vector< NeighborhoodGroup >& subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
+		subset_list.push_back( sr );
+
+		// compensate for the deletion in subsets
+		for( size_t subI = 0; subI < subsets.size(); subI++ )
+			if( subsets[subI] > subsets[sI] )
+				subsets[subI]--;
+	}
+}
+
+/**
+ * Performs a neighborhood list extension
+ */
+void neighborhoodListLookup( GappedMatchRecord*& M_i, 
+						   MatchPositionLookupTable& match_pos_lookup_table,
+						   vector< NeighborhoodGroup >& superset_list, 
+						   vector< NeighborhoodGroup >& chainable_list,
+						   vector< NeighborhoodGroup >& subset_list, 
+						   vector< NeighborhoodGroup >& novel_subset_list,
+						   int direction,
+						   uint seed_size,
+						   uint w,
+						   bitset_t& left_lookups,
+						   bitset_t& right_lookups
+						   )
+{
+	//
+	// construct a neighborhood list and process the neighborhood groups
+	//
+	vector< NeighborhoodListEntry > neighborhood_list;
+	for( size_t x = 0; x < M_i->Multiplicity(); ++x )
+	{
+		int o_x = M_i->Orientation(x) == AbstractMatch::forward ? 1 : -1;
+		int parity = o_x * direction;
+		int64 match_end = parity == 1 ? M_i->LeftEnd(x) : M_i->RightEnd(x) - seed_size + 1;
+
+		if( match_end > 0 )
+			if( (direction == 1 && left_lookups.test(match_end)) ||
+				(direction == -1 && right_lookups.test(match_end)) )
+			{
+				cerr << "looking twice in the same place\n";
+//							genome::breakHere();
+			}else{
+				if( direction == 1 )
+					left_lookups.set(match_end);
+				if( direction == -1 )
+					right_lookups.set(match_end);
+			}
+
+		for( int d = 1; d <= w; ++d )
+		{
+			if( match_end <= parity * d )
+				continue;	// we're too close to the beginning
+			size_t mplt_index = match_end - parity * d;
+			if( mplt_index >= match_pos_lookup_table.size() )
+				continue;	// we're too close to the end!
+
+			MatchRecord* M_j = match_pos_lookup_table[ mplt_index ].first;
+			size_t y = match_pos_lookup_table[ mplt_index ].second;
+			if( M_j == NULL )
+				continue;	// no match at this position
+
+			NeighborhoodListEntry nle;
+			nle.match = M_j;
+			nle.Mi_component = x;
+			nle.Mj_component = y;
+			// update the link if this one was subsumed
+			checkLinkAndComponent( M_j, y );
+			int o_y = ((AbstractMatch*)M_j)->Orientation(y) == AbstractMatch::forward ? 1 : -1;
+			nle.relative_orientation = o_x * o_y == 1 ? true : false;
+			nle.distance = d;
+			neighborhood_list.push_back( nle );
+			
+			if( M_j == M_i )
+			{
+				M_i->tandem = true;
+				break;	// not so fast there cowboy!  can't chain beyond ourself!
+			}
+		}
+	}
+
+	//
+	// now classify each group of the neighborhood list and act appropriately
+	// group types are superset, chainable, subset, novel subset
+	//
+	NeighborhoodListComparator nlc;
+	std::sort( neighborhood_list.begin(), neighborhood_list.end(), nlc );
+
+	std::vector< std::vector< size_t > > superset_groups;
+	std::vector< std::vector< size_t > > chainable_groups;
+	std::vector< std::vector< size_t > > subset_groups;
+	std::vector< std::vector< size_t > > novel_subset_groups;
+
+	size_t group_end = 0;
+	for( size_t prev = 0; prev < neighborhood_list.size(); prev = group_end )
+	{
+		group_end = prev + 1;
+		while( group_end < neighborhood_list.size() && 
+			neighborhood_list[prev].match == neighborhood_list[group_end].match && 
+			neighborhood_list[prev].relative_orientation == neighborhood_list[group_end].relative_orientation )
+		{
+			++group_end;
+		}
+		// the group is everything in the range of prev to end-1
+		if( prev + 1 == group_end )
+			continue;	// can't do anything with groups of size 1 -- there's no match
+
+		// do something about ties here...???
+		// this code selects the *furthest* away match (e.g. that with the largest d)
+		// because that's what got sorted in last in the comparator
+		// it eliminates both duplicate M_i and duplicate M_j components...
+		vector< pair< size_t, size_t > > j_comp_sort_list;
+		for( size_t i = prev + 1; i < group_end; ++i )
+		{
+			if( neighborhood_list[i-1].Mi_component == neighborhood_list[i].Mi_component )
+				continue;
+			j_comp_sort_list.push_back(make_pair(neighborhood_list[i-1].Mj_component, i-1));
+		}
+		j_comp_sort_list.push_back(make_pair(neighborhood_list[group_end-1].Mj_component, group_end-1));
+		std::sort(j_comp_sort_list.begin(), j_comp_sort_list.end());
+		vector<size_t> group_entries;
+		for( size_t i = 1; i < j_comp_sort_list.size(); ++i )
+		{
+			if( j_comp_sort_list[i-1].first == j_comp_sort_list[i].first )
+				continue;
+			group_entries.push_back(j_comp_sort_list[i-1].second);
+		}
+		group_entries.push_back(j_comp_sort_list.back().second);
+
+		// update the links in case something is subsumed
+		for( size_t gI = 0; gI < group_entries.size(); ++gI )
+			checkLinkAndComponent( neighborhood_list[group_entries[gI]].match, neighborhood_list[group_entries[gI]].Mj_component );
+
+		// finally, classify the match as one of superset, subset, 
+		// chainable, novel subset
+		MatchRecord* M_j = neighborhood_list[prev].match;
+
+		if( group_entries.size() == M_i->Multiplicity() && 
+			M_j->Multiplicity() > M_i->Multiplicity() )
+		{
+			// superset
+			superset_groups.push_back( group_entries );
+		}else
+		if( group_entries.size() == M_i->Multiplicity() && 
+			M_j->Multiplicity() == M_i->Multiplicity() )
+		{
+			// chainable
+			chainable_groups.push_back( group_entries );
+		}else
+		if( group_entries.size() < M_i->Multiplicity() && 
+			group_entries.size() == M_j->Multiplicity() )
+		{
+			// subset
+			subset_groups.push_back( group_entries );
+		}else
+		{
+			// novel subset
+			novel_subset_groups.push_back( group_entries );
+		}
+
+	}	// end loop that splits the neighborhood into groups
+
+	createNeighborhoodGroupList( superset_list, superset_groups, neighborhood_list );
+	createNeighborhoodGroupList( chainable_list, chainable_groups, neighborhood_list );
+	createNeighborhoodGroupList( subset_list, subset_groups, neighborhood_list );
+	createNeighborhoodGroupList( novel_subset_list, novel_subset_groups, neighborhood_list );
+}
+
+/**
+ * Chains matches onto M_i or subsumes them as appropriate
+ */
+void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup >& chainable_list,
+				  int direction, int& last_linked )
+{
+	// link the closest possible chainable first.
+	for( size_t gI = 0; gI < chainable_list.size(); gI++ )
+	{
+		MatchRecord* M_j = chainable_list[gI].get<0>();
+
+		vector< size_t >& component_map = chainable_list[gI].get<1>();
+
+		if( M_j == M_i )
+		{
+			// this is an inverted overlapping repeat, skip it.
+			continue;
+		}
+		if( M_j->extended )
+		{
+			// oh no!  M_i should have been swallowed up already!
+//						cerr << "extensor crap 2\n";
+//						breakHere();
+		}
+
+		bool subsumed;
+		bool partial;
+		classifySubset( M_i, chainable_list[gI], subsumed, partial );
+
+		M_j->subsuming_match = M_i;
+		M_j->subsumption_component_map = component_map;
+		vector< size_t >& yx_map = chainable_list[gI].get<1>();
+		vector< size_t > xy_map(yx_map.size());
+		for( size_t i = 0; i < yx_map.size(); ++i )
+			xy_map[ yx_map[i] ] = i;
+//		for( vector< size_t >::iterator rec_iter = chainable_groups[gI].begin(); rec_iter !=  chainable_groups[gI].end(); ++rec_iter )
+//			xy_map[ neighborhood_list[*rec_iter].Mi_component ] = neighborhood_list[*rec_iter].Mj_component;
+
+		// if M_j isn't extending the boundaries of every component of M_i then
+		// it may be inconsistent with already chained matches.  just subsume it without
+		// chaining in that case.
+		if( !subsumed && !partial )
+		{
+			M_i->chained_matches.push_back( M_j );
+			M_i->chained_component_maps.push_back( component_map );
+			// update the left-end and right-end coords
+			bool changed = extendRange(M_i, M_j, xy_map);
+			if( changed )
+				last_linked = 2;
+		}
+
+		int parity = M_i->Orientation(0) == M_j->Orientation(xy_map[0]) ? 1 : -1;
+		if( getSuperset( M_j, -direction*parity ).superset != NULL )
+			unlinkSuperset(M_j,-direction*parity);	// won't be needing this anymore...
+
+		// if M_j has a superset then inherit it and stop chaining here
+		if( getSuperset( M_j, direction*parity ).superset != NULL )
+		{
+			inheritSuperset( M_i, M_j, direction, parity );
+			last_linked = 2;	// we may do a link extension!
+			break;
+		}
+	}
+}
+
+class ProcrastinationQueue
+{
+public:
+	template< typename MrPtrType >
+	ProcrastinationQueue( vector< MrPtrType >& match_record_list )
+	{
+		q.resize( match_record_list.size() );
+		std::copy(match_record_list.begin(), match_record_list.end(), q.begin() );
+		std::make_heap( q.begin(), q.end(), mhc );
+		q_end = q.size();
+		q_size = q.size();
+	}
+
+	/** pops an element from the queue, maintaining heap order */
+	MatchRecord* pop()
+	{
+		std::pop_heap( q.begin(), q.begin()+q_end, mhc );
+		q_end--;
+		return *(q.begin() + q_end);
+	}
+
+	/** Adds an element to the queue and restores heap order */
+	void push( MatchRecord* M_n )
+	{
+		if( q_end < q.size() )
+			q[q_end] = M_n;
+		else
+		{
+			q.push_back(M_n);
+		}
+		q_size++;
+		q_end++;
+		std::push_heap(q.begin(), q.begin()+q_end, mhc);
+	}
+	/** gets the total number of elements that have been placed in the queue */
+	size_t size() const{ return q_size; }
+	/** returns the current number of elements in the queue */
+	size_t end() const{ return q_end; }
+
+
+	/** defines a multiplicity heap ordering */
+	class MultiplicityHeapCompare
+	{
+	public:
+		bool operator()( const MatchRecord* a, const MatchRecord* b )
+		{
+			return a->Multiplicity() < b->Multiplicity();
+		}
+	};
+
+private:
+	const MultiplicityHeapCompare mhc;
+	std::vector< MatchRecord* > q;
+	size_t q_end;
+	size_t q_size;
+};
+
+/**
+ * Creates novel subset matches where appropriate and adds them to the procrastination queue
+ */
+void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup >& novel_subset_list,
+				bool find_novel_subsets, ProcrastinationQueue& procrastination_queue,
+				vector< gnSequence* >& seq_table, int direction, uint w, int& last_linked,
+				size_t& novel_subset_count )
+{
+	// finally process novel subset
+	bool prev_linked = false;	// we only want to link the closest of a group with the same components
+	int created_thisround = 0;
+	static NeighborhoodGroupComponentCompare srcc;
+	for( size_t gI = 0; gI < novel_subset_list.size(); gI++ )
+	{
+		if( !find_novel_subsets )
+			continue;	// only find novel subsets if we're supposed to
+		if( last_linked != 0 )
+			continue;	// only generate subsets when last_linked == 0
+
+		// be sure to handle case where:
+		// --M_i-->   --M_j--   <--M_i--
+		// that may cause an identical novel subset to get spawned but with
+		// M_i and M_j swapped as left and right supersets
+
+		bool same_components = false;
+		if( gI > 0 )
+			same_components = srcc.compare(novel_subset_list[gI], novel_subset_list[gI-1]) == 0;
+		prev_linked = same_components? prev_linked : false;
+
+		if( prev_linked )
+			continue;	// don't link a subset with the same components...
+
+		// TODO: handle the tandem repeat case
+		if( M_i->tandem )
+			continue;
+
+		MatchRecord* M_j = novel_subset_list[gI].get<0>();
+		// if M_j hasn't been extended then we don't do anything yet.
+		// we may find this novel subset again when M_j gets extended
+		if( M_j->extended == false )
+			continue;
+
+		size_t mult = 0;	// multiplicity of novel subset
+		for( size_t i = 0; i < novel_subset_list[gI].get<1>().size(); ++i )
+			if( novel_subset_list[gI].get<1>()[i] != (std::numeric_limits<size_t>::max)() )
+				mult++;
+
+		if( mult < 2 )
+			continue;	// can't do anything if there's no match!
+
+		UngappedMatchRecord tmper1(mult,0);
+		GappedMatchRecord tmper2(tmper1);  // this is lame
+		GappedMatchRecord* M_n = tmper2.Copy();
+
+		size_t mnewi = 0;
+		vector< size_t > new_to_i_map(mult);
+		vector< size_t > new_to_j_map(mult);
+		boost::dynamic_bitset<> ni_list(M_i->Multiplicity());
+		boost::dynamic_bitset<> nj_list(M_j->Multiplicity());
+		for( size_t i = 0; i < novel_subset_list[gI].get<1>().size(); ++i )
+		{
+			if( novel_subset_list[gI].get<1>()[i] != (std::numeric_limits<size_t>::max)() )
+			{
+				new_to_i_map[mnewi] = novel_subset_list[gI].get<1>()[i];
+				new_to_j_map[mnewi] = i;
+				ni_list.set(new_to_i_map[mnewi]);
+				nj_list.set(i);
+				M_n->SetStart(mnewi, M_j->Start(i));	// sets left-end and orientation
+				M_n->SetLength(M_j->Length(i),mnewi);
+				mnewi++;
+			}
+		}
+		if( M_n->Orientation(0) == AbstractMatch::reverse )
+			M_n->Invert();
+		// before we go any further, make sure that the relevant portion of M_i is not 
+		// either completely or partially subsumed by the relevant portion of M_j!
+		MatchProjectionAdapter mpaa( M_i, new_to_i_map );
+		vector< size_t > mpaa_to_Mn_map( new_to_i_map.size() );
+		for( size_t i = 0; i < mpaa_to_Mn_map.size(); ++i )
+			mpaa_to_Mn_map[i] = i;
+		bool subsumed;
+		bool partial;
+		classifyMatch( M_n, &mpaa, mpaa_to_Mn_map, subsumed, partial );
+		if( subsumed )
+		{
+			M_n->Free();
+			continue;	// there's nothing novel about this subset...
+		}
+		if( partial )
+		{
+			// FIXME: we should really spawn a novel subset on the non-subsumed components
+			M_n->Free();
+			continue;
+		}
+		created_thisround+= M_n->Multiplicity();
+
+		M_n->chained_matches.push_back(M_j);
+		M_n->chained_component_maps.push_back(new_to_j_map);
+		//tjt: need to send finalize seq_table for muscle alignment
+		M_n->finalize(seq_table);	// make this one a legitimate match...
+		M_n->chained_matches.clear();
+		M_n->chained_component_maps.clear();
+
+		// create links from M_n to M_i and M_j
+		int ni_parity = M_n->Orientation(0) == M_i->Orientation(new_to_i_map[0]) ? 1 : -1;
+		int nj_parity = M_n->Orientation(0) == M_j->Orientation(new_to_j_map[0]) ? 1 : -1;
+		MatchLink& ni_link = getSuperset(M_n,-direction*ni_parity);
+		ni_link = MatchLink(M_i,M_n,ni_list,new_to_i_map);
+		getSubsets(M_i,direction).push_back(ni_link);
+		MatchLink& nj_link = getSuperset(M_n,direction*ni_parity);
+		nj_link = MatchLink(M_j,M_n,nj_list,new_to_j_map);
+		getSubsets(M_j,-direction*ni_parity*nj_parity).push_back(nj_link);
+
+		// push M_n onto the heap
+		novel_subset_list.push_back(M_n);
+		procrastination_queue.push(M_n);
+		novel_subset_count++;
+	}
+
+	if( created_thisround > w * M_i->Multiplicity() )
+	{
+		cerr << "made too many!\n";
+		genome::breakHere();
+	}
+}
+
+
+
 int main( int argc, char* argv[] )
 {
 //	debug_interval = true;
@@ -907,6 +1500,7 @@ int main( int argc, char* argv[] )
 	// part 2, convert to match records
 	//
 	vector< UngappedMatchRecord* > match_record_list( seedml.size() );
+	size_t component_count = 0;
 	for( size_t mI = 0; mI < seedml.size(); ++mI )
 	{
 		UngappedMatchRecord tmp( seedml[mI]->SeqCount(), seedml[mI]->AlignmentLength() );
@@ -917,6 +1511,7 @@ int main( int argc, char* argv[] )
 			match_record_list[mI]->SetStart( seqI, seedml[mI]->Start( seqI ) );
 			match_record_list[mI]->SetLength( seedml[mI]->Length( seqI ), seqI );
 		}
+		component_count += seedml[mI]->SeqCount();
 		//match_record_list[mI]->
 		seedml[mI]->Free();
 	}
@@ -924,12 +1519,13 @@ int main( int argc, char* argv[] )
 	//
 	// part 3, create a match position lookup table
 	//
-	vector< pair< gnSeqI, MatchPositionEntry > > mplt_sort_list;
+	vector< pair< gnSeqI, MatchPositionEntry > > mplt_sort_list( component_count );
+	size_t compI = 0;
 	for( size_t mI = 0; mI < match_record_list.size(); ++mI )
 	{
 		UngappedMatchRecord* mr = match_record_list[mI];
 		for( size_t seqI = 0; seqI < mr->SeqCount(); ++seqI )
-			mplt_sort_list.push_back( make_pair( mr->LeftEnd( seqI ), make_pair( mr, seqI ) ) );
+			mplt_sort_list[compI++] = make_pair( mr->LeftEnd( seqI ), make_pair( mr, seqI ) ) );
 	}
 	// pairs get ordered on the first element by default 
 	std::sort( mplt_sort_list.begin(), mplt_sort_list.end() );
@@ -942,10 +1538,7 @@ int main( int argc, char* argv[] )
 	//
 	// part 4, create a procrastination queue
 	//
-	std::vector< MatchRecord* > procrastination_queue( match_record_list.size() );
-	std::copy(match_record_list.begin(), match_record_list.end(), procrastination_queue.begin() );
-	MultiplicityHeapCompare mhc;
-	std::make_heap( procrastination_queue.begin(), procrastination_queue.end(), mhc );
+	ProcrastinationQueue procrastination_queue( match_record_list );
 
 	//
 	// part 5, create an (empty) Novel Subset Match Record list
@@ -964,31 +1557,27 @@ int main( int argc, char* argv[] )
 	// part 6, extend all matches!
 	//
 	vector< GappedMatchRecord* > extended_matches;	/**< The extended matches will be chains of UngappedMatchRecords */
-	size_t queue_end = procrastination_queue.size();
 
 	//for extension
 	PairwiseScoringScheme pss = PairwiseScoringScheme(hoxd_matrix,-100,-20);
-	size_t queue_size = procrastination_queue.size();
 	
 	int curI = 0;
 	uint curr_extensions = 0;
 	uint max_extensions = 2;
-	while(  queue_end > 0 )
+	while(  procrastination_queue.end() > 0 )
 	{
 		
 		int prevI = curI;
 		curI +=1;
 		
-		if( (curI * 100) / queue_size != (prevI * 100) / queue_size )
+		if( (curI * 100) / procrastination_queue.size() != (prevI * 100) / procrastination_queue.size() )
 		{
-			cout << (curI * 100) / queue_size << "%..";
+			cout << (curI * 100) / procrastination_queue.size() << "%..";
 			cout.flush();
 		}
 		
 		// pop the next match off the heap
-		std::pop_heap( procrastination_queue.begin(), procrastination_queue.begin()+queue_end, mhc );
-		queue_end--;
-		MatchRecord* umr = *(procrastination_queue.begin() + queue_end);
+		MatchRecord* umr = procrastination_queue.pop(); 
 		// if the match has been subsumed then skip it
 		if( umr->subsuming_match != NULL )
 			continue;
@@ -1033,7 +1622,12 @@ int main( int argc, char* argv[] )
 			}
 		}
 
-		
+		if( M_i == (MatchRecord*)0x01839da4)
+			cerr << "debugme!!\n";
+		if( M_i == (MatchRecord*)0x017aaf24)
+			cerr << "supersetdebugme!!\n";
+
+
 		M_i->extended = true;
 		extended_matches.push_back( M_i );
 		
@@ -1058,536 +1652,48 @@ int main( int argc, char* argv[] )
 			// check for superset
 			if( getSuperset(M_i, direction).superset != NULL )
 			{
-				// update the left end and look for another superset to chain with
-				// then extend all the way to that match
-				MatchRecord* M_j = getSuperset(M_i, direction).superset;
-				MatchLink ij_link = getSuperset(M_i, direction);	// make a copy for safekeeping
-				int ij_parity = M_i->Orientation(0) == M_j->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
-
-				//
-				// Link extension part 1: 
-				// extend M_i to include M_j, add M_j to the chained matches
-				bool changed = extendRange( M_i, M_j, ij_link.sub_to_super_map );
-				M_i->chained_matches.push_back(M_j);
-				M_i->chained_component_maps.push_back(ij_link.sub_to_super_map);
-
-
-
-				// Link extension part 2:
-				// figure out whether any subsets between M_j and M_i got subsumed
-				for( size_t subtypeI = 0; subtypeI < 2; subtypeI++ )
-				{
-					vector< MatchLink >* mjsubs;
-					if( subtypeI == 0 )
-						mjsubs = &getSubsets(M_j, -direction*ij_parity);
-					else
-						mjsubs = &getExtraSubsets(M_j, -direction*ij_parity);
-					vector< MatchLink >& mj_otherside_subsets = *mjsubs;
-
-					for( size_t leftI = 0; leftI < mj_otherside_subsets.size(); ++leftI )
-					{
-						if( subtypeI == 0 )
-							checkLink( mj_otherside_subsets[leftI] );
-						MatchLink& jk_link = mj_otherside_subsets[leftI];
-						boost::dynamic_bitset<> intersect = ij_link.super_component_list & jk_link.super_component_list;
-						MatchRecord* M_k = jk_link.subset;
-						if( M_k == M_i )
-							continue;	// been there, chained that.
-						size_t inter_size = intersect.count();
-						if( inter_size < 2 )
-							continue;	// no match
-						if( inter_size >= M_i->Multiplicity() || M_k->Multiplicity() != inter_size )
-							continue;
-
-						// has this guy already been subsumed?  if so then just skip him
-						if( M_k->subsuming_match != NULL )
-						{
-							if( subtypeI != 1 )
-								breakHere(); // this should only happen with extra subsets
-							mj_otherside_subsets.erase(mj_otherside_subsets.begin()+leftI, mj_otherside_subsets.begin()+leftI+1 );
-							leftI--;
-							continue;
-						}
-
-						// M_k is a subset relative to M_i
-						int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
-						int ik_parity = ij_parity * jk_parity;
-
-						vector< size_t > component_map( M_k->Multiplicity() );
-						remapComponents(jk_link.sub_to_super_map, M_j->Multiplicity(), ij_link.sub_to_super_map, component_map );
-
-						NeighborhoodGroup sr = boost::make_tuple( M_k, component_map, vector<size_t>( M_k->Multiplicity(), 0 ) );
-						// defer it until we're done extending
-						selectList( left_deferred_subsets, right_deferred_subsets, -direction ).push_back( sr );
-					}
-				}
-
-				//
-				// Link extension part 3:
-				// classify outgoing links that share components with M_i
-				unlinkSuperset(M_i,direction);
-				vector< size_t > supersets;
-				vector< size_t > chainable;
-				vector< size_t > subsets;
-				vector< size_t > novel_subsets;
-				vector< MatchLink >& mj_subsets = getSubsets(M_j, direction*ij_parity);
-				for( size_t leftI = 0; leftI < mj_subsets.size(); ++leftI )
-				{
-					checkLink( mj_subsets[leftI] );
-					boost::dynamic_bitset<> intersect = ij_link.super_component_list & mj_subsets[leftI].super_component_list;
-					MatchRecord* M_k = mj_subsets[leftI].subset;
-					if( M_k == M_i )
-						continue;	// been there, chained that.
-					size_t inter_size = intersect.count();
-					if( inter_size < 2 )
-						continue;	// no match
-						// M_k is a superset relative to M_i
-					if( inter_size == M_i->Multiplicity() && M_k->Multiplicity() > inter_size )
-						supersets.push_back(leftI);
-					else if( inter_size == M_i->Multiplicity() && M_k->Multiplicity() == inter_size )
-						chainable.push_back(leftI);
-					else if( inter_size < M_i->Multiplicity() && M_k->Multiplicity() == inter_size )
-						subsets.push_back(leftI);
-					else
-						novel_subsets.push_back(leftI);
-				}
-
-				if( supersets.size() > 0 )
-				{
-//#4018
-					cerr << "something is wrong, we should never have supersets during link extension!\n";
-					breakHere();
-				}
-
-				for( size_t cI = 0; cI < chainable.size(); ++cI )
-				{
-					if( chainable.size() > 1 )
-					{
-						cerr << "bad news bruthah\n";
-						genome::breakHere();
-					}
-					// chain with this guy
-					MatchLink& jk_link = mj_subsets[chainable[cI]];
-					MatchRecord* M_k = jk_link.subset;
-					if( M_k->extended )
-					{
-						cerr << "extensor crap\n";
-						breakHere();
-					}
-					if( M_k == M_i )
-					{
-						cerr << "crap\n";
-						breakHere();
-					}
-
-					// update boundary coordinates
-					vector< size_t > component_map( M_i->Multiplicity() );
-					remapComponents(ij_link.sub_to_super_map, M_j->Multiplicity(), jk_link.sub_to_super_map, component_map );
-					bool changed = extendRange( M_i, M_k, component_map );
-					if( changed )
-						last_linked = 2;
-
-					// unlink from superset
-					int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
-					unlinkSuperset(M_k,-direction*ij_parity*jk_parity);
-					// set subsuming match ptrs
-					M_k->subsuming_match = M_i;
-					M_k->subsumption_component_map = component_map;
-					M_i->chained_matches.push_back( M_k );
-					M_i->chained_component_maps.push_back( component_map );
-
-					// compensate for the deletion in subsets
-					for( size_t subI = 0; subI < chainable.size(); subI++ )
-						if( chainable[subI] > chainable[cI] )
-							chainable[subI]--;
-					for( size_t subI = 0; subI < subsets.size(); subI++ )
-						if( subsets[subI] > chainable[cI] )
-							subsets[subI]--;
-
-					// inherit M_k's outward superset and stop chaining here
-					if( getSuperset( M_k, direction*ij_parity*jk_parity ).superset != NULL )
-					{
-						inheritSuperset( M_i, M_k, direction, ij_parity*jk_parity );
-						last_linked = 2;
-						break;
-					}
-				}
-
-				// process subsets
-				for( size_t sI = 0; sI < subsets.size(); ++sI )
-				{
-					// change M_k to point at M_i
-					MatchLink& jk_link = mj_subsets[subsets[sI]];
-					MatchRecord* M_k = jk_link.subset;
-					int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
-					int ik_parity = ij_parity * jk_parity;
-
-					vector< size_t > component_map( M_k->Multiplicity() );
-					remapComponents(jk_link.sub_to_super_map, M_j->Multiplicity(), ij_link.sub_to_super_map, component_map );
-					// rebuild the superset component list
-					boost::dynamic_bitset<> comp_list(M_i->Multiplicity(), false);
-					for( size_t compI = 0; compI < component_map.size(); ++compI )
-						if(component_map[compI] != (std::numeric_limits<size_t>::max)())
-							comp_list.set(component_map[compI]);
-					unlinkSuperset(M_k,-1*direction*ik_parity);
-
-					// add to the deferred subsets list
-					NeighborhoodGroup sr = boost::make_tuple( M_k, component_map, vector<size_t>( M_k->Multiplicity(), 0 ) );
-					vector< NeighborhoodGroup >& subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
-					subset_list.push_back( sr );
-
-					// compensate for the deletion in subsets
-					for( size_t subI = 0; subI < subsets.size(); subI++ )
-						if( subsets[subI] > subsets[sI] )
-							subsets[subI]--;
-				}
-
+				supersetLinkExtension( M_i, direction, last_linked, left_deferred_subsets, right_deferred_subsets );
 			}	// end if there was a superset
 			else
 			{
 				//
-				// construct a neighborhood list and process the neighborhood groups
-				//
-				vector< NeighborhoodListEntry > neighborhood_list;
-				for( size_t x = 0; x < M_i->Multiplicity(); ++x )
-				{
-					int o_x = M_i->Orientation(x) == AbstractMatch::forward ? 1 : -1;
-					int parity = o_x * direction;
-					int64 match_end = parity == 1 ? M_i->LeftEnd(x) : M_i->RightEnd(x) - seed_size + 1;
+				// perform a neighborhood list extension, 
+				// looks for neighboring matches in the match position lookup table
+				// 
+				vector< NeighborhoodGroup > superset_list;
+				vector< NeighborhoodGroup > chainable_list;
+				vector< NeighborhoodGroup > subset_list;
+				vector< NeighborhoodGroup > novel_subset_list;
+				neighborhoodListLookup( M_i, match_pos_lookup_table,
+								superset_list, chainable_list, subset_list, novel_subset_list,
+								direction, seed_size, w, left_lookups, right_lookups);
 
-					if( match_end > 0 )
-						if( (direction == 1 && left_lookups.test(match_end)) ||
-							(direction == -1 && right_lookups.test(match_end)) )
-						{
-							cerr << "looking twice in the same place\n";
-//							genome::breakHere();
-						}else{
-							if( direction == 1 )
-								left_lookups.set(match_end);
-							if( direction == -1 )
-								right_lookups.set(match_end);
-						}
-
-					for( int d = 1; d <= w; ++d )
-					{
-						if( match_end <= parity * d )
-							continue;	// we're too close to the beginning
-						size_t mplt_index = match_end - parity * d;
-						if( mplt_index >= match_pos_lookup_table.size() )
-							continue;	// we're too close to the end!
-
-						MatchRecord* M_j = match_pos_lookup_table[ mplt_index ].first;
-						size_t y = match_pos_lookup_table[ mplt_index ].second;
-						if( M_j == NULL )
-							continue;	// no match at this position
-
-						NeighborhoodListEntry nle;
-						nle.match = M_j;
-						nle.Mi_component = x;
-						nle.Mj_component = y;
-						// update the link if this one was subsumed
-						checkLinkAndComponent( M_j, y );
-						int o_y = ((AbstractMatch*)M_j)->Orientation(y) == AbstractMatch::forward ? 1 : -1;
-						nle.relative_orientation = o_x * o_y == 1 ? true : false;
-						nle.distance = d;
-						neighborhood_list.push_back( nle );
-						
-						if( M_j == M_i )
-						{
-							M_i->tandem = true;
-							break;	// not so fast there cowboy!  can't chain beyond ourself!
-						}
-					}
-				}
-
-				//
-				// now classify each group of the neighborhood list and act appropriately
-				// group types are superset, chainable, subset, novel subset
-				//
-				NeighborhoodListComparator nlc;
-				std::sort( neighborhood_list.begin(), neighborhood_list.end(), nlc );
-
-				std::vector< std::vector< size_t > > superset_groups;
-				std::vector< std::vector< size_t > > chainable_groups;
-				std::vector< std::vector< size_t > > subset_groups;
-				std::vector< std::vector< size_t > > novel_subset_groups;
-
-				size_t group_end = 0;
-				for( size_t prev = 0; prev < neighborhood_list.size(); prev = group_end )
-				{
-					group_end = prev + 1;
-					while( group_end < neighborhood_list.size() && 
-						neighborhood_list[prev].match == neighborhood_list[group_end].match && 
-						neighborhood_list[prev].relative_orientation == neighborhood_list[group_end].relative_orientation )
-					{
-						++group_end;
-					}
-					// the group is everything in the range of prev to end-1
-					if( prev + 1 == group_end )
-						continue;	// can't do anything with groups of size 1 -- there's no match
-
-					// do something about ties here...???
-					// this code selects the *furthest* away match (e.g. that with the largest d)
-					// because that's what got sorted in last in the comparator
-					// it eliminates both duplicate M_i and duplicate M_j components...
-					vector< pair< size_t, size_t > > j_comp_sort_list;
-					for( size_t i = prev + 1; i < group_end; ++i )
-					{
-						if( neighborhood_list[i-1].Mi_component == neighborhood_list[i].Mi_component )
-							continue;
-						j_comp_sort_list.push_back(make_pair(neighborhood_list[i-1].Mj_component, i-1));
-					}
-					j_comp_sort_list.push_back(make_pair(neighborhood_list[group_end-1].Mj_component, group_end-1));
-					std::sort(j_comp_sort_list.begin(), j_comp_sort_list.end());
-					vector<size_t> group_entries;
-					for( size_t i = 1; i < j_comp_sort_list.size(); ++i )
-					{
-						if( j_comp_sort_list[i-1].first == j_comp_sort_list[i].first )
-							continue;
-						group_entries.push_back(j_comp_sort_list[i-1].second);
-					}
-					group_entries.push_back(j_comp_sort_list.back().second);
-
-					// update the links in case something is subsumed
-					for( size_t gI = 0; gI < group_entries.size(); ++gI )
-						checkLinkAndComponent( neighborhood_list[group_entries[gI]].match, neighborhood_list[group_entries[gI]].Mj_component );
-
-					// finally, classify the match as one of superset, subset, 
-					// chainable, novel subset
-					MatchRecord* M_j = neighborhood_list[prev].match;
-
-					if( group_entries.size() == M_i->Multiplicity() && 
-						M_j->Multiplicity() > M_i->Multiplicity() )
-					{
-						// superset
-						superset_groups.push_back( group_entries );
-					}else
-					if( group_entries.size() == M_i->Multiplicity() && 
-						M_j->Multiplicity() == M_i->Multiplicity() )
-					{
-						// chainable
-						chainable_groups.push_back( group_entries );
-					}else
-					if( group_entries.size() < M_i->Multiplicity() && 
-						group_entries.size() == M_j->Multiplicity() )
-					{
-						// subset
-						subset_groups.push_back( group_entries );
-					}else
-					{
-						// novel subset
-						novel_subset_groups.push_back( group_entries );
-					}
-
-				}	// end loop that splits the neighborhood into groups
-
-				superset_count += superset_groups.size();
-				chainable_count += chainable_groups.size();
-				subset_count += subset_groups.size();
-
-				//
-				// process each group
-				//
+				// tallies for debugging
+				superset_count += superset_list.size();
+				chainable_count += chainable_list.size();
+				subset_count += subset_list.size();
 				
-				// process supersets first
-				for( size_t gI = 0; gI < superset_groups.size(); gI++ )
-				{
-					// supersets are already done.  happy chrismakwanzuhkkah
-				}
+				// now process each type of neighborhood group
+				// supersets are already done.  happy chrismakwanzuhkkah
 
 				// then process chainable
-				// link the closest possible chainable first.
-				vector< NeighborhoodGroup > cur_chainable;
-				createNeighborhoodGroupList( cur_chainable, chainable_groups, neighborhood_list );
-				for( size_t gI = 0; gI < cur_chainable.size(); gI++ )
+				processChainableMatches( M_i, chainable_list, direction, last_linked );
+
+				// defer subset processing
+				for( size_t gI = 0; gI < subset_list.size(); gI++ )
 				{
-					MatchRecord* M_j = cur_chainable[gI].get<0>();
-
-					vector< size_t >& component_map = cur_chainable[gI].get<1>();
-
-					if( M_j == M_i )
-					{
-						// this is an inverted overlapping repeat, skip it.
-						continue;
-					}
-					if( M_j->extended )
-					{
-						// oh no!  M_i should have been swallowed up already!
-//						cerr << "extensor crap 2\n";
-//						breakHere();
-					}
-
-					bool subsumed;
-					bool partial;
-					classifySubset( M_i, cur_chainable[gI], subsumed, partial );
-
-					M_j->subsuming_match = M_i;
-					M_j->subsumption_component_map = component_map;
-					vector< size_t > xy_map(chainable_groups[gI].size());
-					for( vector< size_t >::iterator rec_iter = chainable_groups[gI].begin(); rec_iter !=  chainable_groups[gI].end(); ++rec_iter )
-						xy_map[ neighborhood_list[*rec_iter].Mi_component ] = neighborhood_list[*rec_iter].Mj_component;
-
-					// if M_j isn't extending the boundaries of every component of M_i then
-					// it may be inconsistent with already chained matches.  just subsume it without
-					// chaining in that case.
-					if( !subsumed && !partial )
-					{
-						M_i->chained_matches.push_back( M_j );
-						M_i->chained_component_maps.push_back( component_map );
-						// update the left-end and right-end coords
-						bool changed = extendRange(M_i, M_j, xy_map);
-						if( changed )
-							last_linked = 2;
-					}
-
-					int parity = M_i->Orientation(0) == M_j->Orientation(xy_map[0]) ? 1 : -1;
-					if( getSuperset( M_j, -direction*parity ).superset != NULL )
-						unlinkSuperset(M_j,-direction*parity);	// won't be needing this anymore...
-
-					// if M_j has a superset then inherit it and stop chaining here
-					if( getSuperset( M_j, direction*parity ).superset != NULL )
-					{
-						inheritSuperset( M_i, M_j, direction, parity );
-						last_linked = 2;	// we may do a link extension!
-						break;
-					}
-				}
-
-				// then process subset
-				// link the closest possible subset of a given type.
-				vector< NeighborhoodGroup > cur_subsets;
-				NeighborhoodGroupComponentCompare srcc;
-				createNeighborhoodGroupList( cur_subsets, subset_groups, neighborhood_list );
-				for( size_t gI = 0; gI < cur_subsets.size(); gI++ )
-				{
-					vector< NeighborhoodGroup >& subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
-					subset_list.push_back( cur_subsets[gI] );
+					vector< NeighborhoodGroup >& cur_subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
+					cur_subset_list.push_back( subset_list[gI] );
 				}
 
 				// finally process novel subset
-				vector< NeighborhoodGroup > cur_novel;
-				createNeighborhoodGroupList( cur_novel, novel_subset_groups, neighborhood_list );
-				bool prev_linked = false;	// we only want to link the closest of a group with the same components
-				int created_thisround = 0;
-				for( size_t gI = 0; gI < cur_novel.size(); gI++ )
-				{
-					if( !find_novel_subsets )
-						continue;	// only find novel subsets if we're supposed to
-					if( last_linked != 0 )
-						continue;	// only generate subsets when last_linked == 0
+				processNovelSubsetMatches(M_i, novel_subset_list, find_novel_subsets, procrastination_queue, 
+					seedml.seq_table, direction, w, last_linked, novel_subset_count );
 
-					// be sure to handle case where:
-					// --M_i-->   --M_j--   <--M_i--
-					// that may cause an identical novel subset to get spawned but with
-					// M_i and M_j swapped as left and right supersets
+			} // end if no superset was found then do neighborhood list lookup
 
-					bool same_components = false;
-					if( gI > 0 )
-						same_components = srcc.compare(cur_novel[gI], cur_novel[gI-1]) == 0;
-					prev_linked = same_components? prev_linked : false;
 
-					if( prev_linked )
-						continue;	// don't link a subset with the same components...
-
-					// TODO: handle the tandem repeat case
-					if( M_i->tandem )
-						continue;
-
-					MatchRecord* M_j = cur_novel[gI].get<0>();
-					// if M_j hasn't been extended then we don't do anything yet.
-					// we may find this novel subset again when M_j gets extended
-					if( M_j->extended == false )
-						continue;
-
-					size_t mult = 0;	// multiplicity of novel subset
-					for( size_t i = 0; i < cur_novel[gI].get<1>().size(); ++i )
-						if( cur_novel[gI].get<1>()[i] != (std::numeric_limits<size_t>::max)() )
-							mult++;
-
-					if( mult < 2 )
-						continue;	// can't do anything if there's no match!
-
-					UngappedMatchRecord tmper1(mult,0);
-					GappedMatchRecord tmper2(tmper1);  // this is lame
-					GappedMatchRecord* M_n = tmper2.Copy();
-
-					size_t mnewi = 0;
-					vector< size_t > new_to_i_map(mult);
-					vector< size_t > new_to_j_map(mult);
-					boost::dynamic_bitset<> ni_list(M_i->Multiplicity());
-					boost::dynamic_bitset<> nj_list(M_j->Multiplicity());
-					for( size_t i = 0; i < cur_novel[gI].get<1>().size(); ++i )
-					{
-						if( cur_novel[gI].get<1>()[i] != (std::numeric_limits<size_t>::max)() )
-						{
-							new_to_i_map[mnewi] = cur_novel[gI].get<1>()[i];
-							new_to_j_map[mnewi] = i;
-							ni_list.set(new_to_i_map[mnewi]);
-							nj_list.set(i);
-							M_n->SetStart(mnewi, M_j->Start(i));	// sets left-end and orientation
-							M_n->SetLength(M_j->Length(i),mnewi);
-							mnewi++;
-						}
-					}
-					if( M_n->Orientation(0) == AbstractMatch::reverse )
-						M_n->Invert();
-					// before we go any further, make sure that the relevant portion of M_i is not 
-					// either completely or partially subsumed by the relevant portion of M_j!
-					MatchProjectionAdapter mpaa( M_i, new_to_i_map );
-					vector< size_t > mpaa_to_Mn_map( new_to_i_map.size() );
-					for( size_t i = 0; i < mpaa_to_Mn_map.size(); ++i )
-						mpaa_to_Mn_map[i] = i;
-					bool subsumed;
-					bool partial;
-					classifyMatch( M_n, &mpaa, mpaa_to_Mn_map, subsumed, partial );
-					if( subsumed )
-					{
-						M_n->Free();
-						continue;	// there's nothing novel about this subset...
-					}
-					if( partial )
-					{
-						// FIXME: we should really spawn a novel subset on the non-subsumed components
-						M_n->Free();
-						continue;
-					}
-					created_thisround+= M_n->Multiplicity();
-
-					M_n->chained_matches.push_back(M_j);
-					M_n->chained_component_maps.push_back(new_to_j_map);
-					//tjt: need to send finalize seq_table for muscle alignment
-					M_n->finalize(seedml.seq_table);	// make this one a legitimate match...
-					M_n->chained_matches.clear();
-					M_n->chained_component_maps.clear();
-
-					// create links from M_n to M_i and M_j
-					int ni_parity = M_n->Orientation(0) == M_i->Orientation(new_to_i_map[0]) ? 1 : -1;
-					int nj_parity = M_n->Orientation(0) == M_j->Orientation(new_to_j_map[0]) ? 1 : -1;
-					MatchLink& ni_link = getSuperset(M_n,-direction*ni_parity);
-					ni_link = MatchLink(M_i,M_n,ni_list,new_to_i_map);
-					getSubsets(M_i,direction).push_back(ni_link);
-					MatchLink& nj_link = getSuperset(M_n,direction*ni_parity);
-					nj_link = MatchLink(M_j,M_n,nj_list,new_to_j_map);
-					getSubsets(M_j,-direction*ni_parity*nj_parity).push_back(nj_link);
-
-					// push M_n onto the heap
-					novel_subset_list.push_back(M_n);
-					if( queue_end < procrastination_queue.size() )
-						procrastination_queue[queue_end] = M_n;
-					else
-						procrastination_queue.push_back(M_n);
-					queue_end++;
-					std::push_heap(procrastination_queue.begin(), procrastination_queue.begin()+queue_end, mhc);
-					novel_subset_count++;
-				}
-				if( created_thisround > w * M_i->Multiplicity() )
-				{
-					cerr << "made too many!\n";
-					genome::breakHere();
-				}
-
-			} // end if no superset was found then build neighborhood list
-
+			// if we didn't do a chaining or superset extension, try a gapped extension
 			if( last_linked == 0 )
 			{
 				if ( !extend_chains )
@@ -1599,6 +1705,8 @@ int main( int argc, char* argv[] )
 				//finalize this match before performing extension
 				//copy M_i to temp GMR first
 				GappedMatchRecord* M_i_temp = M_i->Copy();
+				if( M_i_temp == (GappedMatchRecord*)0x010d81f4 )
+					cerr << "debugme!\n";
 				M_i_temp->finalize(seqtable);
 				
 				scores.clear();
@@ -1650,6 +1758,8 @@ int main( int argc, char* argv[] )
 		// finalize the alignment -- this resolves overlapping components into a single gapped alignment
 		//
 		//tjt: need to send finalize seq_table for muscle alignment
+		if( M_i == (GappedMatchRecord*)0x00d37364 )
+			cerr << "debugmult\n";
 		M_i->finalize(seedml.seq_table);
 		
 		//
@@ -1723,7 +1833,7 @@ int main( int argc, char* argv[] )
 				}
 
 				int parity = M_i->Orientation( subset_list[sI].get<1>()[0] ) == M_j->Orientation(0) ? 1 : -1;
-				// if we have he following case:
+				// if we have the following case:
 				// --M_i-->   --M_j--   <--M_i-- ... ... --M_i-->   --M_j--   <--M_i--
 				// then M_j may already be linked to M_i but on the other side
 				if( getSuperset(M_j,direction*parity).superset == M_i )
@@ -1807,7 +1917,6 @@ int main( int argc, char* argv[] )
 	score_t score_final = 0;
 	for( size_t fI = 0; fI < final.size(); fI++ )
 	{
-		//entropy score here we go!
 	    vector<string> alignment;
 		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
 		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
