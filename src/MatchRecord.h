@@ -133,7 +133,6 @@ public:
 	 * converted to a gapped alignment
 	 */
 	void finalize(std::vector<genome::gnSequence *> seq_table );
-
 // methods inherited from AbstractGappedAlignment
 public:
 	GappedMatchRecord* Clone() const { return new GappedMatchRecord( *this ); }
@@ -175,11 +174,7 @@ public:
 
 void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 {
-	// tjt: need seq_table for actual sequences associate with matches
-	//      solution? send it in when calling this function
-
 	std::vector< mems::AbstractMatch* > iv_matches;
-
 	MatchSortEntryCompare msec;
 	std::vector< MatchSortEntry > mse_list( chained_matches.size() );
 	//chained_matches.at(0)->
@@ -188,7 +183,6 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		mse_list[cI].first = chained_matches[cI];
 		mse_list[cI].second = &chained_component_maps[cI];
 	}
-
 	std::sort( mse_list.begin(), mse_list.end(), msec );
 	// add lowest multiplicity matches first, progressively add higher mult. matches
 	std::vector< mems::AbstractMatch* > chain;
@@ -212,11 +206,13 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 				if( m->LeftEnd(seqI) < mpaa.LeftEnd(seqI) &&
 					m->RightEnd(seqI) >= mpaa.LeftEnd(seqI) )
 				{
+					
 					// take the part to the left and put it at the end
 					mems::AbstractMatch* m_left = m->Copy();
 					m_left->CropRight( m_left->RightEnd(seqI) - mpaa.LeftEnd(seqI) + 1, seqI );
 					m->CropLeft( m_left->Length(seqI), seqI );
 					chain.push_back(m_left);
+					
 				}
 				// now m is guaranteed to have left-end >= mpaa
 				if( m->RightEnd(seqI) <= mpaa.RightEnd(seqI) )
@@ -225,9 +221,16 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 					chain[mI] = NULL;
 					continue;
 				}
-				m->CropLeft( mpaa.RightEnd(seqI) - m->LeftEnd(seqI) + 1, seqI );
-				//tjt: pull out regions for gapped aligned
-				
+				if ( m->LeftEnd(seqI) >  mpaa.RightEnd(seqI) )
+				{
+					m->Free();
+					chain[mI] = NULL;
+					continue;
+				}
+				//m->Free();
+				//chain[mI] = NULL;
+				//continue;
+				m->CropLeft( mpaa.RightEnd(seqI) - m->LeftEnd(seqI) + 1, seqI );		
 			}
 		}
 		// get rid of any null entries in the chain
@@ -243,23 +246,19 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		*this = GappedMatchRecord();
 		return;
 	}
-
 	mems::MatchStartComparator< mems::AbstractMatch > asc(0);
 	std::sort( chain.begin(), chain.end(), asc );
 	// aed: At this point the matches in chain are in sorted order, so the region betweeen each of them is what should get fed to muscle
 	//      will need to feed AbstractMatch instead of Match to MuscleInterface::Align though
-	
 	std::vector< mems::AbstractMatch* >::iterator chain_begin = chain.begin();
 	uint chainsize = chain.size()-1;
 	try{
 	for( uint i = 0; i < chainsize; i++ )
 	{
-		
 		mems::GappedAlignment* cr = NULL;
 		boolean align_success = false;
 		// attempt a muscle alignment
 		cr = new mems::GappedAlignment();
-
 		mems::AbstractMatch* m1 = chain.at(i);
 		mems::AbstractMatch* m2 = chain.at(i+1);
 
@@ -267,7 +266,6 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		//		 remember, aligning regions between each match component
 		align_success = mems::MuscleInterface::getMuscleInterface().Align( *cr,  m1 , m2,  seq_table );
    
-
 		if( align_success )
 		{
 			iv_matches.push_back( cr );
@@ -292,8 +290,7 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 				for( std::size_t gI = 0; gI < alignment[seqI].size(); gI++ )
 					if( aln_mat[seqI][gI] )
 						alignment[seqI][gI] = cur_seq[cI++];
-			}
-			
+			}	
 			// tjt: skip over newly inserted item
 			i++;		
 		}
@@ -308,9 +305,6 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 	}catch(...){
 		std::cerr << "matrix exception?\n";
 	}
-
-	
-
 	MatchRecord* mr = this->Copy();
 	SetMatches( chain );
 	//tjt: now chain should be empty
