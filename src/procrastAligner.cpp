@@ -394,298 +394,6 @@ public:
 	char operator()( char a ){ return toupper(a); }
 };
 
-//void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
-int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
-{
-	ccount +=1;
-	//todo: remove alignment parameter
-	//      dont pass vector? 
-	static bool debug_extension = false;
-	//punt on this for now..
-	bool novel_hss_regions_support = false;
-	bool danger_zone_active = true;
-	vector< string > alignment;
-	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
-	int multi = mte->Multiplicity();
-	
-//	int extend_length_1 = ceil(-0.78*multi+150); 
-//	int extend_length = max(20, sqrt(max(pow(150,2.0)-pow(2*multi,2.0),0)));
-	// aced 06/25/07: should re-evaluate the situation now that the Homology HMM has been implemented
-	//
-//  tjt: looks like with hmm w is ok!
-	int extend_length = min(int(w), 130);	
-	
-	vector<int> left_extend_vector;
-	vector<int> right_extend_vector;
-	int left_extend_length = extend_length;	
-	int right_extend_length = extend_length;
-	if ( mte->tandem )
-	{		
-		cerr << "Sorry, no extension for tandem repeats.." << endl << endl;	
-		return FIXME;
-	}
-
-	//careful, if mte->LeftEnd(j) < extend_length, ToString() will be disappointed...
-	for( gnSeqI j = 0; j < alignment.size(); j++)
-	{
-		//now put check for curpos+extend_length<startpos of next match component..
-		 
-		if( mte->Orientation(j) == AbstractMatch::reverse )
-		{
-			//if leftend <= 0 set right extension to 0
-			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
-				right_extend_vector.push_back(0);
-			//if extend_length goes to far, set to maximum possible
-			else if ( mte->LeftEnd(j) <= extend_length )
-				right_extend_vector.push_back(mte->LeftEnd(j)-1);
-
-			//if we run into another match, don't extend into it
-			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
-				right_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
-			
-			//else everything ok to set to preset extend_length
-			else
-				right_extend_vector.push_back(extend_length-1);
-			
-			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
-				left_extend_vector.push_back(0);
-			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
-				left_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j));
-			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
-				left_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
-			else
-				left_extend_vector.push_back(extend_length-1);
-	
-		}
-		else
-		{
-			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
-				left_extend_vector.push_back(0);
-			else if ( mte->LeftEnd(j) <= extend_length )
-				left_extend_vector.push_back(mte->LeftEnd(j)-1);
-			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
-				left_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
-			else
-				left_extend_vector.push_back(extend_length-1);
-
-			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
-				right_extend_vector.push_back(0);
-			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
-				right_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j));
-			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
-				right_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
-			else
-				right_extend_vector.push_back(extend_length-1);	
-		}
-	}
-	left_extend_length = *(std::min_element( left_extend_vector.begin(), left_extend_vector.end() ));
-	right_extend_length = *(std::min_element( right_extend_vector.begin(), right_extend_vector.end() ));
-
-	const gnFilter* rc_filter = gnFilter::DNAComplementFilter();
-	std::vector<std::string> leftExtension(multi);
-	GappedAlignment leftside(multi,left_extend_length);
-	std::vector<std::string> rightExtension(multi);
-	GappedAlignment rightside(multi,right_extend_length);
-	vector< string > leftExtension_aln;
-	vector< string > rightExtension_aln;
-
-	if ( left_extend_length > 10 && direction == 1  )
-	{
-		// extract sequence data
-		for( gnSeqI j = 0; j < alignment.size(); j++)
-		{			
-			if( mte->Orientation(j) == AbstractMatch::reverse )
-			{			
-				seq_table[0]->ToString( leftExtension[j], left_extend_length, mte->RightEnd(j)+1 );
-				leftside.SetLeftEnd(j,mte->RightEnd(j)+1);
-				rc_filter->ReverseFilter(leftExtension[j]);
-			}else{
-				seq_table[0]->ToString( leftExtension[j], left_extend_length, mte->LeftEnd(j) - left_extend_length );
-				leftside.SetLeftEnd(j,mte->LeftEnd(j) - left_extend_length);
-			}
-			leftside.SetOrientation(j,mte->Orientation(j));
-			leftside.SetLength(left_extend_length,j);
-		}
-		bool align_success = false;
-		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( leftExtension_aln, leftExtension );
-		if ( align_success ){		
-			leftside.SetAlignment(leftExtension_aln);
-			leftside.SetAlignmentLength(leftExtension_aln.at(0).size());
-		}else{
-			cerr << "Muscle failed" << endl;
-			return FAILED;
-		}
-	}
-	else if ( right_extend_length > 10 && direction == -1 )
-	{
-		for( gnSeqI j = 0; j < alignment.size(); j++)
-		{
-			if( mte->Orientation(j) == AbstractMatch::reverse )
-			{			
-				rightside.SetLeftEnd(j,mte->LeftEnd(j) - right_extend_length-1);
-				seq_table[0]->ToString( rightExtension[j], right_extend_length, mte->LeftEnd(j) - right_extend_length-1);
-				rc_filter->ReverseFilter(rightExtension[j]);
-			}else{
-				rightside.SetLeftEnd(j,mte->RightEnd(j)+1 );
-				seq_table[0]->ToString( rightExtension[j], right_extend_length, mte->RightEnd(j)+1 );
-			}
-			rightside.SetOrientation(j,mte->Orientation(j));
-			rightside.SetLength(right_extend_length,j);
-		}
-		bool align_success = false;		
-		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( rightExtension_aln, rightExtension );
-		if ( align_success ){
-			rightside.SetAlignment(rightExtension_aln);
-			rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
-		}else{
-			cerr << "Muscle failed" << endl;
-			return FAILED;
-		}
-	}else{
-		//what are you even doing here?!?
-		cerr << "Extension failed" << endl;
-		return FAILED;
-	}
-
-	vector< AbstractMatch* > mlist;
-	if( direction == 1 )
-		mlist.push_back(leftside.Copy());
-	mlist.push_back(mte->Copy());
-	if( direction == -1 )
-		mlist.push_back(rightside.Copy());
- 
-	//createInterval
-	Interval iv;
-	iv.SetMatches(mlist);
-	CompactGappedAlignment<>* cga = new CompactGappedAlignment<>( iv );
-	vector< CompactGappedAlignment<>* > cga_list;
-	CompactGappedAlignment<>* result;
-	//detectAndApplyBackbone
-	backbone_list_t bb_list;
-	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, DEFAULT_ISLAND_SCORE_THRESHOLD, direction != 1, direction == 1 );
-	cga->Free();
-
-	bool boundaries_improved = false;
-	if( bb_list.size() == 0 ||
-		bb_list.at(0).size() == 0)
-	{
-		//no backbone segment found
-		cerr << "Crikey!! no backbone found during extension..." << endl;
-		return FAILED;
-	}
-
-	if(debug_extension)
-	{
-	// aced: debug printing to get bb segments right
-		for( size_t bbI = 0; bb_list.size() > 0 && bbI < bb_list[0].size(); bbI++ )
-			cerr << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
-	}
-	
-	int backbone_i = -1;
-	if (bb_list.at(0).size() == 1)
-		backbone_i = 0;
-	int invalid_matches = 0;
-	for( uint i = 0; i < bb_list.at(0).size(); i++)
-	{
-
-		CompactGappedAlignment<> tmp_cga;
-		cga_list.push_back( tmp_cga.Copy() );
-		result->copyRange(*(cga_list.back()),bb_list.at(0).at(i)->LeftEnd(0),bb_list.at(0).at(i)->AlignmentLength()-1);
-		if( cga_list.back()->Multiplicity() == 0 )
-		{
-			// this one must have been covering an invalid region (gaps aligned to gaps)
-			cga_list.back()->Free();
-			cga_list.erase( cga_list.end()-1 );
-			invalid_matches++;
-			continue;
-		}	
-		for ( gnSeqI j = 0; j < alignment.size(); j++)
-		{
-			if( (cga_list.size() > 0 ) &&
-				(cga_list.back()->Multiplicity() == mte->Multiplicity() )&&
-				((cga_list.back()->LeftEnd(j) < mte->LeftEnd(j) && cga_list.back()->LeftEnd(j) + cga_list.back()->Length() >= mte->LeftEnd(j) +mte->Length()) || (cga_list.back()->LeftEnd(j) <= mte->LeftEnd(j) && cga_list.back()->LeftEnd(j) + cga_list.back()->Length() > mte->LeftEnd(j) + mte->Length())))
-			{
-				//yep, they were improved
-				boundaries_improved = true;
-				backbone_i = i-invalid_matches;
-				break;
-			}
-			else if (0)
-			{
-				boundaries_improved = false;
-				break;
-			}
-		}
-	}
-
-	for( uint i = 0; i < cga_list.size(); i++)
-	{
-		//if cga_list.size() > 1, there are several backbones, possibly of varying multiplicity
-		//this is where things will start to get interesting
-
-		if ( boundaries_improved && i == backbone_i )
-		{
-			if( cga_list.at(i)->Multiplicity() != mte->Multiplicity() )
-			{
-				//WARNING! approaching danger zone
-				//all code below needs to be revised per randomwalk to detectAndApplyBackbone change
-				if ( danger_zone_active )
-				{
-					cerr << "Extension process temporarily out of order..." << endl;
-					return FIXME;
-				}
-			}
-			//boundaries were improved, current match is extended original match
-			cerr << "Extension worked!! Improved boundaries!" << endl;
-			cerr << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->LeftEnd(0)+mte->Length() << endl;
-
-			vector< AbstractMatch* > matches( 1, cga_list.at(i));
-			//tjt: call this workaround version of SetMatches to update GappedMatchRecord
-			mte->SetMatchesTemp(matches);
-			//tjt: no need to update MatchRecord goodies here, wait until back in main
-			cerr << "New boundaries: " << mte->LeftEnd(0) << " " << mte->LeftEnd(0)+mte->Length() << endl << endl;
-
-			if(debug_extension)
-			{
-				//tjt: write alignment to file
-				vector<string> new_alignment;
-				mems::GetAlignment(*mte, seq_table, new_alignment);	// expects one seq_table entry per matching component
-				gnSequence myseq;
-				for( uint j = 0; j < new_alignment.size(); j++)
-					myseq += new_alignment.at(j);
-				gnFASSource::Write(myseq, "coolio2.txt" );
-			}
-			
-			return OK;
-		}
-
-		//else if( !boundaries_improved && i == hss_for_match  )
-		else if( !boundaries_improved )
-		
-		{
-			//no new homologous regions found, boundaries weren't improved..
-			//one wasted round of extending, could we have seen this coming??
-			//update original mte GappedMatchRecord
-			cerr << "Extension failed.. boundaries unchanged.. could we have seen this coming??" << endl << endl;
-			return FAILED;
-		}
-		else if( novel_hss_regions_support )
-		{
-			//newly found homologous region
-			continue;
-			
-		}
-		else
-		{
-			//set match 
-			//cout << "Nothing doing for this backbone..." << endl;
-			continue;
-		}
-		
-	}
-	return FAILED;
-	
-}//tjt: match should be extended!
 
 
 /**
@@ -1102,6 +810,267 @@ void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup
 		}
 	}
 }
+//void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
+int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
+{
+	ccount +=1;
+	//todo: remove alignment parameter
+	//      dont pass vector? 
+	static bool debug_extension = false;
+	//punt on this for now..
+	bool novel_hss_regions_support = false;
+	bool danger_zone_active = true;
+	vector< string > alignment;
+	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
+	int multi = mte->Multiplicity();
+	
+//	int extend_length_1 = ceil(-0.78*multi+150); 
+	int extend_length = max(w, sqrt(max(pow(150,2.0)-pow(2*multi,2.0),0)));
+	// aced 06/25/07: should re-evaluate the situation now that the Homology HMM has been implemented
+	//
+//  tjt: looks like with hmm w is ok!
+	//int extend_length = min(int(2*w), 130);	
+	
+	vector<int> left_extend_vector;
+	vector<int> right_extend_vector;
+	int left_extend_length = extend_length;	
+	int right_extend_length = extend_length;
+	if ( mte->tandem )
+	{		
+		cerr << "Sorry, no extension for tandem repeats.." << endl << endl;	
+		return FIXME;
+	}
+
+	//careful, if mte->LeftEnd(j) < extend_length, ToString() will be disappointed...
+	for( gnSeqI j = 0; j < alignment.size(); j++)
+	{
+		//now put check for curpos+extend_length<startpos of next match component..
+		 
+		if( mte->Orientation(j) == AbstractMatch::reverse )
+		{
+			//if leftend <= 0 set right extension to 0
+			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
+				right_extend_vector.push_back(0);
+			//if extend_length goes to far, set to maximum possible
+			else if ( mte->LeftEnd(j) <= extend_length )
+				right_extend_vector.push_back(mte->LeftEnd(j)-1);
+
+			//if we run into another match, don't extend into it
+			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
+				right_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
+			
+			//else everything ok to set to preset extend_length
+			else
+				right_extend_vector.push_back(extend_length-1);
+			
+			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
+				left_extend_vector.push_back(0);
+			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
+				left_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j));
+			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
+				left_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
+			else
+				left_extend_vector.push_back(extend_length-1);
+	
+		}
+		else
+		{
+			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
+				left_extend_vector.push_back(0);
+			else if ( mte->LeftEnd(j) <= extend_length )
+				left_extend_vector.push_back(mte->LeftEnd(j)-1);
+			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
+				left_extend_vector.push_back(mte->LeftEnd(j)-mte->RightEnd(j-1)-1);
+			else
+				left_extend_vector.push_back(extend_length-1);
+
+			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
+				right_extend_vector.push_back(0);
+			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
+				right_extend_vector.push_back(seq_table[0]->length()-mte->RightEnd(j));
+			else if ( j+1 < alignment.size() && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
+				right_extend_vector.push_back(mte->LeftEnd(j+1)-mte->RightEnd(j)-1);
+			else
+				right_extend_vector.push_back(extend_length-1);	
+		}
+	}
+	left_extend_length = *(std::min_element( left_extend_vector.begin(), left_extend_vector.end() ));
+	right_extend_length = *(std::min_element( right_extend_vector.begin(), right_extend_vector.end() ));
+
+	const gnFilter* rc_filter = gnFilter::DNAComplementFilter();
+	std::vector<std::string> leftExtension(multi);
+	GappedAlignment leftside(multi,left_extend_length);
+	std::vector<std::string> rightExtension(multi);
+	GappedAlignment rightside(multi,right_extend_length);
+	vector< string > leftExtension_aln;
+	vector< string > rightExtension_aln;
+
+	if ( left_extend_length > 10 && direction == 1  )
+	{
+		// extract sequence data
+		for( gnSeqI j = 0; j < alignment.size(); j++)
+		{			
+			if( mte->Orientation(j) == AbstractMatch::reverse )
+			{			
+				seq_table[0]->ToString( leftExtension[j], left_extend_length, mte->RightEnd(j)+1 );
+				leftside.SetLeftEnd(j,mte->RightEnd(j)+1);
+				rc_filter->ReverseFilter(leftExtension[j]);
+			}else{
+				seq_table[0]->ToString( leftExtension[j], left_extend_length, mte->LeftEnd(j) - left_extend_length );
+				leftside.SetLeftEnd(j,mte->LeftEnd(j) - left_extend_length);
+			}
+			leftside.SetOrientation(j,mte->Orientation(j));
+			leftside.SetLength(left_extend_length,j);
+		}
+		bool align_success = false;
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( leftExtension_aln, leftExtension );
+		if ( align_success ){		
+			leftside.SetAlignment(leftExtension_aln);
+			leftside.SetAlignmentLength(leftExtension_aln.at(0).size());
+		}else{
+			cerr << "Muscle failed" << endl;
+			return FAILED;
+		}
+	}
+	else if ( right_extend_length > 10 && direction == -1 )
+	{
+		for( gnSeqI j = 0; j < alignment.size(); j++)
+		{
+			if( mte->Orientation(j) == AbstractMatch::reverse )
+			{			
+				rightside.SetLeftEnd(j,mte->LeftEnd(j) - right_extend_length-1);
+				seq_table[0]->ToString( rightExtension[j], right_extend_length, mte->LeftEnd(j) - right_extend_length-1);
+				rc_filter->ReverseFilter(rightExtension[j]);
+			}else{
+				rightside.SetLeftEnd(j,mte->RightEnd(j)+1 );
+				seq_table[0]->ToString( rightExtension[j], right_extend_length, mte->RightEnd(j)+1 );
+			}
+			rightside.SetOrientation(j,mte->Orientation(j));
+			rightside.SetLength(right_extend_length,j);
+		}
+		bool align_success = false;		
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( rightExtension_aln, rightExtension );
+		if ( align_success ){
+			rightside.SetAlignment(rightExtension_aln);
+			rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
+		}else{
+			cerr << "Muscle failed" << endl;
+			return FAILED;
+		}
+	}else{
+		//what are you even doing here?!?
+		cerr << "Extension failed" << endl;
+		return FAILED;
+	}
+
+	vector< AbstractMatch* > mlist;
+	if( direction == 1 )
+		mlist.push_back(leftside.Copy());
+	//tjt: don't use original match, only regions to the left/right
+	//     since for now we won't modify mte, even if the homology detection method suggests otherwise
+	//mlist.push_back(mte->Copy());
+	if( direction == -1 )
+		mlist.push_back(rightside.Copy());
+ 
+	//createInterval
+	Interval iv;
+	iv.SetMatches(mlist);
+	CompactGappedAlignment<>* cga = new CompactGappedAlignment<>( iv );
+	vector< CompactGappedAlignment<>* > cga_list;
+	CompactGappedAlignment<>* result;
+	//detectAndApplyBackbone
+	backbone_list_t bb_list;
+	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, DEFAULT_ISLAND_SCORE_THRESHOLD, direction != 1, direction == 1 );
+	cga->Free();
+
+	bool boundaries_improved = false;
+	if( bb_list.size() == 0 ||
+		bb_list.at(0).size() == 0)
+	{
+		//no backbone segment found
+		cerr << "Crikey!! no backbone found during extension..." << endl;
+		return FAILED;
+	}
+
+	if(debug_extension)
+	{
+	// aced: debug printing to get bb segments right
+		for( size_t bbI = 0; bb_list.size() > 0 && bbI < bb_list[0].size(); bbI++ )
+			cerr << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
+	}
+	
+	int backbone_i = -1;
+	if (bb_list.at(0).size() == 1)
+		backbone_i = 0;
+	int invalid_matches = 0;
+
+	// tjt: only want to check the first/last backbone (for now)
+	//      process novel homolgous regions in the near future
+	CompactGappedAlignment<> tmp_cga;
+	cga_list.push_back( tmp_cga.Copy() );
+	if ( direction > 0 )
+		result->copyRange(*(cga_list.back()),bb_list.at(0).back()->LeftEnd(0),bb_list.at(0).back()->AlignmentLength()-1);
+	else
+		result->copyRange(*(cga_list.back()),bb_list.at(0).front()->LeftEnd(0),bb_list.at(0).front()->AlignmentLength()-1);
+	if( cga_list.back()->Multiplicity() == 0 )
+	{
+		// this one must have been covering an invalid region (gaps aligned to gaps)
+		cga_list.back()->Free();
+		cga_list.erase( cga_list.end()-1 );
+		invalid_matches++;
+		return FAILED;
+	}
+	if( (cga_list.back()->Multiplicity() == mte->Multiplicity() ) && (cga_list.back()->Length() > 1 ))
+	{
+		// successful extension!!
+		//boundaries were improved, current match is extended original match
+		cerr << "Extension worked!! Improved boundaries! Multiplicity: " << mte->Multiplicity() << endl;
+		cerr << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
+
+		vector< AbstractMatch* > matches( 1, cga_list.back());
+		GappedMatchRecord* M_new = mte->Copy();
+		//tjt: clobber mte's GappedMatchRecord data and set boundaries
+		M_new->SetMatches(matches);
+		//build the component map for processChainableMatches
+		vector< size_t > component_map( mte->Multiplicity() );
+		for( size_t i = 0; i < component_map.size(); ++i )
+			component_map[i] = i;
+		vector< NeighborhoodGroup > chainable_list;
+		NeighborhoodGroup sr = boost::make_tuple( M_new, component_map, vector<size_t>( mte->Multiplicity(), 0 ) );
+		chainable_list.push_back(sr);
+		//tjt: does this need to be updated somewhere after call to processChainableMatches?
+		int last_linked = 0;
+		//use this function to correctly chain the left/right gapped extension to mte(M_i)
+		processChainableMatches( mte, chainable_list, direction, last_linked );
+		cerr << "New boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl << endl;
+
+		if(debug_extension)
+		{
+			//tjt: write alignment to file
+			//need to finalize before calling GetAlignment!
+			mte->finalize(seq_table);
+			vector<string> new_alignment;
+			mems::GetAlignment(*mte, seq_table, new_alignment);	// expects one seq_table entry per matching component
+			gnSequence myseq;
+			for( uint j = 0; j < new_alignment.size(); j++)
+				myseq += new_alignment.at(j);
+			gnFASSource::Write(myseq, "coolio2.txt" );
+		}
+		
+		return OK;
+
+	}
+	else
+	{
+		cerr << "Extension failed.. " << endl << endl;
+		return FAILED;
+	}
+	
+
+	
+	return FAILED;
+	
+}//tjt: match should be extended!
 
 class ProcrastinationQueue
 {
@@ -1672,7 +1641,46 @@ int main( int argc, char* argv[] )
 				// if the superset continues beyond the end of at least one component, then 
 				// we want to create a superset link for it, and process it during a link extension
 				// what to do when the superset doesn't match very well with the 
-
+				MatchRecord* M_j = getSuperset(M_i, direction).superset;
+				if ( M_j != NULL )
+				{
+					MatchLink ij_link = getSuperset(M_i, direction);	
+					int ij_parity = M_i->Orientation(0) == M_j->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
+					mems::MatchProjectionAdapter mpaa( M_j, M_i->chained_component_maps[0] );
+					int overextended_components = 0;
+					for( size_t seqI = 0; seqI < mpaa.Multiplicity(); seqI++ )
+					{
+						if ( direction < 0 )
+						{
+							if( M_i->RightEnd(seqI) > mpaa.RightEnd(seqI) )
+							{
+								//uh oh, extended past superset!
+								overextended_components+=1;
+							}
+						}
+						else
+						{
+							if( M_i->LeftEnd(seqI) < mpaa.LeftEnd(seqI) )
+							{
+								//uh oh, extended past superset!	
+								overextended_components+=1;
+							}			
+						}
+					}
+					if ( overextended_components == mpaa.Multiplicity() )
+					{
+						//   then we want to replace that part of the alignment with the superset
+						//reset to superset boundaries
+						bool changed = extendRange( M_i, M_j, ij_link.sub_to_super_map );
+					}
+					else if ( overextended_components > 0 )
+					{
+						// we want to create a superset link for it, and process it during a link extension
+						inheritSuperset( M_i, M_j, direction, ij_parity );
+						last_linked = 2;	// we may do a link extension!
+					}
+				
+				}
 				// then process chainable
 				processChainableMatches( M_i, chainable_list, direction, last_linked );
 
@@ -1686,7 +1694,7 @@ int main( int argc, char* argv[] )
 				// finally process novel subset
 				processNovelSubsetMatches(M_i, novel_subset_list, find_novel_subsets, procrastination_queue, 
 					seedml.seq_table, direction, w, last_linked, novel_subset_count );
-
+				
 			}
 		}	// end loop over leftward and rightward extension
 
