@@ -401,40 +401,20 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	//todo: remove alignment parameter
 	//      dont pass vector? 
 	static bool debug_extension = false;
-
 	//punt on this for now..
 	bool novel_hss_regions_support = false;
 	bool danger_zone_active = true;
-
 	vector< string > alignment;
 	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
-
-
-	//caculate extend length
-	// m = 0.48
-	// b = 500.04
-	// punt: use this equation for now, update later with simulation data
 	int multi = mte->Multiplicity();
 	
 //	int extend_length_1 = ceil(-0.78*multi+150); 
-	int extend_length = min(int(4*w), 130);	
-	extend_length = max(20, sqrt(max(pow(150,2.0)-pow(2*multi,2.0),0)));
-	//cout << extend_length << endl;
-	if ( multi > 40 && 0 )
-	{
-		cerr << "Sorry, too slow to extend this chain.." << endl << endl;	
-		return FIXME;
-	}
-	// aced:  it seems we need to extend by (2 * (significance_threshold - gap_open) / gap_extend) nucleotides
-	// in order to accurately detect non-homology at the boundaries.  for the default scoring scheme, we need:
-	// 2 * (2727 - 400) / 35 = 130 nucleotides 
-	// hopefully this issue can be solved by combining the new minimal significant cluster detection 
-	// algorithm with a special indicator variable to detectAndApplyBackbone() that suggests we expect homology
-	// on the seed side and non-homology on the extension side
-	//
+//	int extend_length = max(20, sqrt(max(pow(150,2.0)-pow(2*multi,2.0),0)));
 	// aced 06/25/07: should re-evaluate the situation now that the Homology HMM has been implemented
 	//
-
+//  tjt: looks like with hmm w is ok!
+	int extend_length = min(int(w), 130);	
+	
 	vector<int> left_extend_vector;
 	vector<int> right_extend_vector;
 	int left_extend_length = extend_length;	
@@ -502,7 +482,6 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	right_extend_length = *(std::min_element( right_extend_vector.begin(), right_extend_vector.end() ));
 
 	const gnFilter* rc_filter = gnFilter::DNAComplementFilter();
-	
 	std::vector<std::string> leftExtension(multi);
 	GappedAlignment leftside(multi,left_extend_length);
 	std::vector<std::string> rightExtension(multi);
@@ -568,21 +547,6 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 		return FAILED;
 	}
 
-	if(debug_extension)
-	{
-		for( gnSeqI j = 0; j < alignment.size(); j++)
-		{
-			if(  direction == 1 )
-				alignment.at(j).insert(alignment.at(j).begin(),leftExtension_aln.at(j).begin(), leftExtension_aln.at(j).end());
-			else if( direction == -1 )
-				alignment.at(j).append(rightExtension_aln.at(j).begin(), rightExtension_aln.at(j).end());
-		}
-		gnSequence myseq;
-		for( uint j = 0; j < multi; j++)
-			myseq += alignment.at(j);
-		gnFASSource::Write(myseq, "coolio1.fasta" );
-	}	
-	
 	vector< AbstractMatch* > mlist;
 	if( direction == 1 )
 		mlist.push_back(leftside.Copy());
@@ -615,20 +579,12 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	// aced: debug printing to get bb segments right
 		for( size_t bbI = 0; bb_list.size() > 0 && bbI < bb_list[0].size(); bbI++ )
 			cerr << "bbI: " << bbI << '\t' << *(bb_list[0][bbI]) << endl;
-		vector<string> new_alignment;
-		mems::GetAlignment(*result, seq_table, new_alignment);	// expects one seq_table entry per matching component
-		gnSequence myseq2;
-		for( uint j = 0; j < new_alignment.size(); j++)
-			myseq2 += new_alignment.at(j);
-		gnFASSource::Write(myseq2, "coolio2.fasta" );
 	}
 	
 	int backbone_i = -1;
 	if (bb_list.at(0).size() == 1)
 		backbone_i = 0;
 	int invalid_matches = 0;
-
-
 	for( uint i = 0; i < bb_list.at(0).size(); i++)
 	{
 
@@ -642,11 +598,9 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 			cga_list.erase( cga_list.end()-1 );
 			invalid_matches++;
 			continue;
-		}
-			
+		}	
 		for ( gnSeqI j = 0; j < alignment.size(); j++)
 		{
-
 			if( (cga_list.size() > 0 ) &&
 				(cga_list.back()->Multiplicity() == mte->Multiplicity() )&&
 				((cga_list.back()->LeftEnd(j) < mte->LeftEnd(j) && cga_list.back()->LeftEnd(j) + cga_list.back()->Length() >= mte->LeftEnd(j) +mte->Length()) || (cga_list.back()->LeftEnd(j) <= mte->LeftEnd(j) && cga_list.back()->LeftEnd(j) + cga_list.back()->Length() > mte->LeftEnd(j) + mte->Length())))
@@ -655,14 +609,12 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 				boundaries_improved = true;
 				backbone_i = i-invalid_matches;
 				break;
-				
 			}
 			else if (0)
 			{
 				boundaries_improved = false;
 				break;
 			}
-
 		}
 	}
 
@@ -693,7 +645,8 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 			//tjt: no need to update MatchRecord goodies here, wait until back in main
 			cerr << "New boundaries: " << mte->LeftEnd(0) << " " << mte->LeftEnd(0)+mte->Length() << endl << endl;
 
-			if(debug_extension){
+			if(debug_extension)
+			{
 				//tjt: write alignment to file
 				vector<string> new_alignment;
 				mems::GetAlignment(*mte, seq_table, new_alignment);	// expects one seq_table entry per matching component
@@ -1374,8 +1327,7 @@ int main( int argc, char* argv[] )
 	bool chain = true;
 	bool two_hits = false;
 	bool unalign = true;
-	//bool extend_threshold = 91*seed_weight;
-	//bool extend_threshold = 0;
+
 	po::variables_map vm;
 	try {
 
@@ -1417,13 +1369,6 @@ int main( int argc, char* argv[] )
                  << w << ".\n";
         } else {
             cout << "Max gap width (w) not specified\n, using default value of 10\n";
-        }
-
-		if (vm.count("b")) {
-            cout << "kmer background freq size (b) was set to " 
-                 << kmersize << ".\n";
-        } else {
-            cout << "kmer background freq size (b) was not specified\n, using default value of 1\n";
         }
 
 		if (vm.count("z")) {
@@ -1469,7 +1414,7 @@ int main( int argc, char* argv[] )
 	{
 		seed_weight = (int)((double)getDefaultSeedWeight( seedml.seq_table[0]->length() ) * .9);
 	}
-	uint extend_threshold = 91*seed_weight;
+	
 	int seed_rank = 0;
 	if ( solid_seed )
 	{
@@ -1690,31 +1635,13 @@ int main( int argc, char* argv[] )
 					direction -= 2;
 					continue;
 				}
-				//finalize this match before performing extension
-				//copy M_i to temp GMR first
-				GappedMatchRecord* M_i_temp = M_i->Copy();
-				if( M_i_temp == (GappedMatchRecord*)0x010d81f4 )
-					cerr << "debugme!\n";
-				M_i_temp->finalize(seqtable);
-				
-				scores.clear();
-				alignment.clear();
 				bool failed = true;
-				score = 0;
-				mems::GetAlignment(*M_i_temp,seqtable, alignment);	// expects one seq_table entry per matching component
-		
-				computeSPScore( alignment, pss, scores, score);
-				
-				uint multi = M_i_temp->Multiplicity();
-				uint num_hits = 1;
-				if (two_hits)
-					num_hits = 2;
-				// only extend if the score surpasses an initial threshold
-				if( score >= num_hits*extend_threshold*((multi*(multi-1))/2)  )
+				// only extend if two matches are chained if two-hits == true
+				if( !two_hits || (two_hits && M_i->chained_matches.size() > 1 ))
 				{	
 					cerr << "Preparing to extend Chain #" << curI << endl;
 					cerr << "Direction = " << direction << endl;
-					failed = ExtendMatch(M_i_temp, seqtable, pss, w, direction);
+					failed = ExtendMatch(M_i, seqtable, pss, w, direction);
 				}
 				if (failed )
 				{
@@ -1726,11 +1653,7 @@ int main( int argc, char* argv[] )
 				//update links appropriately, and we can take another round
 				//through the evil megaloop, possibly discovering additional chainable
 				//seeds or superset links.
-				vector<AbstractMatch*> matches;
-				M_i_temp->StealMatches(matches);
-				//tjt: hack to avoid clobberation of GappedMatchRecord data
-				M_i->SetMatchesTemp(matches);
-
+				
 				// need to update links by looking for matches in the region that was just extended over
 				vector< NeighborhoodGroup > superset_list;
 				vector< NeighborhoodGroup > chainable_list;
@@ -1773,11 +1696,11 @@ int main( int argc, char* argv[] )
 		//tjt: need to send finalize seq_table for muscle alignment
 		if( M_i == (GappedMatchRecord*)0x00d37364 )
 			cerr << "debugmult\n";
+		//tjt: make sure finalize only gets called once!
 		M_i->finalize(seedml.seq_table);
 		if(extended_matches.size() % 25 == 0 && extended_matches.size() / 25 > 0 )
 			writeXmfa( seedml, extended_matches, xmfa_file );
-
-		
+	
 		//
 		// process deferred subsets
 		//
