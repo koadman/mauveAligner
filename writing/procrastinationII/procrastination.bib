@@ -667,6 +667,37 @@ alignment
   pages = "290--294",
   year = 1998 }
 
+@article{repseek,
+	abstract = {SUMMARY: Chromosomes or other long DNA sequences contain many highly similar repeated sub-sequences. While there are efficient methods for detecting strict repeats or detecting already characterized repeats, there is no software available for detecting approximate repeats in large DNA sequences allowing for weighted substitutions and indels in a coherent statistical framework. Here, we present an implementation of a two-steps method (seed detection followed by their extension) that detects those approximate repeats. Our method is computationally efficient enough to handle large sequences and is flexible enough to account for influencing factors such as sequence-composition biases both at the seed detection and alignment levels. AVAILABILITY: http://wwwabi.snv.jussieu.fr/public/RepSeek/.},
+	address = {Atelier de Bioinformatique, Université Pierre et Marie Curie-Paris 6, 12, rue Cuvier, 75005 Paris, France; UMR 7138 Systématique, Adaptation, Evolution, Université Pierre et Marie Curie-Paris6, Bâtiment A, 7, quai St Bernard, 75252 Paris Cedex 05, France.},
+	author = {Achaz, Guillaume   and Boyer, Frédéric   and Rocha, Eduardo P C  P.  and Viari, Alain   and Coissac, Eric  },
+	citeulike-article-id = {989431},
+	issn = {1460-2059},
+	journal = {Bioinformatics},
+	keywords = {repeats rocha},
+	month = {October},
+	priority = {2},
+	title = {Repseek, a tool to retrieve approximate repeats from large DNA sequences.},
+	url = {http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve\&db=pubmed\&dopt=Abstract\&list_uids=17038345},
+	year = {2006}
+}
+
+
+@article{hoxd,
+	abstract = {The parameters by which alignments are scored can strongly affect sensitivity and specificity of alignment procedures. While appropriate parameter choices are well understood for protein alignments, much less is known for genomic DNA sequences. We describe a straightforward approach to scoring nucleotide substitutions in genomic sequence alignments, especially human-mouse comparisons. Scores are obtained from relative frequencies of aligned nucleotides observed in alignments of non-coding, non-repetitive genomic regions, and can be theoretically motivated through substitution models. Additional accuracy can be attained by down-weighting alignments characterized by low compositional complexity. We also describe an evaluation protocol that is relevant when alignments are intended to identify all and only the orthologous positions. One particular scoring matrix, called HOXD70, has proven to be generally effective for human-mouse comparisons, and has been used by the PipMaker server since July, 2000. We discuss but leave open the problem of effectively scoring regions of strongly biased nucleotide composition, such as low G + C content.},
+	address = {Department of Statistics, Penn State, University Park, PA 16802, USA. chiaro@stat.psu.edu},
+	author = {Chiaromonte, F.  and Yap, V. B.  and Miller, W. },
+	citeulike-article-id = {754252},
+	journal = {Pac Symp Biocomput},
+	keywords = {no-tag},
+	pages = {115--126},
+	priority = {3},
+	title = {Scoring pairwise genomic sequence alignments.},
+	url = {http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve\&db=pubmed\&dopt=Abstract\&list_uids=11928468},
+	year = {2002}
+}
+
+
 @article{ref-gappedblast,
 	abstract = {The BLAST programs are widely used tools for searching protein and DNA databases for sequence similarities. For protein comparisons, a variety of definitional, algorithmic and statistical refinements described here permits the execution time of the BLAST programs to be decreased substantially while enhancing their sensitivity to weak similarities. A new criterion for triggering the extension of word hits, combined with a new heuristic for generating gapped alignments, yields a gapped BLAST program that runs at approximately three times the speed of the original. In addition, a method is introduced for automatically combining statistically significant alignments produced by BLAST into a position-specific score matrix, and searching the database using this matrix. The resulting Position-Specific Iterated BLAST (PSI-BLAST) program runs at approximately the same speed per iteration as gapped BLAST, but in many cases is much more sensitive to weak but biologically relevant sequence similarities. PSI-BLAST is used to uncover several new and interesting members of the BRCT superfamily.},
 	address = {National Center for Biotechnology Information, National Library of Medicine, National Institutes of Health, Bethesda, MD 20894, USA. altschul@ncbi.nlm.nih.gov},
@@ -705,7 +736,20 @@ alignment
 	year = {2002}
 }
 
-
+@book{durbin,
+	abstract = {{Probablistic models are becoming increasingly important in analyzing the huge amount of data being produced by large-scale DNA-sequencing efforts such as the Human Genome Project.  For example, hidden Markov models are used for analyzing biological sequences, linguistic-grammar-based probabilistic models for identifying RNA secondary structure, and probabilistic evolutionary models for inferring phylogenies of sequences from different organisms. This book gives a unified, up-to-date and self-contained account, with a Bayesian slant, of such methods, and more generally to probabilistic methods of sequence analysis. Written by an interdisciplinary team of authors, it is accessible to molecular biologists, computer scientists, and mathematicians with no formal knowledge of the other fields, and at the same time presents the state of the art in this new and important field.}},
+	author = {Durbin, Richard   and Eddy, Sean  R.  and Krogh, Anders   and Mitchison, Graeme  },
+	citeulike-article-id = {163532},
+	howpublished = {Paperback},
+	isbn = {0521629713},
+	keywords = {no-tag},
+	month = {July},
+	priority = {2},
+	publisher = {{Cambridge University Press}},
+	title = {Biological Sequence Analysis : Probabilistic Models of Proteins and Nucleic Acids},
+	url = {http://www.amazon.ca/exec/obidos/redirect?tag=citeulike04-20{\&}path=ASIN/0521629713},
+	year = {1999}
+}
 @article{ref-blastz,
 	abstract = {The Mouse Genome Analysis Consortium aligned the human and mouse genome sequences for a variety of purposes, using alignment programs that suited the various needs. For investigating issues regarding genome evolution, a particularly sensitive method was needed to permit alignment of a large proportion of the neutrally evolving regions. We selected a program called BLASTZ, an independent implementation of the Gapped BLAST algorithm specifically designed for aligning two long genomic sequences. BLASTZ was subsequently modified, both to attain efficiency adequate for aligning entire mammalian genomes and to increase its sensitivity. This work describes BLASTZ, its modifications, the hardware environment on which we run it, and several empirical studies to validate its results. 10.1101/gr.809403},
 	author = {Schwartz, Scott   and Kent, James  W.  and Smit, Arian   and Zhang, Zheng   and Baertsch, Robert   and Hardison, Ross  C.  and Haussler, David   and Miller, Webb  },
