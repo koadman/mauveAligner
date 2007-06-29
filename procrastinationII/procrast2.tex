@@ -61,48 +61,6 @@ We present a novel heuristic for directly computing local multiple alignments th
 
 
 
-\label{sec:overview}
-\section{Definitions and Notation}
-
-Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
-defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all homologous nucleotides in $\mathcal{S}$.
-Since we assume that homology is a transitive property, all
-local multiple alignments on subsequences of $\mathcal{S}$. We denote
-an ungapped alignment, or match, among subsequences in $\mathcal{S}$
-as an object $M$, and a set of such matches as $\mathbf{M}$.
-We refer the number of regions in $\mathcal{S}$
-matched by a given match $M_i \in \mathbf{M}$ as the
-\textit{multiplicity} of $M_i$, denoted as $|M_i|$. There is a limitation on the matches in
-$\mathbf{M}$, no two matches $M_i$ and $M_j$ may have the same
-left-end coordinate.  This constraint has been referred to by others as \textit{consistency} and
-\textit{transitivity}~\cite{ref-transitivity} of matches.  In the
-present work we only require consistency and transitivity of matches
-longer than the seed length, e.g. seed matches may overlap. We denote a gapped alignment, or local alignment, among subsequences in $\mathcal{S}$ as $A$, and a set of gapped alignments as $\mathbf{A}$.  In practice, each $A_i$ in $\mathbf{A}$ is constructed via
-at least one $M_i$ in $\mathbf{M}$. When $|M_i|>2$,$|A_i|>2$ we refer to $M_i$,$A_i$ as
-a multi-match and a multiple local alignment, respectively. The sum of pairs objective function used is defined as follows:\\
-%\begin{equation}
-\begin{figure}[h!]
-$$
-\begin{array}{l}
-f(i,0) = 0,\\
-f(0,j) = 0,\\
-\end{array}
-f(i,j)= \max\left\{\begin{array}{l}
-f(i,j) = f(i-1,j-1)+\mu_{ij},\\
-f(i,j-1) - \gamma\\
-f(i-1,j)-\gamma\\
-0 \\
-\end{array}\right.
-$$
-\begin{center}
-$\mu_{ij}$ is the mismatch score between positions $i,j$ in $\mathcal{S}$.  $\gamma$ is the fixed gap penalty.
-
-\end{center}
-%\end{equation}
-
-\label{ref-sop}
-\end{figure}
-
 \section{A heuristic for local multiple alignment}
 As the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
 
@@ -131,8 +89,7 @@ can be divided into five independent steps:
 
 \subsection{Detecting seeds and multi-matches}
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The many advantages of using spaced seeds for sensitive homology detection have been well documented~\cite{ref-spacedseeds, ref-pattern}. The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches (see Figure~\ref{fig-seeds}).   The lexicographically-lesser of the forward and reverse complement
-subsequence induced by the seed pattern is hashed to identify multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}. Specifically, the use of \textit{palindromic} seed patterns offers computational savings by allowing both strands of DNA to be processed simultaneously.
+As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The many advantages of using spaced seeds for sensitive homology detection have been well documented~\cite{ref-spacedseeds, ref-pattern}. The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
 
 \subsection{Creating chains of multi-matches}
 
@@ -188,9 +145,7 @@ s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(x)}\Bigg)}
 
 Next, we calculated the gap open and gap extension emission probabilities empirically. To estimate the values in Non-homologous state we used a 10kb region taken from \emph{E. coli} CFT073 with 48\% GC content and its reverse (not complemented) and forced an alignment with MUSCLE.  We then counted the number of gap open and gap extend columns in the alignment of Non-homologous sequence. We found 483 and 2535 gap open and  gap extend columns, respectively.  For the homologous state the same procedure was used but this time we used an alignment of two relatively divergent(fixme:percentage?) homologous sequences with ~48\%GC, specifically \emph{Y. pestis} \& \emph{E. coli} k12(say, e. coli and yersinia). We found 44 and 507 gap open and  gap extend columns, respectively.  Since the values from the HOXD substitution matrix were calculated for ungapped alignments, we had to normalize the emission frequencies to account for the gap open and gap extension emission probabilities. All of the transmission and emission probabilities are reported in Figure~\ref{fig-hmm}.
 
-The result of applying a HMM to the alignment columns is a prediction of non-homologous segments among each pair of aligned sequences.  The remaining regions are predicted as homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. Regions found to be non-homologous are unaligned from each other.
-
-Now that we have defined our probabilities for the model, we can defined the parameters for the HMM. We will refer to the sequence of hidden states (Homologous and Nonhomologous, henceforth H and N) as the path $\pi$. The $i$th state in the path is called $\pi_{i}$. From~\cite{durbin}. The probability of the current state only depends on the previous state, and the transmission probability of $a_{kl}$ can be defined as follows:
+Now that we have defined our probabilities for the model, we can defined the parameters for the HMM. We will refer to the sequence of hidden states (Homologous and Nonhomologous, henceforth H and N) as the path $\pi$. The $i$th state in the path is called $\pi_{i}$. The probability of the current state only depends on the previous state, and the transmission probability of $a_{kl}$ can be defined as follows:
 \begin{equation}
 a_{kl} = \textsl{P}\big(\pi_{i}=\textsl{l}\big|\pi_{i-i}=\textsl{k}\big).
 \end{equation}
@@ -204,6 +159,9 @@ For our intents and purposes, the symbols in $\textsl{b}$ are simply all of the 
 \textsl{P}\big(\textsl{x},\pi\big) = a_{0\pi_{1}}\prod_{i=1}^\textsl{L}\textsl{e}_{\pi_{i}}(x_{i})\textsl{a}_{\pi_{i}\pi_{i+1}}.
 \end{equation}
 FIXME: Then, we decode the states $\pi$ $\textsl{P}(A |\pi)$ using the Viterbi algorithm~\cite{durbin}.
+
+
+The result of applying a HMM to the alignment columns is a prediction of non-homologous segments among each pair of aligned sequences.  The remaining regions are predicted as homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. Regions found to be non-homologous are unaligned from each other.
 
 If have reached the end of the extension window without reaching a non-homologous state, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
