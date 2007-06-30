@@ -55,9 +55,9 @@ The importance of accurate homology identification to comparative genomics can n
 
 Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multiple alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause serious efficiency problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
-Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment?   In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.
+Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment?   In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.
 
-We present a novel heuristic for directly computing local multiple alignments that exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We use a hidden markov model to detect any such non-homologous regions embedded in the global multiple alignment.  Non-homologous regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.  The remainder of this manuscript presents details of our computational approach, an evaluation of the accuracy of our method on synthetic datasets, and an application to Alu genome data.
+We present a novel heuristic for directly computing local multiple alignments that exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We use a hidden Markov model to detect any such non-homologous regions embedded in the global multiple alignment.  Non-homologous regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.  The remainder of this manuscript presents details of our computational approach, an evaluation of the accuracy of our method on synthetic datasets, and an application to Alu genome data.
 
 
 
@@ -72,7 +72,7 @@ can be divided into five independent steps:
 (4) estimation of homologous sequence boundaries using random walk statistics
 (5) unalignment of all non-homologous sequence in local multiple alignment
 
-
+\textbf{this seems somewhat redundant with the last paragraph of the introduction section.  we should do something about one paragraph or another since our space is limited.  also, we're focusing heavily on the extension part, but i would say that guillaume's statistics will be equally important to emphasize.}
 
 \begin{figure}[p]
 \begin{center}
@@ -89,12 +89,15 @@ can be divided into five independent steps:
 
 \subsection{Detecting seeds and multi-matches}
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The many advantages of using spaced seeds for sensitive homology detection have been well documented~\cite{ref-spacedseeds, ref-pattern}. The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and sensitivity on a variety of input sequences~\cite{ref-procrast}.
+As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The many advantages of using spaced seeds for sensitive homology detection have been well documented~\cite{ref-spacedseeds, ref-pattern}. The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and reasonable sensitivity on a variety of input sequences~\cite{ref-procrast}.
+
+\textbf{can this wordy paragraph be condensed and some formal notation for a multi-Match introduced? I think it would be helpful to define something like M\_i.L for the left-end of the i-th match...  keeping it consistent with the original
+procrastination paper.  we should also define multiplicity here, since it figures prominently into the next section}
 
 \subsection{Creating chains of multi-matches}
 
-Once we have generated a list of multi-matches, we rely on our previously described method for efficiently filtration method for chaining ~\cite{ref-procrast}. A brief review of the method follows. In order to chain over each region of sequence $\mathcal{O}(1)$ times,
-our method chains matches in order of decreasing multiplicity--we
+Once a list of multi-matches has been generated, we an efficient chaining algorithm to identify overlapping and nested chains of multi-matches~\cite{ref-procrast}. A brief review of the method follows. In order to chain over each region of sequence $\mathcal{O}(1)$ times,
+the method chains matches in order of decreasing multiplicity--we
 extend the highest multiplicity matches first. We first chain all matches
 with the same multiplicity within $w$
 characters. When a match can no
@@ -118,7 +121,7 @@ To perform a gapped extension in each direction, we use MUSCLE to align the left
 \subsubsection{Identifying non-homologous regions}
 \begin{figure}[t]
 \centering \epsfig{file=./figures/hmm.eps,width=3.5in}
-\caption{HMM used to detect non-homologous sequence between two sequences x and y. gO stands for gap open, and gE gap extend. }
+\caption{HMM used to detect non-homologous sequence between two sequences x and y. gO indicates gap open and gE gap extend. Alignment columns are treated as strand-symmetric, so that AC also indicates CA and the reverse complements TG and GT.}
 
 \label{fig-hmm}\vspace{-0.2cm}
 \end{figure}
@@ -237,7 +240,7 @@ Present results have demonstrated both high sensitivity and specificity on align
 sequences and retrieving multiple copies of mutated patterns. We have also presented a statistic method for assigning significance to the resulting multiple local alignments that is used to select only the highly significant alignments.While we view the statistical significance proposal a preliminary, thus far the results of our significance assessment indicates a promising avenue of further research.
 
 \section{Implementation}
-We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL. 
+We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL.
 
 \section{ Acknowledgments }
 AED was supported by NSF grant DBI-0630765. TJT was
