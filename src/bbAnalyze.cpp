@@ -1,12 +1,13 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include "libMems/Backbone.h"
 #include "libGenome/gnFeature.h"
 #include "libGenome/gnBaseQualifier.h"
 #include "libMems/IntervalList.h"
 #include "libMems/MatchList.h"
 #include "libMems/PhyloTree.h"
-#include "ProgressiveAligner.h"
+#include "libMems/ProgressiveAligner.h"
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -18,66 +19,6 @@ using namespace mems;
 const uint SHORT_SEGMENT = 5;
 const double ALTERNALOG_MIN_SIZE = 15.0;
 
-
-typedef vector< pair< int64, int64 > > bb_seqentry_t;
-typedef struct bb_entry_s
-{
-	bb_seqentry_t bb_seq;
-	ULA bb_cols;
-	size_t iv;
-} bb_entry_t;
-
-void printBbSeq( ostream& os, const bb_seqentry_t& bbseq )
-{
-	for( size_t i = 0; i < bbseq.size(); ++i )
-	{
-		if( i > 0 )
-			os << '\t';
-		os << "(" << bbseq[i].first << ", " << bbseq[i].second << ")";
-	}
-}
-
-void readBackboneSeqFile( istream& bbseq_input, vector< bb_seqentry_t >& backbone )
-{
-	string cur_line;
-	getline( bbseq_input, cur_line );	// read off the header line
-	while( getline( bbseq_input, cur_line ) )
-	{
-		bb_seqentry_t bb;
-		stringstream line_str( cur_line );
-		int64 lpos = 0;
-		while( line_str >> lpos )
-		{
-			int64 rpos = 0;
-			line_str >> rpos;
-			bb.push_back( make_pair( lpos, rpos ) );
-		}
-		backbone.push_back(bb);
-	}
-}
-
-void readBackboneColsFile( istream& bbcol_input, vector< pair< size_t, ULA > >& bb_list )
-{
-	string cur_line;
-	while( getline( bbcol_input, cur_line ) )
-	{
-		ULA tmp_ula;
-		size_t ivI;
-		stringstream ss( cur_line );
-		ss >> ivI;
-		size_t left_col;
-		size_t len;
-		ss >> left_col;
-		ss >> len;
-		gnSeqI bbseq;
-		while( ss >> bbseq )
-		{
-			tmp_ula.SetStart( bbseq, left_col );
-		}
-		tmp_ula.SetLength( len );
-		bb_list.push_back( make_pair( ivI, tmp_ula ) );
-	}
-}
 
 class BbSeqComp
 {
