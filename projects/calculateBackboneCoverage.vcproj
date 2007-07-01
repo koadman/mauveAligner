@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;__GNDEBUG__;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,10 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib ..\..\libMems\lib\memsd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib ..\..\libMems\lib\memsd.lib"
 				OutputFile="$(OutDir)/calculateBackboneCoveraged.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/calculateBackboneCoverage.pdb"
@@ -124,7 +124,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -143,10 +143,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib ..\..\libMems\lib\mems.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib ..\..\libMems\lib\mems.lib"
 				OutputFile="$(OutDir)/calculateBackboneCoverage.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -223,10 +223,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib ..\..\libMems\lib\memsfd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib ..\..\libMems\lib\memsfd.lib"
 				OutputFile="$(OutDir)/calculateBackboneCoverage.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -286,7 +286,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;__GNDEBUG__;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -307,10 +307,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome64d.lib ..\..\libClustalW\lib\ClustalW64d.lib ..\..\libMems\lib\mems64d.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64d.lib ..\..\libClustalW\lib\ClustalW64d.lib ..\..\libMems\lib\mems64d.lib"
 				OutputFile="$(OutDir)/calculateBackboneCoveraged.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/calculateBackboneCoverage.pdb"
@@ -368,7 +368,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -387,10 +387,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome64.lib ..\..\libClustalW\lib\ClustalW64.lib ..\..\libMems\lib\mems64.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64.lib ..\..\libClustalW\lib\ClustalW64.lib ..\..\libMems\lib\mems64.lib"
 				OutputFile="$(OutDir)/calculateBackboneCoverage.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -449,7 +449,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -468,10 +468,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome64fd.lib ..\..\libClustalW\lib\ClustalW64fd.lib ..\..\libMems\lib\mems64fd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64fd.lib ..\..\libClustalW\lib\ClustalW64fd.lib ..\..\libMems\lib\mems64fd.lib"
 				OutputFile="$(OutDir)/calculateBackboneCoverage.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"

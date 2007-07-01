@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				InlineFunctionExpansion="0"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMUSCLE;..\..\libMems\;..\..\boost\include\boost-1_33_1;..\..\bagFFT;"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMUSCLE;..\..\libMems\;..\..\boost\boost_1_34_0\;..\..\bagFFT;"
 				PreprocessorDefinitions="NR=1;WIN32;_DEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;__GNDEBUG__;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,10 +66,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib ..\..\libMUSCLE\lib\MUSCLEd.lib ..\..\libMems\lib\memsd.lib  ..\src\bagFFT\libfftw3-3.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib ..\..\libMUSCLE\lib\MUSCLEd.lib ..\..\libMems\lib\memsd.lib  ..\src\bagFFT\libfftw3-3.lib"
 				OutputFile="$(OutDir)/procrastAlignerd.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;;"
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/procrastAligner.pdb"
@@ -130,7 +130,7 @@
 				OmitFramePointers="false"
 				EnableFiberSafeOptimizations="false"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMUSCLE;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\muscle\;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="NR=1;WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -149,10 +149,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib ..\..\libMUSCLE\lib\MUSCLE.lib ..\..\libMems\lib\mems.lib ..\src\bagFFT\libfftw3-3.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib ..\..\libMems\lib\mems.lib ..\src\bagFFT\libfftw3-3.lib"
 				OutputFile="$(OutDir)/procrastAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;;&quot;..\..\muscle\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -214,7 +214,7 @@
 				OmitFramePointers="false"
 				EnableFiberSafeOptimizations="false"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMUSCLE;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="NR=1;WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -233,10 +233,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genomefd.lib ..\..\libMUSCLE\lib\MUSCLEfd.lib ..\..\libClustalW\lib\ClustalWfd.lib ..\..\libMems\lib\memsfd.lib ..\src\bagFFT\libfftw3-3.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib ..\..\libMems\lib\memsfd.lib"
 				OutputFile="$(OutDir)/procrastAlignerfd.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;;&quot;..\..\muscle\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -297,7 +297,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				InlineFunctionExpansion="0"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1;..\..\bagFFT;"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\;..\..\bagFFT;"
 				PreprocessorDefinitions="NR=1;WIN32;_DEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;__GNDEBUG__;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -318,10 +318,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome64d.lib ..\..\libClustalW\lib\ClustalW64d.lib ..\..\libMems\lib\mems64d.lib  ..\src\bagFFT\libfftw3-3.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64d.lib ..\..\libClustalW\lib\ClustalW64d.lib ..\..\libMems\lib\mems64d.lib  ..\src\bagFFT\libfftw3-3.lib"
 				OutputFile="$(OutDir)/procrastAlignerd.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;;"
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/procrastAligner.pdb"
@@ -383,7 +383,7 @@
 				OmitFramePointers="false"
 				EnableFiberSafeOptimizations="false"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="NR=1;WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -402,10 +402,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome64.lib ..\..\libClustalW\lib\ClustalW64.lib ..\..\libMems\lib\mems64.lib ..\src\bagFFT\libfftw3-3.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64.lib ..\..\libClustalW\lib\ClustalW64.lib ..\..\libMems\lib\mems64.lib ..\src\bagFFT\libfftw3-3.lib"
 				OutputFile="$(OutDir)/procrastAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -468,7 +468,7 @@
 				OmitFramePointers="false"
 				EnableFiberSafeOptimizations="false"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\include\boost-1_33_1"
+				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
 				PreprocessorDefinitions="NR=1;WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -487,10 +487,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib ..\..\libGenome\lib\genome64fd.lib ..\..\libClustalW\lib\ClustalW64fd.lib ..\..\libMems\lib\mems64fd.lib ..\src\bagFFT\libfftw3-3.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64fd.lib ..\..\libClustalW\lib\ClustalW64fd.lib ..\..\libMems\lib\mems64fd.lib ..\src\bagFFT\libfftw3-3.lib"
 				OutputFile="$(OutDir)/procrastAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\lib&quot;"
+				AdditionalLibraryDirectories="..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -544,30 +544,6 @@
 				RelativePath="..\src\procrastAligner.cpp"
 				>
 			</File>
-			<Filter
-				Name="bagFFT"
-				>
-				<File
-					RelativePath="..\src\bagFFT\bagFFT.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\fft.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\llr_score.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\minimize.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\utils.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -586,62 +562,6 @@
 				RelativePath="..\src\SeedMatchEnumerator.h"
 				>
 			</File>
-			<Filter
-				Name="bagFFT"
-				>
-				<File
-					RelativePath="..\src\bagFFT\bagFFT-algorithm.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\bagFFT.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\brent.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\complex.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\convolution.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\extended_exponent.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\fft.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\fftw3.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\llr_score.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\minimize.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\mnbrak.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\theta_fns.h"
-					>
-				</File>
-				<File
-					RelativePath="..\src\bagFFT\utils.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
