@@ -177,7 +177,7 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 	std::vector< mems::AbstractMatch* > iv_matches;
 	MatchSortEntryCompare msec;
 	std::vector< MatchSortEntry > mse_list( chained_matches.size() );
-	//chained_matches.at(0)->
+
 	for( size_t cI = 0; cI < chained_matches.size(); ++cI )
 	{
 		mse_list[cI].first = chained_matches[cI];
@@ -188,7 +188,6 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 	std::vector< mems::AbstractMatch* > chain;
 	for( size_t cI = 0; cI < mse_list.size(); ++cI )
 	{
-		//tjt: almost reinvented the wheel here, didnt realize MatchProjectionAdapter existed!
 		mems::MatchProjectionAdapter mpaa( mse_list[cI].first, *(mse_list[cI].second) );
 		// clobber any region that overlaps with this mpaa
 		for( size_t seqI = 0; seqI < mpaa.SeqCount(); seqI++ )
@@ -206,27 +205,28 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 				if( m->LeftEnd(seqI) < mpaa.LeftEnd(seqI) &&
 					m->RightEnd(seqI) >= mpaa.LeftEnd(seqI) )
 				{
-					
-					// take the part to the left and put it at the end
+					// take the part of m to the left of mpaa and put it at the end of our chain
 					mems::AbstractMatch* m_left = m->Copy();
 					m_left->CropRight( m_left->RightEnd(seqI) - mpaa.LeftEnd(seqI) + 1, seqI );
 					m->CropLeft( m_left->Length(seqI), seqI );
 					chain.push_back(m_left);
-					
 				}
 				// now m is guaranteed to have left-end >= mpaa
 				if( m->RightEnd(seqI) <= mpaa.RightEnd(seqI) )
 				{
+					// m is completely contained inside mpaa, so get rid of it
 					m->Free();
 					chain[mI] = NULL;
 					continue;
 				}
-				if ( m->LeftEnd(seqI) >  mpaa.RightEnd(seqI) )
+				// why??  why would we want to delete m if it lies completely outside mpaa?
+/*				if ( m->LeftEnd(seqI) >  mpaa.RightEnd(seqI) )
 				{
 					m->Free();
 					chain[mI] = NULL;
 					continue;
 				}
+*/
 				//m->Free();
 				//chain[mI] = NULL;
 				//continue;
