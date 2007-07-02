@@ -111,8 +111,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbAnalyze", "bbAnalyze.vcpr
 		{20FE3C39-9B04-4D5F-8249-115D8812B93E} = {20FE3C39-9B04-4D5F-8249-115D8812B93E}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "muscle", "..\..\muscle\muscle.vcproj", "{219A4F0A-B107-4E79-9685-23304542FD84}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "getOrthologList", "getOrthologList.vcproj", "{B077561F-E888-44AC-A763-0B4245A9E458}"
 	ProjectSection(ProjectDependencies) = postProject
 		{20FE3C39-9B04-4D5F-8249-115D8812B93E} = {20FE3C39-9B04-4D5F-8249-115D8812B93E}
@@ -124,6 +122,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stripSubsetLCBs", "stripSubsetLCBs.vcproj", "{66EBAA32-DD8B-4DB8-AFBC-DE33BB9C3E98}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libMUSCLE", "..\..\muscle\projects\libMUSCLE.vcproj", "{4E952785-0A53-4057-8CB9-03754EB3BFA3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "muscle", "..\..\muscle\projects\muscle.vcproj", "{219A4F0A-B107-4E79-9685-23304542FD84}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -450,18 +450,6 @@ Global
 		{E03B45BF-3438-42B5-A4DD-CFA35E784C2B}.Release|Win32.Build.0 = Release|Win32
 		{E03B45BF-3438-42B5-A4DD-CFA35E784C2B}.Release|x64.ActiveCfg = Release|x64
 		{E03B45BF-3438-42B5-A4DD-CFA35E784C2B}.Release|x64.Build.0 = Release|x64
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|Win32.ActiveCfg = Debug|Win32
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|Win32.Build.0 = Debug|Win32
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|x64.ActiveCfg = Debug|x64
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|x64.Build.0 = Debug|x64
-		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|Win32.ActiveCfg = FastDebug|Win32
-		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|Win32.Build.0 = FastDebug|Win32
-		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|x64.ActiveCfg = FastDebug|x64
-		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|x64.Build.0 = FastDebug|x64
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|Win32.ActiveCfg = Release|Win32
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|Win32.Build.0 = Release|Win32
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|x64.ActiveCfg = Release|x64
-		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|x64.Build.0 = Release|x64
 		{B077561F-E888-44AC-A763-0B4245A9E458}.Debug|Win32.ActiveCfg = Debug|Win32
 		{B077561F-E888-44AC-A763-0B4245A9E458}.Debug|Win32.Build.0 = Debug|Win32
 		{B077561F-E888-44AC-A763-0B4245A9E458}.Debug|x64.ActiveCfg = Debug|Win32
@@ -498,6 +486,15 @@ Global
 		{4E952785-0A53-4057-8CB9-03754EB3BFA3}.Release|Win32.ActiveCfg = Release|Win32
 		{4E952785-0A53-4057-8CB9-03754EB3BFA3}.Release|Win32.Build.0 = Release|Win32
 		{4E952785-0A53-4057-8CB9-03754EB3BFA3}.Release|x64.ActiveCfg = Release|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|Win32.ActiveCfg = Debug|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|Win32.Build.0 = Debug|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.Debug|x64.ActiveCfg = Debug|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|Win32.ActiveCfg = FastDebug|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|Win32.Build.0 = FastDebug|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.FastDebug|x64.ActiveCfg = FastDebug|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|Win32.ActiveCfg = Release|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|Win32.Build.0 = Release|Win32
+		{219A4F0A-B107-4E79-9685-23304542FD84}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
