@@ -22,9 +22,8 @@ $^*$E-mail: a.darling@imb.uq.edu.au}
 
 
 \author{Guillaume Achaz}
-
-\address{Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6\\
-Paris, France}
+\address{Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6,\\
+ Paris, France}
 
 \author{ Mark A. Ragan}
 
@@ -51,28 +50,18 @@ The identification of homologous DNA via sequence alignment is a basic building 
 
 \section{Introduction}
 
-The importance of accurate homology identification to comparative genomics can not be overestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blastz, ref-ssearch,repseek} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
+The importance of accurate homology identification to comparative genomics can not be underestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blastz, ref-ssearch} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
 
 Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Pairwise alignment has been demonstrated to be less accurate than multiple alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause serious efficiency problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS elements in microbes are just two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
-Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment?   In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.
+Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? Thus, we aim to bridge the gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
 
-We present a novel heuristic for directly computing local multiple alignments that exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches.  Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We use a hidden Markov model to detect any such non-homologous regions embedded in the global multiple alignment.  Non-homologous regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.  The remainder of this manuscript presents details of our computational approach, an evaluation of the accuracy of our method on synthetic datasets, and an application to Alu genome data.
+%In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive %alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over %their entire length.
 
-
+%Thus, our aim is to avoid this problem and at the same time bridge this gap in efficiency by presenting a novel heuristic for gapped extension %for sensitive local multiple alignment.
 
 \section{A heuristic for local multiple alignment}
-As the cost of alignment in multiple sequences grows exponentially with respect to the number of sequences, we must find clever ways to perform and limit the amount of gapped alignment via dynamic programming that is performed. Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our aim is to bridge this gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment.
-
-Our heuristic for local multiple alignment, as depicted in Figure~\ref{fig-main},
-can be divided into five independent steps:
-(1) detection of multi-matches using palindromic spaced seeds
-(2) prioritized chaining of all multi-matches
-(3) gapped extension of all chains
-(4) estimation of homologous sequence boundaries using random walk statistics
-(5) unalignment of all non-homologous sequence in local multiple alignment
-
-\textbf{this seems somewhat redundant with the last paragraph of the introduction section.  we should do something about one paragraph or another since our space is limited.  also, we're focusing heavily on the extension part, but i would say that guillaume's statistics will be equally important to emphasize.}
+We present a novel heuristic for directly computing local multiple alignments that exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches (see Figure~\ref{fig-main}). Gapped alignments arise when trying to extend seeds to fully capture surrounding sequence homology. Our method assumes that a fixed number of nucleotides flanking a seed match is likely to be homologous and computes a global multiple alignment on the flanking region.  In some cases our assumption of flanking homology proves erroneous and results in an alignment of unrelated sequences.  We use a hidden Markov model to detect any such non-homologous regions embedded in the global multiple alignment.  Non-homologous regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.  Finally, we present a method for assigning significance to the resulting local-multiple alignments to discard local-multiple alignments likely to be insignificant. 
 
 \begin{figure}[p]
 \begin{center}
@@ -87,12 +76,35 @@ can be divided into five independent steps:
 
 %\colorbox[named]{Gray}{adfa}
 
-\subsection{Detecting seeds and multi-matches}
+\subsection{Extracting multi-matches from the input sequence}
 
-As a starting point for homology detection, we locate all spaced seeds of a given weight $z$ in the input sequence(s). The many advantages of using spaced seeds for sensitive homology detection have been well documented~\cite{ref-spacedseeds, ref-pattern}. The palindromic spaced seed pattern is analyzed at each position in the input sequence to identify all multi-matches.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and reasonable sensitivity on a variety of input sequences~\cite{ref-procrast}.
+Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
+defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all
+significant local multiple alignments on subsequences of $\mathcal{S}$. Our
+proposed method first extracts candidate ungapped alignments, or multi-matches, 
+among subsequences in $\mathcal{S}$, denoted as $\cal M$. To extract multi-matches from the input sequence, we utilize a palindromic spaced seed pattern, which is analyzed at each position in the input sequence.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and reasonable sensitivity on a variety of input sequences~\cite{ref-procrast}.
 
-\textbf{can this wordy paragraph be condensed and some formal notation for a multi-Match introduced? I think it would be helpful to define something like M\_i.L for the left-end of the i-th match...  keeping it consistent with the original
-procrastination paper.  we should also define multiplicity here, since it figures prominently into the next section}
+We refer the number of regions in $\mathcal{S}$
+matched by a given match $M_i \in \mathbf{M}$ as the
+\textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
+matching region of $M_i$ as a \textit{component} of $M_i$. Note that
+$|M_i| \geq 2~\forall~M \in \mathbf{M}$.  We denote the left-end
+coordinates in $\mathcal{S}$ of each component of $M_i$ as $M_i.L_1,
+M_i.L_2,\dots, M_i.L_{|M_i|}$, and similarly we denote the right-end
+coordinates as $M_i.R_x$.  When aligning DNA sequences, matches may
+occur on the forward or reverse complement strands. To account for
+this phenomenon we add an orientation value to each matching region:
+$M_i.O_x \in \{1,-1\}$, where 1 indicates a forward strand match and
+-1 for reverse.
+
+Our algorithm has an important limitation on the matches in
+$\mathbf{M}$: no two matches $M_i$ and $M_j$ may have the same
+left-end coordinate, e.g. $M_i.L_x \neq M_j.L_y~\forall~i, j, x, y$
+except for the identity case when $i=j$ and $x=y$.  This constraint
+has been referred to by others as \textit{consistency} and
+\textit{transitivity}~\cite{ref-transitivity} of matches.  In the
+present work we only require consistency and transitivity of matches
+longer than the seed length, e.g. seed matches may overlap.
 
 \subsection{Creating chains of multi-matches}
 
@@ -168,10 +180,121 @@ The result of applying a HMM to the alignment columns is a prediction of non-hom
 
 If have reached the end of the extension window without reaching a non-homologous state, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
-\subsection{Assigning significance to local multiple alignments}
-FIXME: insert statistics here!
+\section{Assigning significance to local multiple alignments}
 
 
+\subsection{1 segment between two sequences}
+
+First, we examine how the probability is obtained for multiplicity 2 for two sequences of size
+$m$ and $n$. Our goal is to derive the probability that the two sequences share at least one
+segment with a score $t$ or more. It has been shown that, $n$, the number of segments of score $t+$ (t or more) follows a
+Poisson distribution with mean
+\begin{equation}
+E[n]=\textsl{K}\textit{mn}\textsl{p}^{t}
+\end{equation}
+
+where \textsl{K} and \textsl{p} are two values specific to the scoring system, with \textsl{p} being the probability to find a segment of score $\geq 1$ with multiplicity $\geq 2$. The rationale behind this is:
+
+\begin{enumerate}
+\item the product $mn$ is the number of cells you have in an alignment of both sequences. It
+does correspond to all possible symbol of the first sequence 1 vs. all possible symbols
+of the second one.
+
+\item for a given set of positions $i(0 \leq i \leq m)$ and $j(0 \leq j \leq n)$, the probability of having
+a segment of score 1 is \textsl{p}. To have a segment of score 2, you need two head-to-tail
+ordered segments of score 1 (scores are additive) at position $i$, $i+1$ and $j$, $j +1$ which
+have a probability $\textsl{p}^{2}$. Finally, a segment of score $t$ is $t$ head-to-tail ordered segments
+of score 1 and has a probability $\textsl{p}^{t}$.
+
+\item So basically, what we have is on average a probability $\textsl{p}^{t}$ times the number of possible
+location corrected by some value \textsl{K}.
+\end{enumerate}
+
+It is important to mention that $p \leq 1$, so that $\textsl{p}^{t}$ can be expressed as $e^{-\gamma t}$. Therefore,
+we will often see:
+
+\begin{equation}
+E[n]=\textsl{K}\textit{mn}e^{-\gamma t}
+\end{equation}
+
+From there it is easy to get the probability to observe at least one segment of score $t+$.
+It is given by the following equation:
+
+\begin{equation}
+\textsl{P}(1+) = 1-\textit{Poisson}(0) = 1-e^{\textsl{K}\textit{mn}\textsl{p}^{t}} = 1-e^{\textsl{K}\textit{mn}e^{-\gamma t}}
+\end{equation}
+
+\subsection{1 segment within one sequence, \textit{i.e.} a 2-copy repeat}
+In the case of a single sequence with a repeat of multiplicity 2, we have actually $\frac{n(n-1)}{2}$
+cells in the alignment of a sequence with itself (the score matrix being symmetric). Note
+that it actually assumes that the length of the repeats $l_{rep}\ll n$ and that repeats can have
+overlapping copies. It can also be seen as the number of locations where we can place the
+beginning of both copies. Since the sequence has length $n$, there are $(_{2}^\textsl{n})$
+possible locations for the 2 copies. So we have, for the probability of finding at least 1 pair of sequence (a
+2-copy repeat) having a score $t+$:
+
+\begin{equation}
+\textsl{P}(score \geq 1) = 1-e^{(\textsl{K}(_{2}^\textsl{n})\textsl{p}^{t})}
+\end{equation}
+
+Note that this assumes that the probability of finding a same segment of score 1 at
+position $i,j$ with $0 \leq i < j \leq n$ is given by \textsl{p}.
+
+\subsection{Estimation of \textsl{K} and \textsl{p}}
+Typically the two parameters K and p are unknown and are estimated from simulation for
+a given scoring system. The idea is to note that $\textsl{P}(score \geq t) = 1 - \textsl{F}(t)$, $\textsl{F}(t)$ being the
+cumulative distribution of $t$. So, for 2-copy repeats, we have:
+
+\begin{equation}
+\log(-\log(\textsl{F}))= \log(\textsl{K})+\log((_{2}^\textsl{n}))+t\log(\textsl{p})
+\end{equation}
+
+In this case, $\log(-\log(\textsl{F}))$ is a simple linear function of of $t$. We also note that since
+$p \leq 1$, we have a negative slope. It turns out that it for random sequences, this works
+amazingly well (typically $r^{2}\approx 0.99$). There are several tricks we can use to estimate these parameters, which can
+ drastically reduce the number of random sequences to simulate.
+ 
+\begin{figure}[t]
+\centering \epsfig{file=./figures/exactseeds.eps,width=4.5in}
+\caption{First test, Exact Seeds. We generated 1000 random sequence of size $10^{5}$bp with GC = 0.6. For each sequence,
+we detected the longest 2-copy, 3-copy, ..., 5-copy repeat. Using all sequences, we then generated the F
+cumulative distribution and plotted it as a function of t (here the seed length). Results
+are shown in figure 1 (dots with line r = 2, r = 3, ...). Using the multiplicity r = 2, we
+estimated both K = 1.5527 and p = 0.2859.}
+
+\label{fig-hmm}\vspace{-0.2cm}
+\end{figure}
+\subsection{From 2-copy to $r$-copy repeats}
+We need to generalize this for higher multiplicity, so that we have in there a new term that
+is the multiplicity $r$. Basically we can have the exact same reasoning except that this time \textsl{p} is the probability
+of having a repeat of multiplicity $r$ and not just 2. It seems reasonable to assume that the
+probability of finding a segment of score 1 at positions $i, j, k$ with $0 \leq i < j < k \leq n$ is
+$\textsl{p}^{r-1}$. The first position can be anything, all the other ones have to be similar segments.
+Moreover, we also need to find how many arrangement we can have with more than 2
+copies. This is rather easy since if we have $r$ copies in a sequence of length $n$. If we have
+$l-{rep}\ll n$, we can ignore the border effect and then we have $(_{2}^\textsl{n})$
+possible positions. Therefore we can express the more general form as:
+
+\begin{equation}
+\textsl{P}(score \geq t|r) \approx 1-e^{(\textsl{K}(_{r}^\textsl{n})\textsl{p}^{(r-1)t})}
+\end{equation}
+
+This equation, using the same transformation as for 2-copy repeats, can be expressed as:
+
+\begin{equation}
+\log(-\log(\textsl{F}))= \log(\textsl{K})+\log((_{r}^\textsl{n}))+t(r-1)\log(\textsl{p})
+\end{equation}
+
+If this is true, it means that one can estimate only the parameters \textsl{K} and \textsl{p} once
+for multiplicity 2 and then have the relationship between scores and probability for all
+multiplicities. In practice this means that it becomes feasible and that we do not need to
+find all $\textsl{K}_{r}$ and $\textsl{p}_{r}$ by simulation with $r \in [2,\inf]$.
+
+
+
+\subsection{What's next?}
+Well, it seems that the method I proposed above (maybe others have been using the same
+trick) works for strict repeats. Let’s test it for non-strict repeats.
 
 \section{Results}
 
@@ -214,21 +337,8 @@ aligned positions out of the total number of match component pairs.
 
 
 \begin{figure}[t]
-\scriptsize
-\begin{verbatim}
-GATTGCTTGAACCTG--------GAGATTCAAGTGAGCTGAGATTGCACCACTGCATTCCAGCCTGGGC--AACAAAGCAAGACTCT
-AATTGCTTGAACCTGGGAG-GCGGAGGTTGCAGTGAGCCGAGATGACGCCACTGCACTCCAGCCTGGGC--GACAGAGCA-------
-AATCGCTTGAACCCAAGAGAGTGAAGGTTGCAGTGAGCTGAGATCATGCCACTTCACTCCAGCCTGAGTGAAACAGC----------
-AATAACTTCAACCTGGGAG-ACAGAGGTTGCAGTCAGCTGAGATCGCACCACTGCATTCCAGCCTGGGT--GACAGACCGAGACTCT
-AACTGCTTGAACTCGGGAG-GCAGAGATTGCAGTGAGCTGAGATCATGTCAATGCACTGCAGCTTGAGT--GACAGAGTG-------
-AATCGCTTGAACCTGGGAG-GCAGAGGTTACAGAGAGCTGGGATTGTGCCACTGCACTCCGGCCTGGGC--AACAGAATG-------
-AATCACTTGAACCTGGGAG-GCAGAGGTTACAGTGAGCCAAAATCGCGCCACTGCACTCCAACCTGGGC--AACACAGCAA------
-AATTGCTTGAACCCGGGAG-GTGGAGGCTGCAGTGAGCCGAGATCATGCCACTGCACTCCAGCCT-GGT--GACAGAGCGAGA----
-AATTGTTTGAACCCAGGAG-GCGGAGGCTGCAGTGAGCCGAGATTGTGTCACTGTACTCCAGCCTGGGCAAGACAGAG---------
-AATCCCTTCAACCTGGGAA-ACAGAGGTTGCAGTGAGCCAAGATCGCACCATTGCACTCCAGTCTGGGC--AACAGAGAGA------
-\end{verbatim}
-\normalsize
-\caption{Partial alignment of Alu-Sc subfamily found in \emph{H. sapiens} C1 esterase inhibitor gene. Each row represents an aligned ALU.}
+\centering \epsfig{file=./figures/alu_align.eps,width=4.5in}
+\caption{Partial alignment of Alu-Sc subfamily found in \emph{H. sapiens} C1 esterase inhibitor gene. Each row represents an aligned ALU. Highlighted columns indicate conserved sequence among all all 10 sequences.}
 \label{fig-align}
 \end{figure}
 
