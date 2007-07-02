@@ -138,7 +138,9 @@ To perform a gapped extension in each direction, we use MUSCLE to align the left
 \label{fig-hmm}\vspace{-0.2cm}
 \end{figure}
 
-It often the case that the spaced seed approach is \emph{too} sensitive and does not always identify truly homologous sequence. This can cause non-homologous sequence to be aligned during gapped extension, since The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are homologous or not. Since ideally we want to avoid aligning non-homologous sequence, especially when considering the consequences on downstream analysis, we need to identify any possible columns in the gapped extension that are likely to be non-Homologous. We have configured a Hidden Markov Model (Figure ~\ref{fig-hmm}) to do exactly this, consisting of two states, Homologous and Non-Homologous, to reject any column likely to be non-Homologous. Say something about HMM is constructed, how emission probabilities are extracted, how transmission probabilities were determined, and how homologous and nonhomologous states were decoded.
+It often the case that the spaced seed approach is \emph{too} sensitive and does not always identify truly homologous sequence. This can cause unrelated sequence to be aligned during gapped extension since The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are homologous or not. Since we want to avoid aligning unrelated sequence, especially when considering the consequences on downstream analysis, we need to identify any possible columns in the gapped extension that are likely to be unrelated. We have configured a Hidden Markov Model (Figure ~\ref{fig-hmm}) to do exactly this, consisting of two states, Homologous and Unrelated. 
+
+FIXME: Say something about HMM is constructed, how emission probabilities are extracted, how transmission probabilities were determined, and how homologous and nonhomologous states were decoded.
 
 The emission probabilities were extracted from the HOXD substitution matrix presented in~\cite{hoxd}.
 
@@ -181,7 +183,7 @@ The result of applying a HMM to the alignment columns is a prediction of non-hom
 If have reached the end of the extension window without reaching a non-homologous state, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
 \section{Assigning significance to local multiple alignments}
-
+To improve specificity and avoid reporting spurious results, we present a method for estimating the pvalue of local multiple alignments. 
 
 \subsection{1 segment between two sequences}
 
@@ -298,8 +300,6 @@ trick) works for strict repeats. Let’s test it for non-strict repeats.
 
 \section{Results}
 
-
-\subsection{Retrieval of randomly generated patterns}
 %describe and present results(table)
 %\begin{comment}
 
@@ -325,15 +325,6 @@ We have previously demonstrated the sensitivity of our chaining method in findin
 the human genome~\cite{ref-procrast}. Figure~\ref{fig-align} shows an example local multiple alignment of an ALU family as generated with \texttt{procrastAligner}. To highlight the benefits of our proposed heuristic for gapped extension, we compare \texttt{procrastAligner}'s performance to that of two related programs, EulerAlign~\cite{ref-related1} and HomologMiner~\cite{ref-homologminer}. For this comparison we have inserted mutated copies of randomly generated patterns into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method~\cite{ref-mycoplasma}. We generated and inserted DNA patterns into the genome as follows. To evaluate sensitivity and specificity of the methods as a function of multiplicity we generated 10 patterns for each multiplicity between 2 and 300. To generate each pattern, we first randomly determined a length for each multiplicity (larger pattern lengths for lower multiplicities and vice versa) using the following exponential equation: $l = 200e^{-0.01r}$ , where $r$ is pattern multiplicity and $l$ the calculated length. Next, we constructed the DNA pattern by using a background nucleotide frequency equivalent to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Then, we randomly mutated each copy of the pattern following a star tree topology. Some positions in the pattern were taken to be more likely to contain mutations by using a gamma-distributed rate heterogeneity. The distance between each mutation and length of indels were calculated using a Poisson distribution. Sequence divergence was varied from 0 substitutions per site (i.e. no divergence) to 1 substitution per site, allowing us also to analyze sensitivity and specificity of each method as a function of sequence divergence. Afterwards, we assigned an orientation to each copy by selecting either the forward or reverse strand.
 
 Now that the pattern and all copies are ready to be inserted into the sequence, we randomly selected the minimum distance between any two copies (between 100-1000nt) following a uniform distribution and inserted each copy into the genome.  We started the analysis by simply recording each method's ability to recover all mutated copies of the  artificially generated pattern. If a copy of the pattern was found, it was recorded as a hit, else miss. We also used each method to find all significant multiple local alignments in the modified genome of \emph{M. genitalium} and recorded their respective sensitivity and specificity as a function of multiplicity and sequence divergences. Results of this experiment are reported in Table~\ref{tab-results}. Parameters used for each program were configured as follows: \\ \\ \textbf{procrastAligner}:\texttt{--z=9 --w=30 --solid=0 --chain=1 --extend=1}\\ \textbf{EulerAlign}:\texttt{ -k 9 -l -i 50 -v} \\ \textbf{HomologMiner}:\texttt{M=20 C=200 T=15 S=10}.
-
-\subsection{144 HCV alignment? }
-Next, we used a manually curated alignment of 144 Hepatitis C Virus sequences~\cite{ref-hcvdb} to analyze the
-accuracy of our method.  We measure the
-accuracy of our method as the fraction of pairwise
-positions aligned in the correct alignment that are also present in
-\texttt{procrastAligner} chains.  We measure positive predictive
-value as the number of match component pairs that contain correctly
-aligned positions out of the total number of match component pairs.
 
 
 \begin{figure}[t]
