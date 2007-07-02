@@ -1752,8 +1752,6 @@ int main( int argc, char* argv[] )
 			cerr << "debugmult\n";
 		//tjt: make sure finalize only gets called once!
 		M_i->finalize(seedml.seq_table);
-		if(extended_matches.size() % 25 == 0 && extended_matches.size() / 25 > 0 )
-			writeXmfa( seedml, extended_matches, xmfa_file );
 	
 		//
 		// process deferred subsets
