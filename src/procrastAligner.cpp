@@ -158,6 +158,32 @@ bool extendRange( MatchRecord* M_i, MatchRecord* M_m, const vector< size_t >& co
 	return changed;
 }
 
+bool reduceRange( MatchRecord* M_i, MatchRecord* M_m, const vector< size_t >& component_map )
+{
+	bool changed = false;
+		// set range to cover M_m
+	for( size_t x = 0; x < M_i->Multiplicity(); ++x )
+	{
+		size_t z = component_map[x];
+		if( M_i->LeftEnd(x) == NO_MATCH || M_m->LeftEnd(z) == NO_MATCH )
+			genome::breakHere();
+		int64 lend_diff = M_m->LeftEnd(z) - M_i->LeftEnd(x);
+		if( lend_diff > 0 )
+		{
+			M_i->SetLeftEnd(x, M_i->LeftEnd(x) - lend_diff);
+			M_i->SetLength(M_i->Length(x)+lend_diff, x);
+			changed = true;
+		}
+		int64 rend_diff = M_i->RightEnd(x) - M_m->RightEnd(z) ;
+		if( rend_diff > 0 )
+		{
+			M_i->SetLength( M_i->Length(x)+rend_diff, x );
+			changed = true;
+		}
+	}
+	return changed;
+}
+
 void remapComponents(const vector< size_t >& srcmap, size_t mid_multiplicity, const vector< size_t >& destmap, vector< size_t >& newmap )
 {
 	vector< size_t > super_map( mid_multiplicity, (std::numeric_limits<size_t>::max)() );
@@ -167,7 +193,7 @@ void remapComponents(const vector< size_t >& srcmap, size_t mid_multiplicity, co
 		newmap[mapI] = super_map[srcmap[mapI]];
 }
 
-void classifyMatch( AbstractMatch* M_i, AbstractMatch* M_j, vector< size_t >& ji_component_map, bool& subsumed, bool& partial )
+void classifyMatch( AbstractMatch* M_i, AbstractMatch* M_j, vector< size_t >& ji_component_map, bool& subsumed, bool& partial, bool superset = false )
 {
 	subsumed = true;
 	partial = false;
@@ -177,16 +203,27 @@ void classifyMatch( AbstractMatch* M_i, AbstractMatch* M_j, vector< size_t >& ji
 		size_t y = i;
 		int64 lend_diff = M_i->LeftEnd(x) - M_j->LeftEnd(y);
 		int64 rend_diff = M_j->RightEnd(y) - M_i->RightEnd(x);
+		if (superset)
+		{
+			lend_diff =  M_j->LeftEnd(y) - M_i->LeftEnd(x); 
+			rend_diff =  M_i->RightEnd(x)-M_j->RightEnd(y);
+		}
+		
 		if( lend_diff > 0 || rend_diff > 0 )
 			subsumed = false;
 		if( lend_diff <= 0 && rend_diff <= 0 )
 			partial = true;
 	}
 }
+//same as classifySubset, except for supersets
+void classifySuperset( MatchRecord* M_i, NeighborhoodGroup& sr, bool& subsumed, bool& partial )
+{
+	classifyMatch( M_i, sr.get<0>(), sr.get<1>(), subsumed, partial, true );
+}
 
 void classifySubset( MatchRecord* M_i, NeighborhoodGroup& sr, bool& subsumed, bool& partial )
 {
-	classifyMatch( M_i, sr.get<0>(), sr.get<1>(), subsumed, partial );
+	classifyMatch( M_i, sr.get<0>(), sr.get<1>(), subsumed, partial, false );
 }
 
 void checkLink( MatchRecord*& mr )
@@ -241,7 +278,27 @@ vector<MatchLink>& getExtraSubsets( MatchRecord* mr, int direction )
 		return mr->extra_left_subsets;
 	return mr->extra_right_subsets;
 }
-
+//inverse of unlinkSuperset
+//linkSuperset then unlinkSuperset should exactly  offset each other
+void linkSuperset( MatchRecord* mr, MatchRecord* supermatch, boost::dynamic_bitset<>& comp_list, vector< size_t >& comp_map, int direction )
+{
+	// update superset links
+	MatchLink& slink = MatchLink( supermatch, mr, comp_list, comp_map );
+	if( slink.superset != NULL )
+	{
+		slink.subset = mr;
+		int parity = mr->Orientation(0) == slink.superset->Orientation(slink.sub_to_super_map[0]) ? 1 : -1;
+		getSubsets(slink.superset,-direction*parity).push_back(slink);
+	}
+	vector< MatchLink >& subsets = getSubsets(mr,direction);
+	for( size_t subI = 0; subI < subsets.size(); ++subI )
+	{
+		subsets[subI].superset = mr;
+		int parity = mr->Orientation(subsets[subI].sub_to_super_map[0]) == subsets[subI].subset->Orientation(0) ? 1 : -1;
+		getSuperset(subsets[subI].subset, -direction*parity).superset = mr;
+	}
+	
+}
 void unlinkSuperset( MatchRecord* mr, int direction )
 {
 	MatchLink& superlink = getSuperset( mr, direction );
@@ -853,6 +910,51 @@ void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup
 		}
 	}
 }
+//processes supersets
+void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup >& superset_list,
+				  int direction, int& last_linked )
+{
+	
+	// link the closest possible superset first.
+	for( size_t gI = 0; gI < superset_list.size(); gI++ )
+	{
+		MatchRecord* M_j = superset_list[gI].get<0>();
+
+		vector< size_t >& component_map = M_i->chained_component_maps.at(0);
+		boost::dynamic_bitset<> comp_list(M_i->Multiplicity(), false);
+		for( size_t compI = 0; compI < M_i->Multiplicity(); ++compI )
+			comp_list.set(component_map[compI]);
+		if( M_j == M_i )
+		{
+			// this is an inverted overlapping repeat, skip it.
+			continue;
+		}
+		if( M_j->extended )
+		{
+			// oh no!  M_i should have been swallowed up already!
+//						cerr << "extensor crap 2\n";
+//						breakHere();
+		}
+
+		bool subsumed;
+		bool partial;
+		//update classifysubset to ClassifySuperset
+		classifySuperset( M_i, superset_list[gI], subsumed, partial );
+
+		if( subsumed && !partial )
+		{
+			// update the left-end and right-end coords
+			bool changed = reduceRange(M_i, M_j, component_map);
+		}
+		if( partial )
+			//some of the components of the superset matches are subsumed
+			//punt: what should I do differently here?
+
+		linkSuperset( M_i, M_j, comp_list, component_map,  direction);
+		last_linked = 1;// stores the group type that was chained.  1 == superset, 2 == chainable, 0 == none
+					
+	}
+}
 //void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
 int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
 {
@@ -880,7 +982,7 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	int right_extend_length = extend_length;
 	if ( mte->tandem )
 	{		
-		cerr << "Sorry, no extension for tandem repeats.." << endl << endl;	
+		//cerr << "Sorry, no extension for tandem repeats.." << endl << endl;	
 		return FIXME;
 	}
 
@@ -1644,6 +1746,8 @@ int main( int argc, char* argv[] )
 			// if we didn't do a chaining or superset extension, try a gapped extension
 			if( last_linked == 0 )
 			{
+				
+
 				if ( !extend_chains )
 				{
 					direction -= 2;
@@ -1679,68 +1783,27 @@ int main( int argc, char* argv[] )
 								direction, seed_size, w, left_lookups, right_lookups);
 					
 				// now process each type of neighborhood group
-				// FIXME: need to process supersets
 
-				// how to process supersets?
 				// if we have completely extended through a superset
 				//   then we want to replace that part of the alignment with the superset
 				// if the superset continues beyond the end of at least one component, then 
 				// we want to create a superset link for it, and process it during a link extension
-				// what to do when the superset doesn't match very well with the 
-				MatchRecord* M_j = getSuperset(M_i, direction).superset;
-				if ( M_j != NULL )
-				{
-					MatchLink ij_link = getSuperset(M_i, direction);	
-					int ij_parity = M_i->Orientation(0) == M_j->Orientation(ij_link.sub_to_super_map[0]) ? 1 : -1;
-					mems::MatchProjectionAdapter mpaa( M_j, M_i->chained_component_maps[0] );
-					int overextended_components = 0;
-					for( size_t seqI = 0; seqI < mpaa.Multiplicity(); seqI++ )
-					{
-						if ( direction < 0 )
-						{
-							if( M_i->RightEnd(seqI) > mpaa.RightEnd(seqI) )
-							{
-								//uh oh, extended past superset!
-								overextended_components+=1;
-							}
-						}
-						else
-						{
-							if( M_i->LeftEnd(seqI) < mpaa.LeftEnd(seqI) )
-							{
-								//uh oh, extended past superset!	
-								overextended_components+=1;
-							}			
-						}
-					}
-					if ( overextended_components == mpaa.Multiplicity() )
-					{
-						//   then we want to replace that part of the alignment with the superset
-						//reset to superset boundaries
-						bool changed = extendRange( M_i, M_j, ij_link.sub_to_super_map );
-					}
-					else if ( overextended_components > 0 )
-					{
-						// we want to create a superset link for it, and process it during a link extension
-						inheritSuperset( M_i, M_j, direction, ij_parity );
-						last_linked = 2;	// we may do a link extension!
-					}
+				if ( superset_list.size() > 0 )
+					processSupersetMatches( M_i, superset_list, direction, last_linked );
 				
-				}
 				// then process chainable
-				processChainableMatches( M_i, chainable_list, direction, last_linked );
-
+				if ( chainable_list.size() > 0 )
+					processChainableMatches( M_i, chainable_list, direction, last_linked );
 				// defer subset processing
 				for( size_t gI = 0; gI < subset_list.size(); gI++ )
 				{
 					vector< NeighborhoodGroup >& cur_subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
 					cur_subset_list.push_back( subset_list[gI] );
 				}
-
 				// finally process novel subset
-				processNovelSubsetMatches(M_i, novel_subset_list, find_novel_subsets, procrastination_queue, 
-					seedml.seq_table, direction, w, last_linked, novel_subset_count );
-				
+				if ( novel_subset_list.size() > 0 )
+					processNovelSubsetMatches(M_i, novel_subset_list, find_novel_subsets, procrastination_queue, 
+						seedml.seq_table, direction, w, last_linked, novel_subset_count );
 			}
 		}	// end loop over leftward and rightward extension
 
