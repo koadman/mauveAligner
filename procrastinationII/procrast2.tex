@@ -82,10 +82,10 @@ Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all
 significant local multiple alignments on subsequences of $\mathcal{S}$. Our
 proposed method first extracts candidate ungapped alignments, or multi-matches, 
-among subsequences in $\mathcal{S}$, denoted as $\cal M$. To extract multi-matches from the input sequence, we utilize a palindromic spaced seed pattern, which is analyzed at each position in the input sequence.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and reasonable sensitivity on a variety of input sequences~\cite{ref-procrast}.
+among subsequences in $\mathcal{S}$, denoted as $\mathbf{M}$. To extract multi-matches from the input sequence, we utilize a palindromic spaced seed pattern, which is analyzed at each position in the input sequence.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and reasonable sensitivity on a variety of input sequences~\cite{ref-procrast}.
 
-We refer the number of regions in $\mathcal{S}$
-matched by a given match $M_i \in \mathbf{M}$ as the
+We refer the number of matching regions in $\mathcal{S}$
+by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
 matching region of $M_i$ as a \textit{component} of $M_i$. Note that
 $|M_i| \geq 2~\forall~M \in \mathbf{M}$.  We denote the left-end
@@ -108,7 +108,8 @@ longer than the seed length, e.g. seed matches may overlap.
 
 \subsection{Creating chains of multi-matches}
 
-Once a list of multi-matches has been generated, we an efficient chaining algorithm to identify overlapping and nested chains of multi-matches~\cite{ref-procrast}. A brief review of the method follows. In order to chain over each region of sequence $\mathcal{O}(1)$ times,
+Once a list of multi-matches has been generated, we employ an efficient chaining algorithm to identify overlapping and nested chains of multi-matches~\cite{ref-procrast}. A brief review of the method follows. 
+In order to chain over each region of sequence $\mathcal{O}(1)$ times,
 the method chains matches in order of decreasing multiplicity--we
 extend the highest multiplicity matches first. We first chain all matches
 with the same multiplicity within $w$
@@ -127,9 +128,10 @@ a previous match extension.
 
 \subsection{Gapped extension of high scoring chains}
 
-Once we have finished the chaining process, we performed gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain in order make a decision whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used. This idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.
+After successfully chaining the multi-matches, we performed gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain in order make a decision whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used. This idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.
 
 To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is determined empirically to optimize efficiency and sensitivity. FIXME.
+
 \subsubsection{Identifying non-homologous regions}
 \begin{figure}[t]
 \centering \epsfig{file=./figures/hmm.eps,width=3.5in}
@@ -138,11 +140,7 @@ To perform a gapped extension in each direction, we use MUSCLE to align the left
 \label{fig-hmm}\vspace{-0.2cm}
 \end{figure}
 
-It often the case that the spaced seed approach is \emph{too} sensitive and does not always identify truly homologous sequence. This can cause unrelated sequence to be aligned during gapped extension since The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are homologous or not. Since we want to avoid aligning unrelated sequence, especially when considering the consequences on downstream analysis, we need to identify any possible columns in the gapped extension that are likely to be unrelated. We have configured a Hidden Markov Model (Figure ~\ref{fig-hmm}) to do exactly this, consisting of two states, Homologous and Unrelated. 
-
-FIXME: Say something about HMM is constructed, how emission probabilities are extracted, how transmission probabilities were determined, and how homologous and nonhomologous states were decoded.
-
-The emission probabilities were extracted from the HOXD substitution matrix presented in~\cite{hoxd}.
+It often the case that the spaced seed approach is \emph{too} sensitive and does not always identify truly homologous sequence. This can cause unrelated sequence to be aligned during gapped extension since The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are homologous or not. Since we want to avoid aligning unrelated sequence, especially when considering the consequences on downstream analysis, we need to identify any possible columns in the gapped extension that are likely to be unrelated. We have configured a Hidden Markov Model (Figure ~\ref{fig-hmm}) to do exactly this, consisting of two hidden states, Homologous and Unrelated. The observable states are the pairwise alignment columns; the emission probabilities for each possible pair of aligned nucleotides were extracted from the HOXD substitution matrix presented in~\cite{hoxd}:
 
 \begin{equation}
 \begin{tabular}
@@ -156,13 +154,14 @@ The emission probabilities were extracted from the HOXD substitution matrix pres
 \end{tabular}
 \end{equation}
 
-\begin{equation}
-s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(x)}\Bigg)}
-\end{equation}
+%This was done by solving for the
+%\begin{equation}
+%s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(x)}\Bigg)}
+%\end{equation}
 
-Next, we calculated the gap open and gap extension emission probabilities empirically. To estimate the values in Non-homologous state we used a 10kb region taken from \emph{E. coli} CFT073 with 48\% GC content and its reverse (not complemented) and forced an alignment with MUSCLE.  We then counted the number of gap open and gap extend columns in the alignment of Non-homologous sequence. We found 483 and 2535 gap open and  gap extend columns, respectively.  For the homologous state the same procedure was used but this time we used an alignment of two relatively divergent(fixme:percentage?) homologous sequences with ~48\%GC, specifically \emph{Y. pestis} \& \emph{E. coli} k12(say, e. coli and yersinia). We found 44 and 507 gap open and  gap extend columns, respectively.  Since the values from the HOXD substitution matrix were calculated for ungapped alignments, we had to normalize the emission frequencies to account for the gap open and gap extension emission probabilities. All of the transmission and emission probabilities are reported in Figure~\ref{fig-hmm}.
+Since the HOXD matrix was calculated for ungapped alignments, we calculated the gap open and gap extension emission probabilities empirically. To estimate the values in Non-homologous state we used a 10kb region taken from \emph{E. coli} CFT073 with 48\% GC content and its reverse (not complemented) and forced an alignment with MUSCLE.  We then counted the number of gap open and gap extend columns in the alignment of Non-homologous sequence. We found 483 and 2535 gap open and  gap extend columns, respectively.  For the homologous state the same procedure was used but this time we used an alignment of two relatively divergent(fixme:percentage?) homologous sequences with ~48\%GC, specifically \emph{Y. pestis} \& \emph{E. coli} k12(say, e. coli and yersinia). We found 44 and 507 gap open and  gap extend columns, respectively.  Since the values from the HOXD substitution matrix were calculated for ungapped alignments, we had to normalize the emission frequencies to account for the gap open and gap extension emission probabilities. All of the transmission and emission probabilities are reported in Figure~\ref{fig-hmm}.
 
-Now that we have defined our probabilities for the model, we can defined the parameters for the HMM. We will refer to the sequence of hidden states (Homologous and Nonhomologous, henceforth H and N) as the path $\pi$. The $i$th state in the path is called $\pi_{i}$. The probability of the current state only depends on the previous state, and the transmission probability of $a_{kl}$ can be defined as follows:
+Now that we have defined our probabilities for the model, we can defined the parameters for the HMM. We will refer to the sequence of hidden states (Homologous and Unrelated, henceforth H and N) as the path $\pi$. The $i$th state in the path is called $\pi_{i}$. The probability of the current state only depends on the previous state, and the transmission probability of $a_{kl}$ can be defined as follows:
 \begin{equation}
 a_{kl} = \textsl{P}\big(\pi_{i}=\textsl{l}\big|\pi_{i-i}=\textsl{k}\big).
 \end{equation}
@@ -178,13 +177,12 @@ For our intents and purposes, the symbols in $\textsl{b}$ are simply all of the 
 FIXME: Then, we decode the states $\pi$ $\textsl{P}(A |\pi)$ using the Viterbi algorithm~\cite{durbin}.
 
 
-The result of applying a HMM to the alignment columns is a prediction of non-homologous segments among each pair of aligned sequences.  The remaining regions are predicted as homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. Regions found to be non-homologous are unaligned from each other.
+The result of applying a HMM to the alignment columns is a prediction of Unrelated segments among each pair of aligned sequences.  The remaining regions are predicted as Homologous.  We apply transitivity to these homology predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. Regions found to be Unrelated are unaligned from each other.
 
-If have reached the end of the extension window without reaching a non-homologous state, we then improve our original seed boundaries and then trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
+If have reached the end of the extension window without reaching the Unrelated state, we then improve our original seed boundaries and trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
 \section{Assigning significance to local multiple alignments}
-To improve specificity and avoid reporting spurious results, we present a method for estimating the pvalue of local multiple alignments. 
-
+To improve specificity and avoid reporting spurious results, we now present a method for estimating the pvalue of local multiple alignments. 
 \subsection{1 segment between two sequences}
 
 First, we examine how the probability is obtained for multiplicity 2 for two sequences of size
