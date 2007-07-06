@@ -425,6 +425,10 @@ void createNeighborhoodGroupList( vector< NeighborhoodGroup >& group_list, vecto
 	std::sort( group_list.begin(), group_list.end(), src );
 }
 
+/**
+ * Assigns the superset link from M_j to M_i.  This function should be called when
+ * M_j has been chained as part of M_i and M_j has an outgoing superset link.
+ */
 void inheritSuperset( MatchRecord* M_i, MatchRecord* M_j, int direction, int parity )
 {
 	// remap superset components
@@ -443,16 +447,13 @@ void inheritSuperset( MatchRecord* M_i, MatchRecord* M_j, int direction, int par
 
 }
 
+/**
+ * returns either the left or right list, depending on the current direction of extension
+ */
 vector< NeighborhoodGroup >& selectList( vector< NeighborhoodGroup >& left_list, vector< NeighborhoodGroup >& right_list, int direction )
 {
 	return direction == 1 ? left_list : right_list;
 }
-
-class ToUPPER
-{
-public:
-	char operator()( char a ){ return toupper(a); }
-};
 
 
 
@@ -648,6 +649,10 @@ void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_li
 	}
 }
 
+/**
+ * Temporary buffers that get used every time a neighborhood list lookup is performed.
+ * Storing the buffers persistently prevents repeated memory allocations
+ */
 class NllBuffers
 {
 public:
@@ -684,9 +689,12 @@ public:
 NllBuffers nllbufs;
 
 /**
- * Performs a neighborhood list extension
+ * Performs a neighborhood list lookup to find other matches nearby the match of interest
+ * @param	M_i		The primary match which is under extension
+ * @param	match_pos_lookup_table
+ * @param	M_e		(Optionally NULL) A gapped extension which will be added to M_i after its neighborhood has been searched
  */
-void neighborhoodListLookup( GappedMatchRecord*& M_i, 
+void neighborhoodListLookup( GappedMatchRecord* M_i, 
 						   MatchPositionLookupTable& match_pos_lookup_table,
 						   vector< NeighborhoodGroup >& superset_list, 
 						   vector< NeighborhoodGroup >& chainable_list,
@@ -696,7 +704,8 @@ void neighborhoodListLookup( GappedMatchRecord*& M_i,
 						   uint seed_size,
 						   uint w,
 						   bitset_t& left_lookups,
-						   bitset_t& right_lookups
+						   bitset_t& right_lookups,
+						   GappedMatchRecord* M_e
 						   )
 {
 	// make sure storage is empty
@@ -725,7 +734,17 @@ void neighborhoodListLookup( GappedMatchRecord*& M_i,
 					right_lookups.set(match_end);
 			}
 
-		for( int d = 1; d <= w; ++d )
+		int d = 1;
+		int w_end = w;
+		// are we cleaning up a gapped extension?  if so, adjust d and w_end so
+		// we don't search anything twice and also cover all of the extension area
+		if(M_e != NULL)
+		{
+			int64 me_match_end = parity == 1 ? M_e->LeftEnd(x) : M_e->RightEnd(x) - seed_size + 1;
+			d = w + 1;	// already searched within w of match_end
+			w_end = w + me_match_end - match_end;	// search anything new included in M_e
+		}
+		for( ; d <= w_end; ++d )
 		{
 			if( match_end <= parity * d )
 				continue;	// we're too close to the beginning
@@ -787,6 +806,7 @@ void neighborhoodListLookup( GappedMatchRecord*& M_i,
 		// this code selects the *furthest* away match (e.g. that with the largest d)
 		// because that's what got sorted in last in the comparator
 		// it eliminates both duplicate M_i and duplicate M_j components...
+		// FIXME:  is this true?  is it safe?
 		vector< pair< size_t, size_t > >& j_comp_sort_list = nllbufs.j_comp_sort_list;
 		j_comp_sort_list.resize(0);
 		for( size_t i = prev + 1; i < group_end; ++i )
@@ -955,8 +975,19 @@ void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup 
 					
 	}
 }
-//void ExtendMatch(vector< GappedMatchRecord* >& final, int fI, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss)
-int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction = 0)
+
+/**
+ * Performs a gapped extension on a match.  The region either left or right of the match is processed by
+ * progressive alignment.
+ * @param	M_i		The match to extend
+ * @param	seq_table	gnSequences which correspond to each match component
+ * @param	pss		A scoring scheme to use during alignment, consisting of substitution matrix and gap open/extend
+ * @param	w		The max gap for chaining.  Used to compute extension lengths.
+ * @param	direction	The direction of extension
+ * @param	M_e		(output) A MatchRecord containing just the extension, or NULL if extension failed
+ * @return	FAILED, OK, or FIXME
+ */
+int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction, GappedMatchRecord*& M_e )
 {
 	ccount +=1;
 	//todo: remove alignment parameter
@@ -965,76 +996,70 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	//punt on this for now..
 	bool novel_hss_regions_support = false;
 	bool danger_zone_active = true;
-//	vector< string > alignment;
-//	mems::GetAlignment(*mte,seq_table, alignment);	// expects one seq_table entry per matching component
-	int multi = mte->Multiplicity();
+	int multi = M_i->Multiplicity();
 	
 //	int extend_length_1 = ceil(-0.78*multi+150); 
 	int extend_length = max(w, sqrt(max(pow(150,2.0)-pow(2*multi,2.0),0)));
-	// aced 06/25/07: should re-evaluate the situation now that the Homology HMM has been implemented
-	//
-//  tjt: looks like with hmm w is ok!
-	//int extend_length = min(int(2*w), 130);	
 	
 	vector<int> left_extend_vector(multi,0);
 	vector<int> right_extend_vector(multi,0);
 	int left_extend_length = extend_length;	
 	int right_extend_length = extend_length;
-	if ( mte->tandem )
+	if ( M_i->tandem )
 	{		
 		//cerr << "Sorry, no extension for tandem repeats.." << endl << endl;	
 		return FIXME;
 	}
 
-	//careful, if mte->LeftEnd(j) < extend_length, ToString() will be disappointed...
+	//careful, if M_i->LeftEnd(j) < extend_length, ToString() will be disappointed...
 	for( gnSeqI j = 0; j < multi; j++)
 	{
 		//now put check for curpos+extend_length<startpos of next match component..
 		 
-		if( mte->Orientation(j) == AbstractMatch::reverse )
+		if( M_i->Orientation(j) == AbstractMatch::reverse )
 		{
 			//if leftend <= 0 set right extension to 0
-			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
+			if( M_i->LeftEnd(j) <= 0 || M_i->LeftEnd(j) > 4000000000u )
 				right_extend_vector[j] = 0;
 			//if extend_length goes to far, set to maximum possible
-			else if ( mte->LeftEnd(j) <= extend_length )
-				right_extend_vector[j] = mte->LeftEnd(j)-1;
+			else if ( M_i->LeftEnd(j) <= extend_length )
+				right_extend_vector[j] = M_i->LeftEnd(j)-1;
 
 			//if we run into another match, don't extend into it
-			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
-				right_extend_vector[j] = mte->LeftEnd(j)-mte->RightEnd(j-1)-1;
+			else if ( j > 0 && M_i->LeftEnd(j) - extend_length <= M_i->RightEnd(j-1) )
+				right_extend_vector[j] = M_i->LeftEnd(j)-M_i->RightEnd(j-1)-1;
 			
 			//else everything ok to set to preset extend_length
 			else
 				right_extend_vector.push_back(extend_length-1);
 			
-			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
+			if(M_i->RightEnd(j) <= 0 || M_i->RightEnd(j) > 4000000000u)
 				left_extend_vector.push_back(0);
-			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
-				left_extend_vector[j] = seq_table[0]->length()-mte->RightEnd(j);
-			else if ( j+1 < multi && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
-				left_extend_vector[j] = mte->LeftEnd(j+1)-mte->RightEnd(j)-1;
+			else if ( M_i->RightEnd(j) + extend_length > seq_table[0]->length() )
+				left_extend_vector[j] = seq_table[0]->length()-M_i->RightEnd(j);
+			else if ( j+1 < multi && M_i->RightEnd(j) + extend_length >= M_i->LeftEnd(j+1) )
+				left_extend_vector[j] = M_i->LeftEnd(j+1)-M_i->RightEnd(j)-1;
 			else
 				left_extend_vector[j] = extend_length-1;
 	
 		}
 		else
 		{
-			if( mte->LeftEnd(j) <= 0 || mte->LeftEnd(j) > 4000000000u )
+			if( M_i->LeftEnd(j) <= 0 || M_i->LeftEnd(j) > 4000000000u )
 				left_extend_vector[j] = 0;
-			else if ( mte->LeftEnd(j) <= extend_length )
-				left_extend_vector[j] = mte->LeftEnd(j)-1;
-			else if ( j > 0 && mte->LeftEnd(j) - extend_length <= mte->RightEnd(j-1) )
-				left_extend_vector[j] = mte->LeftEnd(j)-mte->RightEnd(j-1)-1;
+			else if ( M_i->LeftEnd(j) <= extend_length )
+				left_extend_vector[j] = M_i->LeftEnd(j)-1;
+			else if ( j > 0 && M_i->LeftEnd(j) - extend_length <= M_i->RightEnd(j-1) )
+				left_extend_vector[j] = M_i->LeftEnd(j)-M_i->RightEnd(j-1)-1;
 			else
 				left_extend_vector[j] = extend_length-1;
 
-			if(mte->RightEnd(j) <= 0 || mte->RightEnd(j) > 4000000000u)
+			if(M_i->RightEnd(j) <= 0 || M_i->RightEnd(j) > 4000000000u)
 				right_extend_vector[j] = 0;
-			else if ( mte->RightEnd(j) + extend_length > seq_table[0]->length() )
-				right_extend_vector[j] = seq_table[0]->length()-mte->RightEnd(j);
-			else if ( j+1 < multi && mte->RightEnd(j) + extend_length >= mte->LeftEnd(j+1) )
-				right_extend_vector[j] = mte->LeftEnd(j+1)-mte->RightEnd(j)-1;
+			else if ( M_i->RightEnd(j) + extend_length > seq_table[0]->length() )
+				right_extend_vector[j] = seq_table[0]->length()-M_i->RightEnd(j);
+			else if ( j+1 < multi && M_i->RightEnd(j) + extend_length >= M_i->LeftEnd(j+1) )
+				right_extend_vector[j] = M_i->LeftEnd(j+1)-M_i->RightEnd(j)-1;
 			else
 				right_extend_vector[j] = extend_length-1;	
 		}
@@ -1055,16 +1080,16 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 		// extract sequence data
 		for( gnSeqI j = 0; j < multi; j++)
 		{			
-			if( mte->Orientation(j) == AbstractMatch::reverse )
+			if( M_i->Orientation(j) == AbstractMatch::reverse )
 			{			
-				seq_table[0]->ToString( leftExtension[j], left_extend_length, mte->RightEnd(j)+1 );
-				leftside.SetLeftEnd(j,mte->RightEnd(j)+1);
+				seq_table[0]->ToString( leftExtension[j], left_extend_length, M_i->RightEnd(j)+1 );
+				leftside.SetLeftEnd(j,M_i->RightEnd(j)+1);
 				rc_filter->ReverseFilter(leftExtension[j]);
 			}else{
-				seq_table[0]->ToString( leftExtension[j], left_extend_length, mte->LeftEnd(j) - left_extend_length );
-				leftside.SetLeftEnd(j,mte->LeftEnd(j) - left_extend_length);
+				seq_table[0]->ToString( leftExtension[j], left_extend_length, M_i->LeftEnd(j) - left_extend_length );
+				leftside.SetLeftEnd(j,M_i->LeftEnd(j) - left_extend_length);
 			}
-			leftside.SetOrientation(j,mte->Orientation(j));
+			leftside.SetOrientation(j,M_i->Orientation(j));
 			leftside.SetLength(left_extend_length,j);
 		}
 		bool align_success = false;
@@ -1081,16 +1106,16 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	{
 		for( gnSeqI j = 0; j < multi; j++)
 		{
-			if( mte->Orientation(j) == AbstractMatch::reverse )
+			if( M_i->Orientation(j) == AbstractMatch::reverse )
 			{			
-				rightside.SetLeftEnd(j,mte->LeftEnd(j) - right_extend_length-1);
-				seq_table[0]->ToString( rightExtension[j], right_extend_length, mte->LeftEnd(j) - right_extend_length-1);
+				rightside.SetLeftEnd(j,M_i->LeftEnd(j) - right_extend_length-1);
+				seq_table[0]->ToString( rightExtension[j], right_extend_length, M_i->LeftEnd(j) - right_extend_length-1);
 				rc_filter->ReverseFilter(rightExtension[j]);
 			}else{
-				rightside.SetLeftEnd(j,mte->RightEnd(j)+1 );
-				seq_table[0]->ToString( rightExtension[j], right_extend_length, mte->RightEnd(j)+1 );
+				rightside.SetLeftEnd(j,M_i->RightEnd(j)+1 );
+				seq_table[0]->ToString( rightExtension[j], right_extend_length, M_i->RightEnd(j)+1 );
 			}
-			rightside.SetOrientation(j,mte->Orientation(j));
+			rightside.SetOrientation(j,M_i->Orientation(j));
 			rightside.SetLength(right_extend_length,j);
 		}
 		bool align_success = false;		
@@ -1114,8 +1139,8 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	if( direction == 1 )
 		mlist.push_back(leftside.Copy());
 	//tjt: don't use original match, only regions to the left/right
-	//     since for now we won't modify mte, even if the homology detection method suggests otherwise
-	//mlist.push_back(mte->Copy());
+	//     since for now we won't modify M_i, even if the homology detection method suggests otherwise
+	//mlist.push_back(M_i->Copy());
 	if( direction == -1 )
 		mlist.push_back(rightside.Copy());
  
@@ -1146,7 +1171,7 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 		extension_bb = bb_list.at(0).back();
 	else
 		extension_bb = bb_list.at(0).front();
-	if(extension_bb->Multiplicity() != mte->Multiplicity() )
+	if(extension_bb->Multiplicity() != M_i->Multiplicity() )
 		return FAILED;
 
 	CompactGappedAlignment<> tmp_cga;
@@ -1167,43 +1192,29 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 		cga_list.erase( cga_list.end()-1 );
 		return FAILED;
 	}
-	if( (cga_list.back()->Multiplicity() == mte->Multiplicity() ) && (cga_list.back()->Length() > 1 ))
+	if( (cga_list.back()->Multiplicity() == M_i->Multiplicity() ) && (cga_list.back()->Length() > 1 ))
 	{
 		// successful extension!!
 		//boundaries were improved, current match is extended original match
 		if(debug_extension)
 		{
-			cerr << "Extension worked!! Improved boundaries! Multiplicity: " << mte->Multiplicity() << endl;
-			cerr << "Old boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl;
+			cerr << "Extension worked!! Improved boundaries! Multiplicity: " << M_i->Multiplicity() << endl;
+			cerr << "Old boundaries: " << M_i->LeftEnd(0) << " " << M_i->RightEnd(0) << endl;
 		}
 
 		// create a GappedMatchRecord for the gapped extension
 		vector< AbstractMatch* > matches( 1, cga_list.back());
-		GappedMatchRecord* M_new = mte->Copy();
-		//tjt: clobber mte's GappedMatchRecord data and set boundaries
-		M_new->SetMatches(matches);
-
-		//build a component map for processChainableMatches
-		vector< size_t > component_map( mte->Multiplicity() );
-		for( size_t i = 0; i < component_map.size(); ++i )
-			component_map[i] = i;
-
-		// chain it...
-		mte->chained_matches.push_back( M_new );
-		mte->chained_component_maps.push_back( component_map );
-		bool changed = extendRange(mte, M_new, component_map);
-		if(debug_extension)
-		{
-			cerr << "New boundaries: " << mte->LeftEnd(0) << " " << mte->RightEnd(0) << endl << endl;
-		}
+		M_e = M_i->Copy();
+		//tjt: clobber M_e's GappedMatchRecord data and set boundaries
+		M_e->SetMatches(matches);
 
 		if(debug_extension)
 		{
 			//tjt: write alignment to file
 			//need to finalize before calling GetAlignment!
-			mte->finalize(seq_table);
+			M_i->finalize(seq_table);
 			vector<string> new_alignment;
-			mems::GetAlignment(*mte, seq_table, new_alignment);	// expects one seq_table entry per matching component
+			mems::GetAlignment(*M_i, seq_table, new_alignment);	// expects one seq_table entry per matching component
 			gnSequence myseq;
 			for( uint j = 0; j < new_alignment.size(); j++)
 				myseq += new_alignment.at(j);
@@ -1219,6 +1230,9 @@ int ExtendMatch(GappedMatchRecord*& mte, vector< gnSequence* >& seq_table, Pairw
 	return FAILED;
 }//tjt: match should be extended!
 
+/**
+ * A class to prioritize match records for extension based on their multiplicity
+ */
 class ProcrastinationQueue
 {
 public:
@@ -1310,7 +1324,14 @@ void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGro
 
 		// TODO: handle the tandem repeat case
 		if( M_i->tandem )
+		{
+			// step 1. count tandem repeat components
+			// step 2. create a new GappedMatchRecord with one component per tandem component
+			// add a GappedMatchRecord with the outer component boundaries
+			// do ordinary extension
+			// when finalize() gets called, something special needs to happen
 			continue;
+		}
 
 		MatchRecord* M_j = novel_subset_list[gI].get<0>();
 		// if M_j hasn't been extended then we don't do anything yet.
@@ -1402,6 +1423,13 @@ void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGro
 	}
 }
 
+
+/**
+ * Writes a set of MatchRecords in eXtended Multi-FastA format
+ * @param	seedml	A matchlist containing the seq_table of interest
+ * @param	extended_matches	A set of matches to write out
+ * @param	xmfa_file	The filename to use for output
+ */
 void writeXmfa( MatchList& seedml, std::vector< GappedMatchRecord* >& extended_matches, const std::string& xmfa_file )
 {
 	GenericIntervalList<GappedMatchRecord> gmr_list;
@@ -1422,6 +1450,7 @@ void writeXmfa( MatchList& seedml, std::vector< GappedMatchRecord* >& extended_m
 		}
 	}
 }
+
 
 int main( int argc, char* argv[] )
 {
@@ -1689,6 +1718,8 @@ int main( int argc, char* argv[] )
 		int last_linked = 0;	// stores the group type that was chained.  1 == superset, 2 == chainable, 0 == none
 		vector< NeighborhoodGroup > left_deferred_subsets;
 		vector< NeighborhoodGroup > right_deferred_subsets;
+		vector< NeighborhoodGroup > left_deferred_novel_subsets;
+		vector< NeighborhoodGroup > right_deferred_novel_subsets;
 
 		score_t score = 0;
 		vector< gnSequence* > seqtable( M_i->SeqCount(), seedml.seq_table[0] );
@@ -1716,7 +1747,7 @@ int main( int argc, char* argv[] )
 				vector< NeighborhoodGroup > novel_subset_list;
 				neighborhoodListLookup( M_i, match_pos_lookup_table,
 								superset_list, chainable_list, subset_list, novel_subset_list,
-								direction, seed_size, w, left_lookups, right_lookups);
+								direction, seed_size, w, left_lookups, right_lookups, NULL);
 
 				// tallies for debugging
 				superset_count += superset_list.size();
@@ -1736,9 +1767,13 @@ int main( int argc, char* argv[] )
 					cur_subset_list.push_back( subset_list[gI] );
 				}
 
-				// finally process novel subset
-				processNovelSubsetMatches(M_i, novel_subset_list, find_novel_subsets, procrastination_queue, 
-					seedml.seq_table, direction, w, last_linked, novel_subset_count );
+				// defer novel subset processing
+				vector< NeighborhoodGroup >& cur_novel_subset_list = selectList( left_deferred_novel_subsets, right_deferred_novel_subsets, direction );
+				cur_novel_subset_list.clear();	// we only process novel subsets on the very last extension
+				for( size_t gI = 0; gI < novel_subset_list.size(); gI++ )
+				{
+					cur_novel_subset_list.push_back( novel_subset_list[gI] );
+				}
 
 			} // end if no superset was found then do neighborhood list lookup
 
@@ -1748,19 +1783,15 @@ int main( int argc, char* argv[] )
 			{
 				
 
-				if ( !extend_chains )
-				{
-					direction -= 2;
-					continue;
-				}
 				bool failed = true;
+				GappedMatchRecord* M_e = NULL;	// M_e will contain the extension
+
 				// only extend if two matches are chained if two-hits == true
-				if( !two_hits || (two_hits && M_i->chained_matches.size() > 1 ))
+				if( extend_chains &&
+					(!two_hits || (two_hits && M_i->chained_matches.size() > 1 )))
 				{	
-					// its fast enough now that printing to screen actually slows it down...
-//					cerr << "Preparing to extend Chain #" << curI << endl;
-//					cerr << "Direction = " << direction << endl;
-					failed = ExtendMatch(M_i, seqtable, pss, w, direction);
+					// its fast enough now that printing to screen actually slows things down...
+					failed = ExtendMatch(M_i, seqtable, pss, w, direction, M_e);
 				}
 				if (failed )
 				{
@@ -1768,6 +1799,11 @@ int main( int argc, char* argv[] )
 					direction -=2;
 					continue;
 				}
+
+				//build a component map for the new record
+				vector< size_t > component_map( M_i->Multiplicity() );
+				for( size_t i = 0; i < component_map.size(); ++i )
+					component_map[i] = i;
 
 				//update links appropriately, and we can take another round
 				//through the evil megaloop, possibly discovering additional chainable
@@ -1780,8 +1816,19 @@ int main( int argc, char* argv[] )
 				vector< NeighborhoodGroup > novel_subset_list;
 				neighborhoodListLookup( M_i, match_pos_lookup_table,
 								superset_list, chainable_list, subset_list, novel_subset_list,
-								direction, seed_size, w, left_lookups, right_lookups);
+								direction, seed_size, w, left_lookups, right_lookups, M_e);
 					
+				// chain it...
+				M_i->chained_matches.push_back( M_e );
+				M_i->chained_component_maps.push_back( component_map );
+				bool changed = extendRange(M_i, M_e, component_map);
+
+//				if(debug_extension)
+//				{
+					cerr << "New boundaries: " << M_i->LeftEnd(0) << " " << M_i->RightEnd(0) << endl << endl;
+//				}
+
+
 				// now process each type of neighborhood group
 
 				// if we have completely extended through a superset
@@ -1800,10 +1847,12 @@ int main( int argc, char* argv[] )
 					vector< NeighborhoodGroup >& cur_subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
 					cur_subset_list.push_back( subset_list[gI] );
 				}
-				// finally process novel subset
-				if ( novel_subset_list.size() > 0 )
-					processNovelSubsetMatches(M_i, novel_subset_list, find_novel_subsets, procrastination_queue, 
-						seedml.seq_table, direction, w, last_linked, novel_subset_count );
+				// defer novel subset processing
+				vector< NeighborhoodGroup >& cur_novel_subset_list = selectList( left_deferred_novel_subsets, right_deferred_novel_subsets, direction );
+				cur_novel_subset_list.clear();	// only process novel subsets from the very last extension
+				for( size_t gI = 0; gI < novel_subset_list.size(); gI++ )
+					cur_novel_subset_list.push_back( novel_subset_list[gI] );
+
 			}
 		}	// end loop over leftward and rightward extension
 
@@ -1813,6 +1862,15 @@ int main( int argc, char* argv[] )
 		//tjt: need to send finalize seq_table for muscle alignment
 		if( M_i == (GappedMatchRecord*)0x00d37364 )
 			cerr << "debugmult\n";
+
+		// finally process novel subset
+		for( int direction = 1; direction > -2; direction -= 2 )
+		{
+			vector< NeighborhoodGroup >& cur_novel_subset_list = selectList( left_deferred_novel_subsets, right_deferred_novel_subsets, direction );
+			processNovelSubsetMatches(M_i, cur_novel_subset_list, find_novel_subsets, procrastination_queue, 
+				seedml.seq_table, direction, w, last_linked, novel_subset_count );
+		}
+
 		//tjt: make sure finalize only gets called once!
 		M_i->finalize(seedml.seq_table);
 	
