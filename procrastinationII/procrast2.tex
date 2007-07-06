@@ -6,7 +6,7 @@
 
 \begin{document}
 
-\title{Bridging the gap: improving local multiple alignment with a novel heuristic for gapped extension.}
+\title{Bridging the gap: improving local multiple alignment of \\DNA sequence with a novel heuristic for gapped extension.}
 
 \author{Todd J. Treangen$^\dag*$}
 
@@ -40,7 +40,7 @@ Barcelona, Spain\\
 {\center \scriptsize $^\dag$ These authors contributed equally to this work \\}
 
 \begin{abstract}
-The identification of homologous DNA via sequence alignment is a basic building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences.
+The identification of homologous DNA via sequence alignment is a basic building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions. Our proposed method places high priority on precision and sensitivity, and in doing so, we are able to generate local multiple alignments currently not possible using existing methods. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences.
 \end{abstract}
 
 \keywords{sequence alignment}
@@ -54,7 +54,7 @@ The importance of accurate homology identification to comparative genomics can n
 
 Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Multiple alignment has been demonstrated to be more accurate than pairwise alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause serious efficiency problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS elements in microbes are two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
-Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? We aim to bridge the gap in efficiency by presenting a novel heuristic for gapped extension for sensitive local multiple alignment. \textbf{It's not just a gap in efficiency, is it?  I think we're automatically creating a type of alignment that wasn't previously possible...}
+Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? We aim to bridge the gap in precision in current homology identification methods through a novel gapped extension heuristic for local multiple alignment. 
 
 %In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive %alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over %their entire length.
 
@@ -83,7 +83,6 @@ defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all
 significant local multiple alignments on subsequences of $\mathcal{S}$. Our
 proposed method first extracts candidate ungapped alignments, or multi-matches,
 among subsequences in $\mathcal{S}$, denoted as $\mathbf{M}$. To extract multi-matches from the input sequence, we utilize a palindromic spaced seed pattern, which is analyzed at each position in the input sequence.  Previously we have demonstrated that palindromic spaced seeds offer good efficiency and reasonable sensitivity on a variety of input sequences~\cite{ref-procrast}.
-
 We refer the number of matching regions in $\mathcal{S}$
 by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
@@ -93,18 +92,14 @@ coordinates in $\mathcal{S}$ of each component of $M_i$ as $M_i.L_1,
 M_i.L_2,\dots, M_i.L_{|M_i|}$, and similarly we denote the right-end
 coordinates as $M_i.R_x$.  When aligning DNA sequences, matches may
 occur on the forward or reverse complement strands. To account for
-this phenomenon we add an orientation value to each matching region:
+this, we add an orientation value to each matching region:
 $M_i.O_x \in \{1,-1\}$, where 1 indicates a forward strand match and
--1 for reverse.
-
-Our algorithm has an important limitation on the matches in
+-1 for reverse. Our algorithm has an important limitation on the matches in
 $\mathbf{M}$: no two matches $M_i$ and $M_j$ may have the same
 left-end coordinate, e.g. $M_i.L_x \neq M_j.L_y~\forall~i, j, x, y$
 except for the identity case when $i=j$ and $x=y$.  This constraint
 has been referred to by others as \textit{consistency} and
-\textit{transitivity}~\cite{ref-transitivity} of matches.  In the
-present work we only require consistency and transitivity of matches
-longer than the seed length, e.g. seed matches may overlap.
+\textit{transitivity}~\cite{ref-transitivity} of matches.  
 
 \subsection{Creating chains of multi-matches}
 
@@ -128,9 +123,7 @@ a previous match extension.
 
 \subsection{Gapped extension of high scoring chains}
 
-After successful chaining of multi-matches, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. \textbf{Not after all chains, but during each chain's extension.}   \textbf{((}We first evaluate the chain in order make a decision whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used. This idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat} in order to minimize the number of gapped extensions that do not improve the boundaries of the chain.\textbf{)) can this be shortened to one sentence since it's not a new idea?}
-
-To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is determined empirically to optimize efficiency and sensitivity. \textbf{FIXME.  this may be a new enough idea to warrant writing the equation into the text.}
+After successful chaining of a multi-match $M_i$, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain in order make a decision whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used, an idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat}.To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is determined empirically to optimize efficiency and sensitivity. \textbf{FIXME.  this may be a new enough idea to warrant writing the equation into the text.} \textbf{TJT: Its not clear to me what the equation should be. thoughts?}
 
 \subsubsection{Identifying non-homologous regions}
 \begin{figure}[t]
@@ -139,49 +132,43 @@ To perform a gapped extension in each direction, we use MUSCLE to align the left
 
 \label{fig-hmm}\vspace{-0.2cm}
 \end{figure}
-
-It often the case that the spaced seed approach is \emph{too} sensitive and does not always identify truly homologous sequence. \textbf{While that may be true, the primary reason we have unrelated sequence that needs rejection is because we force MUSCLE to continue aligning until it's aligning unrelated sequence.} This can cause unrelated sequence to be aligned during gapped extension since The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are homologous or not. Since we want to avoid aligning unrelated sequence, especially when considering the consequences on downstream analysis, we need to identify any possible columns in the gapped extension that are likely to be unrelated. We have configured a hidden Markov model (Figure ~\ref{fig-hmm}) to do exactly this, consisting of two hidden states, Homologous and Unrelated. The observable states are the pairwise alignment columns  \textbf{should we mention the symbols and strand-symmetry here?}.  The emission probabilities for each possible pair of aligned nucleotides were extracted from the HOXD substitution matrix presented by Chiaramonte \textit{et al} 2002~\cite{hoxd}:
-
+The MUSCLE alignment software dutifully reports the highest scoring global multiple alignment of input sequences, regardless of whether they are biologically related. As a consequence of the gapped extension process, it is likely that we send unrelated sequence to MUSCLE align and as a result the final alignment will contain non-homologous sequence. Since it is imperative that we do everything possible to avoid aligning unrelated sequence, especially when considering the consequences on downstream analysis, identifying any possible columns in the gapped extension that are likely to be unrelated is crucial. We have configured a Hidden Markov Model (Figure ~\ref{fig-hmm}) for this purpose, consisting of two hidden states, Homologous and Unrelated. The observable states are the pairwise alignment columns, which are all possible pairs in $\texttt{{\{A,G,C,T,-\}}}$ with strand and species symmetry, i.e. \texttt{AA=TT=AT=TA}.  The emission probabilities for each possible pair of aligned nucleotides were extracted from the HOXD substitution matrix presented by Chiaramonte \textit{et al} 2002~\cite{hoxd}. We solved for the emission frequencies in the homologous and unrelated state using the same equation used in~\cite{hoxd} to calculate the values HOXD substitution matrix:
 \begin{equation}
-\begin{tabular}
-{c|cccc}
-& A & G & C & T \\
-\hline
- A   & 91 & -114 &-31 & -123 \\
- G   & -114 & 100 &-125 & -31 \\
- C   & -31 & -125 &100 & -114\\
- T   & -123 & -31 &-114 & 91 \\
-\end{tabular}
+s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 \end{equation}
-\textbf{since we're space-limited, perhaps we can omit the matrix values since they can be found in another paper and the important values for our work are the emission probs derived from the matrix...}
+where $p(x,y)$ is the fraction of the observed aligned pairs of $x\&y$ in the training set used in~\cite{hoxd}, and $q_{1}(x)$ and $q_{2}(x)$ denote the background frequencies of nucleotides x and y, respectively. The resulting $s(x,y)$ was normalized so that the largest was 100, and the rest rounded to the nearest integer. We can first derive the background nucleotide frequencies in the training set from the known $47.5\%G+C$ content, or $f_{GC}=0.475$ and $f_{AT}=0.525$. Due to strand and species symmetry, we then have the following set of emission frequences for the Unrelated state: \begin{center}$N_{AA}=N_{AT}=N_{TA}=N_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2}) = 0.06890625$ \\
+$N_{CC}=N_{CG}=N_{GC}=N_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) = 0.05640625$ \\
+$N_{AC}=N_{AG}=N_{TC}=N_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) = 0.06234375$ \\
+$N_{CA}=N_{CT}=N_{GA}=N_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) = 0.06234375$ \\
+\end{center}
 
-%This was done by solving for the
-%\begin{equation}
-%s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(x)}\Bigg)}
-%\end{equation}
-
-Emission frequencies for nucleotide substitutions can be derived from the HOXD matrix, but gap open and extend frequencies can not.  To empirically estimate values for the unrelated state we aligned a 10kb, 48\% GC content region taken from \emph{E. coli} CFT073 (Accession NC\_XXXXX.XX, coordinates Y,YYY,YYY-Z,ZZZ,ZZZ) with an unrelated sequence.  We generated an unrelated sequence with identical nucleotide composition by reversing the extracted sequence without complementation.  We then forced an alignment with MUSCLE and counted the number of gap open and gap extend columns in the alignment of unrelated sequences.  \textbf{The actual numbers of gaps seem unimportant since we've got the frequencies in the figure}We found 483 and 2535 gap open and  gap extend columns, respectively.  Gap open and extend frequencies for the homologous state were estimated by constructing an alignment of 10kb of orthologous sequence shared among a pair of divergent organisms.  We aligned the 48\%GC segment between genes xxxX and yyyY from \textit{E. coli} K12 and \textit{Y. pestis}\textbf{strain??, also give GenBank accession numbers.} We add the empirically derived gap-open and extend frequencies for each state and normalize the emission frequencies to a probability distribution.  The resulting emission probabilities are reported in Figure~\ref{fig-hmm}.
-
-\textbf{The following three equations and the associated text is basic HMM theory and is probably not necessary to include to get our point across.  we've got a smart and HMM savvy audience at PSB.}
-Now that we have defined our probabilities for the model, we can defined the parameters for the HMM. We will refer to the sequence of hidden states (Homologous and Unrelated, henceforth H and N) as the path $\pi$. The $i$th state in the path is called $\pi_{i}$. The probability of the current state only depends on the previous state, and the transmission probability of $a_{kl}$ can be defined as follows:
+Then we can use the HOXD matrix to estimate each emission prob in the homologous
+state as, for example:
 \begin{equation}
-a_{kl} = \textsl{P}\big(\pi_{i}=\textsl{l}\big|\pi_{i-i}=\textsl{k}\big).
+\log_{2}\bigg(\frac{H_{AA}}{N_{AA}}\bigg) = 91x,
 \end{equation}
+where $frac{1}{x}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follow:
+\begin{center}$\log_{2}\bigg(\frac{N_{AC}}{N_{AC}}\bigg) = -114x,$ 
+$\log_{2}\bigg(\frac{H_{AG}}{N_{AC}}\bigg) = -31x$ \\
+$\log_{2}\bigg(\frac{H_{AT}}{N_{AC}}\bigg) = -123x,$ 
+$\log_{2}\bigg(\frac{H_{CG}}{N_{CC}}\bigg) = -125x$ \\
+$\log_{2}\bigg(\frac{H_{AA}}{N_{AA}}\bigg) = \ \ \ 91x,$
+$\log_{2}\bigg(\frac{H_{CC}}{N_{CC}}\bigg) = \ \ \ 100x$ \\
+\end{center}
 
-Similarly, we can define the emission probability that symbol $\textsl{b}$ is seen in state $\textsl{k}$ as:
+This leaves us with six equations and seven free variables, so with this alone we can solve the system of equations. But there's the additional restriction that we want all emissions freqs to sum to 1 to make a probability distribution, so we also have:
 \begin{equation}
-e_{kb} = \textsl{P}\big(\pi_{i}=\textsl{b}\big|\pi_{i}=\textsl{k}\big).
+H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
 \end{equation}
-For our intents and purposes, the symbols in $\textsl{b}$ are simply all of the possible pairs in ${A,G,C,T,-}$ where order doesn't matter and neither does the strand (i.e. {\texttt AA=TT=AT=TA} ). Now we can define the join probability of observing a pairwise alignment $\textsl{A}$ and state sequence $\pi$:
-\begin{equation}
-\textsl{P}\big(\textsl{x},\pi\big) = a_{0\pi_{1}}\prod_{i=1}^\textsl{L}\textsl{e}_{\pi_{i}}(x_{i})\textsl{a}_{\pi_{i}\pi_{i+1}}.
-\end{equation}
-FIXME: Then, we decode the states $\pi$ $\textsl{P}(A |\pi)$ using the Viterbi algorithm~\cite{durbin}.
 
+Since we can solve each of the above six for $H_{XY}$ we can then substitute those values in to the
+normalizing equation and solve for $x$. We calculated $x$ to be $0.03072937146$, and the scaling factor $\frac{1}{x}$ to be $32.54215601$ . Once that we have these values, we can directly calculate the remaining values.
 
-We apply the posterior HMM decoder implemented in Gerton Lunter's HMMoC software to compute the posterior probability that each alignment column represents homologous sequence.  Columns with a p.p. below 0.5 (todo: make this threshold configurable) are considered to be unrelated.  We then apply the transitive homology principle to our predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. Regions found to be unrelated are unaligned from each other.
+Emission frequencies for nucleotide substitutions can be derived from the HOXD matrix, but gap open and extend frequencies can not.  To empirically estimate values for the unrelated state we aligned a 10kb, 48\% GC content region taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates 37,300-38,300) with an unrelated sequence.  We generated an unrelated sequence with identical nucleotide composition by reversing the extracted sequence without complementation.  We then forced an alignment with MUSCLE and counted the number of gap open and gap extend columns in the alignment of unrelated sequences.  Gap open and extend frequencies for the homologous state were estimated by constructing an alignment of 10kb of orthologous sequence shared among a pair of divergent organisms.  We aligned the 48\%GC segment between genes fruR and secA from \textit{E. coli} K12 (Accession U00096.21) and \emph{Y. pestis} CO92 (Accession AL590842.1). We add the empirically derived gap-open and extend frequencies for each state and normalize the emission frequencies to a probability distribution.  The resulting emission probabilities are reported in Figure~\ref{fig-hmm}.
 
-If have reached the end of the extension window without reaching the Unrelated state \textbf{don't we perform another round of chaining if we've gotten any homologous extension, even just a few nt?  i think we do, but should we?  yes, because at the very least we need to link subsets appropriately}, we then improve our original seed boundaries and trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
+\textbf{TJT: How did we calculate transmission probabilities?}
+
+Using these empirically derived transmission and emission probabilities, we apply the posterior HMM decoder implemented in Gerton Lunter's HMMoC software~\cite{hmmoc} to compute the posterior probability that each alignment column represents homologous sequence.  Columns with a p.p. below 0.5 (todo: make this threshold configurable) are considered to be unrelated.  We then apply the transitive homology principle to our predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. Regions found to be unrelated are immediately unaligned from each other. If we detect sequence to be in the Homologous state beyond the original chain boundaries,  we then improve our original boundaries and trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
 \section{Assigning significance to local multiple alignments}
 To improve specificity and avoid reporting spurious results, we now present a method for estimating the $p$-value of local multiple alignments.
