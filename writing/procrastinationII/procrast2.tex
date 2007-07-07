@@ -54,7 +54,7 @@ The importance of accurate homology identification to comparative genomics can n
 
 Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Multiple alignment has been demonstrated to be more accurate than pairwise alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause serious efficiency problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS elements in microbes are two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
-Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? We aim to bridge the gap in precision in current homology identification methods through a novel gapped extension heuristic for local multiple alignment. 
+Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the SP objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw, ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? We aim to bridge the gap in precision in current homology identification methods through a novel gapped extension heuristic for local multiple alignment.
 
 %In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive %alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over %their entire length.
 
@@ -99,13 +99,13 @@ $\mathbf{M}$: no two matches $M_i$ and $M_j$ may have the same
 left-end coordinate, e.g. $M_i.L_x \neq M_j.L_y~\forall~i, j, x, y$
 except for the identity case when $i=j$ and $x=y$.  This constraint
 has been referred to by others as \textit{consistency} and
-\textit{transitivity}~\cite{ref-transitivity} of matches.  
+\textit{transitivity}~\cite{ref-transitivity} of matches.
 
 \subsection{Creating chains of multi-matches}
 
 Once a list of multi-matches has been generated, we employ an efficient chaining algorithm to identify overlapping and nested chains of multi-matches~\cite{ref-procrast}. A brief review of the method follows.
-In order to chain over each region of sequence $\mathcal{O}(1)$ times,
-the method chains matches in order of decreasing multiplicity--we
+In order to chain over each region of sequence only once,
+we chain matches in order of decreasing multiplicity--we
 extend the highest multiplicity matches first. We first chain all matches
 with the same multiplicity within $w$
 characters. When a match can no
@@ -118,13 +118,16 @@ extend the subset match(es), we \textit{procrastinate} and extend
 the subset match later when it has the highest multiplicity of any
 match waiting to be extended. When chaining a match with a linked
 superset, we immediately include the entire region covered by the linked superset
-match--eliminating the need to re-examine sequence already covered by
-a previous match extension.
+match and in doing so eliminate the need to re-examine sequence already covered by
+a previously chained match.
 
 \subsection{Gapped extension of high scoring chains}
 
-After successful chaining of a multi-match $M_i$, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain in order make a decision whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used, an idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat}.To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is determined empirically to optimize efficiency and sensitivity. \textbf{FIXME.  this may be a new enough idea to warrant writing the equation into the text.} \textbf{TJT: Its not clear to me what the equation should be. thoughts?}
-
+After chaining a multi-match $M_i$, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain in order make a decision whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used, an idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat}.To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is determined empirically to optimize efficiency and sensitivity. \textbf{TJT: Its not clear to me what the equation should be, currently its:}
+\begin{equation}
+ \max(w, \sqrt{(\max(150^{2}-(2*multi)^{2},0)}));
+\end{equation}
+\textbf{but I think it makes sense to be very small for chains with high multiplicity(say $\geq$30), since the probability of successful gapped extension is drastically reduced. why not try a small sequence window (say 20-30nt) first? perhaps its not enough sequence for the hmm, but is there any way we can determine this experimentally?}
 \subsubsection{Identifying non-homologous regions}
 \begin{figure}[t]
 \centering \epsfig{file=./figures/hmm.eps,width=4.5in}
@@ -148,15 +151,15 @@ state as, for example:
 \log_{2}\bigg(\frac{H_{AA}}{N_{AA}}\bigg) = 91x,
 \end{equation}
 where $frac{1}{x}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follow:
-\begin{center}$\log_{2}\bigg(\frac{N_{AC}}{N_{AC}}\bigg) = -114x,$ 
+\begin{center}$\log_{2}\bigg(\frac{N_{AC}}{N_{AC}}\bigg) = -114x,$
 $\log_{2}\bigg(\frac{H_{AG}}{N_{AC}}\bigg) = -31x$ \\
-$\log_{2}\bigg(\frac{H_{AT}}{N_{AC}}\bigg) = -123x,$ 
+$\log_{2}\bigg(\frac{H_{AT}}{N_{AC}}\bigg) = -123x,$
 $\log_{2}\bigg(\frac{H_{CG}}{N_{CC}}\bigg) = -125x$ \\
 $\log_{2}\bigg(\frac{H_{AA}}{N_{AA}}\bigg) = \ \ \ 91x,$
 $\log_{2}\bigg(\frac{H_{CC}}{N_{CC}}\bigg) = \ \ \ 100x$ \\
 \end{center}
 
-This leaves us with six equations and seven free variables, so with this alone we can solve the system of equations. But there's the additional restriction that we want all emissions freqs to sum to 1 to make a probability distribution, so we also have:
+This leaves us with six equations and seven free variables, so with this alone we can solve the system of equations. But there's the additional restriction that we want all emissions frequencies to sum to 1 to make a probability distribution, so we also have:
 \begin{equation}
 H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
 \end{equation}
@@ -279,12 +282,6 @@ If this is true, it means that one can estimate only the parameters \textsl{K} a
 for multiplicity 2 and then have the relationship between scores and probability for all
 multiplicities. In practice this means that it becomes feasible and that we do not need to
 find all $\textsl{K}_{r}$ and $\textsl{p}_{r}$ by simulation with $r \in [2,\inf]$.
-
-
-
-\subsection{What's next?}
-Well, it seems that the method I proposed above (maybe others have been using the same
-trick) works for strict repeats. Let’s test it for non-strict repeats.
 
 \section{Results}
 
