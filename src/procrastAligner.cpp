@@ -74,13 +74,14 @@ typedef boost::tuple< MatchRecord*, std::vector< size_t >, std::vector< size_t >
 class NeighborhoodGroupComponentCompare
 {
 public:
-	bool operator()( const NeighborhoodGroup& a, const NeighborhoodGroup& b )
+	bool operator()( const NeighborhoodGroup& a, const NeighborhoodGroup& b ) const
 	{
 		return compare(a,b) < 0;
 	}
-	int compare( const NeighborhoodGroup& a, const NeighborhoodGroup& b )
+	int compare( const NeighborhoodGroup& a, const NeighborhoodGroup& b ) const
 	{
 	// compare component map vectors
+		// todo: make these buffers persistent to avoid reallocation!!
 		vector< size_t > ac(a.get<1>());
 		vector< size_t > bc(b.get<1>());
 		std::sort(ac.begin(), ac.end());
@@ -1702,8 +1703,6 @@ int main( int argc, char* argv[] )
 			}
 		}
 
-		if( M_i == (MatchRecord*)0x01839da4)
-			cerr << "debugme!!\n";
 		if( M_i == (MatchRecord*)0x017aaf24)
 			cerr << "supersetdebugme!!\n";
 
@@ -1896,6 +1895,17 @@ int main( int argc, char* argv[] )
 				bool partial;
 				classifySubset( M_i, subset_list[sI], subsumed, partial );
 				MatchRecord* M_j = subset_list[sI].get<0>();
+
+				if( M_j->subsuming_match != NULL )
+				{
+					// sometimes duplicate MatchRecord pointers can exist in the subset list when a subset gets found
+					// during a neighborhood list lookup but was already linked to a neighboring superset
+					// in that case, we just skip the second entry...
+					if(M_j->subsuming_match != M_i )
+						cerr << "Error processing M_i " << M_i << ": match " << M_j << " was already subsumed\n";
+					continue;
+				}
+
 				if( subsumed )
 				{
 					M_j->subsuming_match = M_i;
