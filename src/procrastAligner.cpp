@@ -998,10 +998,9 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	bool novel_hss_regions_support = false;
 	bool danger_zone_active = true;
 	int multi = M_i->Multiplicity();
-	
-//	int extend_length_1 = ceil(-0.78*multi+150); 
-	int extend_length = max(w, sqrt(max(pow(150,2.0)-pow(2*multi,2.0),0)));
-	
+	double e = 2.71828182845904523536;
+//	I think this works a little better...
+	int extend_length = 70*pow(e,-0.01*multi);
 	vector<int> left_extend_vector(multi,0);
 	vector<int> right_extend_vector(multi,0);
 	int left_extend_length = extend_length;	
