@@ -888,8 +888,8 @@ void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup
 		if( M_j->extended )
 		{
 			// oh no!  M_i should have been swallowed up already!
-//						cerr << "extensor crap 2\n";
-//						breakHere();
+			cerr << "extensor crap 2\n";
+			breakHere();
 		}
 
 		bool subsumed;
@@ -953,8 +953,8 @@ void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup 
 		if( M_j->extended )
 		{
 			// oh no!  M_i should have been swallowed up already!
-//						cerr << "extensor crap 2\n";
-//						breakHere();
+			cerr << "extensor crap 2\n";
+			breakHere();
 		}
 
 		bool subsumed;
