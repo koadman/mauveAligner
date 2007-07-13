@@ -7,7 +7,7 @@
 \usepackage{times}
 \begin{document}
 
-\title{Bridging the gap: improving local multiple alignment of \\DNA sequence with a novel heuristic for gapped extension.}
+\title{Improving local multiple alignment of DNA sequence with a hidden Markov model based heuristic for gapped extension.}
 
 \author{Todd J. Treangen$^\dag*$}
 
@@ -41,7 +41,7 @@ Barcelona, Spain\\
 {\center \scriptsize $^\dag$ These authors contributed equally to this work \\}
 
 \abstracts{
-The identification of homologous DNA via sequence alignment is a basic building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions. Our proposed method places high priority on precision and sensitivity, and in doing so, we are able to generate local multiple alignments currently not possible using existing methods. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences.
+The identification of homologous DNA via sequence alignment is a basic building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test. Our proposed method places high priority on precision and sensitivity, and in doing so, we are able to generate local multiple alignments currently not possible using existing methods. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences.
 }
 
 \keywords{sequence alignment}
@@ -62,7 +62,7 @@ can be divided into five independent steps: (1) extraction of multi-matches from
 
 \begin{figure}[p]
 \begin{center}
-\epsfig{file=./figures/extension.eps,width=4.2in}
+\epsfig{file=./figures/extension.eps,width=4.1in}
 %\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
 %\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.7in}}
 \end{center}
@@ -164,8 +164,69 @@ Emission frequencies for nucleotide substitutions can be derived from any strand
 Using these empirically derived transition and emission probabilities, we apply the posterior HMM decoder implemented in Gerton Lunter's HMMoC software~\cite{hmmoc} to compute the posterior probability that each alignment column represents homologous sequence.  Columns with a p.p. below 0.5 (todo: make this threshold configurable) are considered to be unrelated.  We then apply the transitive homology principle to our predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. We trim the alignment to exclude all columns beyond the Homologous state. We then improve our original boundaries and trigger another round of chaining(and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
 
 \section{Assigning significance to local multiple alignments}
-To improve specificity and avoid reporting spurious results, we now present a method for estimating the $p$-value of local multiple alignments.
-\textbf{FIXME: not sure what to do with this...}
+To improve specificity and avoid reporting spurious results, we now present a method for estimating the $p$-value of local multiple alignments. First, we examine how the probability is obtained for multiplicity 2 for two sequences of size
+$m$ and $n$. Our goal is to derive the probability that the two sequences share at least one
+segment with a score $t$ or more. It has been shown that, $n$, the number of segments of score $t+$ (t or more) follows a Poisson distribution with mean:
+\begin{equation}
+E[n]=\textsl{K}\textit{mn}\textsl{p}^{t}
+\end{equation}
+where \textsl{K} and \textsl{p} are two values specific to the scoring system, with \textsl{p} being the probability to find a segment of score $\geq 1$ with multiplicity $\geq 2$. It is important to mention that $p \leq 1$, so that $\textsl{p}^{t}$ can be expressed as $e^{-\gamma t}$. Therefore, we will often see:
+\begin{equation}
+E[n]=\textsl{K}\textit{mn}e^{-\gamma t}
+\end{equation}
+From there it is easy to get the probability to observe at least one segment of score $t+$.
+It is given by the following equation:
+\begin{equation}
+\textsl{P}(1+) = 1-\textit{Poisson}(0) = 1-e^{\textsl{K}\textit{mn}\textsl{p}^{t}} = 1-e^{\textsl{K}\textit{mn}e^{-\gamma t}}
+\end{equation}
+In the case of a single sequence with a repeat of multiplicity 2, we have actually $\frac{n(n-1)}{2}$
+cells in the alignment of a sequence with itself (the score matrix being symmetric). Note
+that it actually assumes that the length of the repeats $l_{rep}\ll n$ and that repeats can have
+overlapping copies. It can also be seen as the number of locations where we can place the
+beginning of both copies. Since the sequence has length $n$, there are $(_{2}^\textsl{n})$
+possible locations for the 2 copies. So we have, for the probability of finding at least 1 pair of sequence (a
+2-copy repeat) having a score $t+$:
+
+\begin{equation}
+\textsl{P}(score \geq 1) = 1-e^{(\textsl{K}(_{2}^\textsl{n})\textsl{p}^{t})}
+\end{equation}
+
+Note that this assumes that the probability of finding a same segment of score 1 at
+position $i,j$ with $0 \leq i < j \leq n$ is given by \textsl{p}.
+
+\subsection{Estimation of \textsl{K} and \textsl{p}}
+Typically the two parameters K and p are unknown and are estimated from simulation for
+a given scoring system. The idea is to note that $\textsl{P}(score \geq t) = 1 - \textsl{F}(t)$, $\textsl{F}(t)$ being the
+cumulative distribution of $t$. So, for 2-copy repeats, we have:
+\begin{equation}
+\log(-\log(\textsl{F}))= \log(\textsl{K})+\log((_{2}^\textsl{n}))+t\log(\textsl{p})
+\end{equation}
+In this case, $\log(-\log(\textsl{F}))$ is a simple linear function of of $t$. We also note that since
+$p \leq 1$, we have a negative slope. It turns out that it for random sequences, this works
+amazingly well (typically $r^{2}\approx 0.99$). There are several tricks we can use to estimate these parameters, which can
+ drastically reduce the number of random sequences to simulate.
+ 
+\subsection{From 2-copy to $r$-copy repeats}
+We need to generalize this for higher multiplicity, so that we have in there a new term that
+is the multiplicity $r$. Basically we can have the exact same reasoning except that this time \textsl{p} is the probability
+of having a repeat of multiplicity $r$ and not just 2. It seems reasonable to assume that the
+probability of finding a segment of score 1 at positions $i, j, k$ with $0 \leq i < j < k \leq n$ is
+$\textsl{p}^{r-1}$. The first position can be anything, all the other ones have to be similar segments.
+Moreover, we also need to find how many arrangement we can have with more than 2
+copies. This is rather easy since if we have $r$ copies in a sequence of length $n$. If we have
+$l-{rep}\ll n$, we can ignore the border effect and then we have $(_{2}^\textsl{n})$
+possible positions. Therefore we can express the more general form as:
+\begin{equation}
+\textsl{P}(score \geq t|r) \approx 1-e^{(\textsl{K}(_{r}^\textsl{n})\textsl{p}^{(r-1)t})}
+\end{equation}
+This equation, using the same transformation as for 2-copy repeats, can be expressed as:
+\begin{equation}
+\log(-\log(\textsl{F}))= \log(\textsl{K})+\log((_{r}^\textsl{n}))+t(r-1)\log(\textsl{p})
+\end{equation}
+If this is true, it means that one can estimate only the parameters \textsl{K} and \textsl{p} once
+for multiplicity 2 and then have the relationship between scores and probability for all
+multiplicities. In practice this means that it becomes feasible and that we do not need to
+find all $\textsl{K}_{r}$ and $\textsl{p}_{r}$ by simulation with $r \in [2,\inf]$.
 
 \section{Results}
 \begin{figure}[t]
@@ -208,8 +269,7 @@ Now that the pattern and all copies are ready to be inserted into the sequence, 
 
 \section{Discussion}
 
-We have presented a sensitive and efficient heuristic for local multiple alignment.
-We have extended previous results by converting chains of ungapped multi-matches into  into to local multiple alignments. \textbf{FIXME when results are ready... save atleast 0.5 page for me please!}
+We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended previous results by converting chains of ungapped multi-matches into to local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test. Our proposed method places high priority on precision and sensitivity, and in doing so, we were able to generate local multiple alignments more sensitive than existing methods. \textbf{FIXME when results are ready... save atleast 0.5 page for me please!}
 
 \section{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL.
@@ -217,7 +277,7 @@ We have implemented our method in a program, \texttt{procrastAligner}, available
 \section{ Acknowledgments }
 AED was supported by NSF grant DBI-0630765. TJT was
 supported by Spanish Ministry MECD Grant TIN2004-03382 and AGAUR
-Training Grant FI-IQUC-2005.
+Training Grant FI-IQUC-2005. \textbf{Also thank those kind enough to read over manuscript for submission!}
 
 
 \bibliographystyle{ws-procs9x6}
