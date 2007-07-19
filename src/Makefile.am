@@ -18,7 +18,7 @@ countInPlaceInversions toGrimmFormat joinAlignmentFiles mauveToXMFA \
 stripGapColumns gappiness progressiveMauve progressiveMauveStatic \
 sortContigs extractBCITrees calculateBackboneCoverage2 createBackboneMFA \
 pairCompare procrastAligner scoreALU evd alignmentProjector stripSubsetLCBs \
-projectAndStrip makeBadgerMatrix multiEVD randomGeneSample
+projectAndStrip makeBadgerMatrix multiEVD randomGeneSample getOrthologList
 
 EXTRA_PROGRAMS = mauveMpatrol mauveEfence toGBKsequence multiToRawSequence unalign
 
@@ -165,10 +165,10 @@ gappiness_LDFLAGS = @STATIC_FLAG@
 gappiness_LDADD = $(LIBRARY_CL)
 
 
-progressiveMauve_SOURCES = progressiveMauve.cpp ProgressiveAligner.cpp PairwiseMatchFinder.cpp ProgressiveAligner.h PairwiseMatchFinder.h UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h SeedOccurrenceList.h TreeUtilities.h
+progressiveMauve_SOURCES = progressiveMauve.cpp UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h  TreeUtilities.h
 progressiveMauve_LDADD = $(LIBRARY_CL)
 
-progressiveMauveStatic_SOURCES = progressiveMauve.cpp ProgressiveAligner.cpp PairwiseMatchFinder.cpp ProgressiveAligner.h PairwiseMatchFinder.h UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h SeedOccurrenceList.h TreeUtilities.h
+progressiveMauveStatic_SOURCES = progressiveMauve.cpp UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h  TreeUtilities.h
 progressiveMauveStatic_LDFLAGS = @STATIC_FLAG@
 progressiveMauveStatic_LDADD = $(LIBRARY_CL)
 
@@ -193,13 +193,8 @@ pairCompare_LDFLAGS = @STATIC_FLAG@
 pairCompare_LDADD = $(LIBRARY_CL)
 
 procrastAligner_SOURCES = procrastAligner.cpp MatchRecord.h procrastUtilities.h SeedMatchEnumerator.h
-#	bagFFT/utils.cpp \
-#	bagFFT/fft.cpp bagFFT/minimize.cpp \
-#	bagFFT/llr_score.cpp bagFFT/bagFFT.cpp 
-# procrastUtilities.cpp
-#procrastAligner_LDFLAGS = @STATIC_FLAG@
+procrastAligner_LDFLAGS = @STATIC_FLAG@
 procrastAligner_LDADD = $(LIBRARY_CL) 
-# -lfftw3
 
 scoreALU_SOURCES = scoreALU.cpp
 scoreALU_LDFLAGS = @STATIC_FLAG@
@@ -232,4 +227,8 @@ multiEVD_LDADD = $(LIBRARY_CL)
 randomGeneSample_SOURCES = randomGeneSample.cpp
 randomGeneSample_LDFLAGS = @STATIC_FLAG@
 randomGeneSample_LDADD = $(LIBRARY_CL)
+
+getOrthologList_SOURCES = getOrthologList.cpp
+getOrthologList_LDFLAGS = @STATIC_FLAG@
+getOrthologList_LDADD = $(LIBRARY_CL)
 
