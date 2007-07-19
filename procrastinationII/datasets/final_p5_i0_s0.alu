@@ -1,0 +1,23 @@
+   SW  perc perc perc  query       position in query         matching repeat     position in  repeat
+score  div. del. ins.  sequence     begin    end   (left)   repeat   class/family begin  end (left)  ID
+
+1000   0  0  0  anysequence  10804  11054  (569020)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  14067  14317  (565757)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  77068  77318  (502756)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  88865  89115  (490959)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  131535  131785  (448289)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  175711  175961  (404113)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  178974  179224  (400850)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  188512  188762  (391312)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  202568  202818  (377256)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  269836  270086  (309988)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  334845  335095  (244979)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  340116  340366  (239708)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  366471  366721  (213353)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  407133  407383  (172691)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  437755  438005  (142069)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  440516  440766  (139308)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  468126  468376  (111698)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  509290  509540  (70534)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  529621  529871  (50203)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  545685  545935  (34139)  +  random  random  0  0  0  none  

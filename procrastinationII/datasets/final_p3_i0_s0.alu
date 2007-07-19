@@ -1,0 +1,43 @@
+   SW  perc perc perc  query       position in query         matching repeat     position in  repeat
+score  div. del. ins.  sequence     begin    end   (left)   repeat   class/family begin  end (left)  ID
+
+1000   0  0  0  anysequence  25337  25462  (554612)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  28865  28990  (551084)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  30251  30376  (549698)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  70067  70192  (509882)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  85817  85942  (494132)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  103709  103834  (476240)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  123365  123490  (456584)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  139367  139492  (440582)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  160031  160156  (419918)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  168473  168598  (411476)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  172505  172630  (407444)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  179687  179812  (400262)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  192413  192538  (387536)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  196319  196444  (383630)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  208919  209044  (371030)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  209927  210052  (370022)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  211313  211438  (368636)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  217865  217990  (362084)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  222149  222274  (357800)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  267383  267508  (312566)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  277337  277462  (302612)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  294977  295102  (284972)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  297371  297496  (282578)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  314003  314128  (265946)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  319043  319168  (260906)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  319799  319924  (260150)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  353315  353440  (226634)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  356591  356716  (223358)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  366293  366418  (213656)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  376625  376750  (203324)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  392501  392626  (187448)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  414929  415054  (165020)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  470999  471124  (108950)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  495947  496072  (84002)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  508295  508420  (71654)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  536267  536392  (43682)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  542189  542314  (37760)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  561215  561340  (18734)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  570161  570286  (9788)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  579737  579862  (212)  +  random  random  0  0  0  none  
