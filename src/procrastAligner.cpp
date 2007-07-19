@@ -1163,6 +1163,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	{
 		//no backbone segment found
 //		cerr << "Crikey!! no backbone found during extension..." << endl;
+		result->Free();
 		return FAILED;
 	}
 
@@ -1174,7 +1175,10 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	else
 		extension_bb = bb_list.at(0).front();
 	if(extension_bb->Multiplicity() != M_i->Multiplicity() )
+	{
+		result->Free();
 		return FAILED;
+	}
 
 	cga_list.push_back( tmp_cga.Copy() );
 	result->copyRange( *(cga_list.back()), extension_bb->LeftEnd(0), extension_bb->AlignmentLength()-1 );
