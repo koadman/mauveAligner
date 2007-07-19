@@ -284,7 +284,7 @@ vector<MatchLink>& getExtraSubsets( MatchRecord* mr, int direction )
 void linkSuperset( MatchRecord* mr, MatchRecord* supermatch, boost::dynamic_bitset<>& comp_list, vector< size_t >& comp_map, int direction )
 {
 	// update superset links
-	MatchLink& slink = MatchLink( supermatch, mr, comp_list, comp_map );
+	MatchLink slink = MatchLink( supermatch, mr, comp_list, comp_map );
 	if( slink.superset != NULL )
 	{
 		slink.subset = mr;
@@ -1237,7 +1237,8 @@ class ProcrastinationQueue
 {
 public:
 	template< typename MrPtrType >
-	ProcrastinationQueue( vector< MrPtrType >& match_record_list )
+	ProcrastinationQueue( vector< MrPtrType >& match_record_list ) :
+	mhc()
 	{
 		q.resize( match_record_list.size() );
 		std::copy(match_record_list.begin(), match_record_list.end(), q.begin() );
