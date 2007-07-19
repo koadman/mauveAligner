@@ -300,7 +300,7 @@
 				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\include;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\;..\..\bm.3.3.0\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
-				EnableEnhancedInstructionSet="2"
+				EnableEnhancedInstructionSet="0"
 				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
