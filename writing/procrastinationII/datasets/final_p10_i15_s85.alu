@@ -1,0 +1,5 @@
+   SW  perc perc perc  query       position in query         matching repeat     position in  repeat
+score  div. del. ins.  sequence     begin    end   (left)   repeat   class/family begin  end (left)  ID
+
+1000   0  0  0  anysequence  282475  284996  (295078)  +  random  random  0  0  0  none  
+1000   0  0  0  anysequence  441361  443882  (136192)  +  random  random  0  0  0  none  

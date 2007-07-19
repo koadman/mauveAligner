@@ -1,0 +1,305 @@
+#FormatVersion Mauve1
+#Sequence1File    final_1.fna
+#Sequence1Entry    1
+#Sequence1Format    FastA
+> 1:7516-7566 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 2:11791-11841 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CAATCATC--AAA--TATTAGAAA------CAAAATAGA
+CT------CAATTA
+> 3:15971-16021 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------GAATTA
+> 4:32881-32931 + modified_1.fna
+ACTTGT-TAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAA----A
+CT------CAATTA
+> 5:49981-50031 + modified_1.fna
+ACTTGT-AAT---ACA--------------------A----CATTCATC--AAA--TATGTGAAA------TAAAAAAGA
+CT------CAATTA
+> 6:50361-50411 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATGCATC--AAA--TATTTGAAA------TAAAATAGA
+C-------CAATTA
+> 7:51786-51836 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CACTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 8:61476-61526 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----AATTCATC--AAA--TATCTAAAA------TAAACTAGA
+CT------CAATTA
+> 9:63186-63236 + modified_1.fna
+ACTTGT-AAA---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 10:65846-65896 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 11:78006-78056 + modified_1.fna
+ACTTGT-GATA-TGCA--------------------A----CATCCATC--AAA--TATTTGAA-------TAAAATAGA
+CT------CAAGTA
+> 12:84751-84801 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CAATCATC--AAA--TATTTGAAA------TAAAATACA
+CT------CAATTA
+> 13:97861-97911 + modified_1.fna
+ACTTGT-AAT---GCA---------CCTT-------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 14:99381-99431 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAAGTTATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 15:100901-100951 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CACTCATC--AAA--TCTTTGAAA------TAAAATAGA
+CT------CAATTA
+> 16:101471-101521 + modified_1.fna
+ACTTGTAAAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+AT------CAATTA
+> 17:104986-105036 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAATTAGA
+CT------CAATTA
+> 18:108121-108171 + modified_1.fna
+ACTTGT-AAT---GCA--------------------ATTTCCATTCATC--AAA--TCTTTGAAA------TAAAATAGA
+CT------TAATTA
+> 19:111256-111306 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATG--AAA--TATTTGAAA------TAAAATACA
+CT------CACTTA
+> 20:112016-112066 + modified_1.fna
+AATTGT-AAT---GCA--------------------A----CATTCA-C--AAA--TATTTGAAA------TAAAATAGA
+CT------CAACTA
+> 21:118571-118621 + modified_1.fna
+ACTTGT-AAT---GCA--------------TTGTG-A----CATTCATC--AAA--AATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 22:132536-132586 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 23:145741-145791 + modified_1.fna
+ACTTGT-CAT---G----------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 24:154006-154056 + modified_1.fna
+ACTGGT-AAT---GCA--------------------A----CCTTCATC--AAA--TATTCGAAA------TAAAATAGA
+CT------CAATTA
+> 25:156381-156431 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGACA------TAAACTAGA
+CT------CAATTA
+> 26:164931-164981 + modified_1.fna
+ACTTGT-AAT---GCG--------------------A----CATTCCTC--AAA--TATTTGAAA------TAAAATAGG
+CT---AAACAATTA
+> 27:171961-172011 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 28:172911-172961 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTAAAA------TAAAATAGA
+CT------CAATTA
+> 29:173861-173911 + modified_1.fna
+AATTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 30:180036-180086 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 31:180416-180466 + modified_1.fna
+ACGTGA-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TCAAATAGA
+CT------CAATTA
+> 32:195521-195571 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATG--AAA--TATTTGAAG------TAAAATAGA
+CT------CAATTA
+> 33:198846-198896 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 34:199796-199846 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGCAA------TAAAATAGA
+CT------CAAGTA
+> 35:200746-200796 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGCAA------TAAAATCGA
+CT------CAATTA
+> 36:206731-206781 + modified_1.fna
+ACTTGT-TAT---GCA--------------------A----CATTCATC--AAA--TATTTGGCA------TAAAATAGA
+CT------CAATTA
+> 37:207016-207066 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 38:210056-210106 + modified_1.fna
+AGTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTCAAA------TAAAATGGA
+CT------CAATTA
+> 39:233236-233286 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 40:236656-236706 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TACAATAGA
+CT------CAATTA
+> 41:243496-243546 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CGATTA
+> 42:246916-246966 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATCAAAAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 43:249006-249056 + modified_1.fna
+ACTTGT-AGT---GCA--------------------A----CATCCATC--AAA--TATTTGAAAC-----TAAAATAGA
+CT------CAATTA
+> 44:249671-249721 + modified_1.fna
+ACTTAT-AAT---GCA-----AAAA----A------A----CATTCATC--AAA--TATTTGAAG------TAAGATAGC
+GT------CAATTA
+> 45:264111-264161 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 46:267816-267866 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAG--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 47:273706-273756 + modified_1.fna
+ACTTGT-AAT---GCA--------------------T----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 48:274941-274991 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTT-AAA------TAAAATAGA
+CT------CAATTA
+> 49:282541-282591 + modified_1.fna
+ACTTGC-AAT---GCA--------------------A----CATTCGTC--AAA--TATATGCAA------TATAGTAGA
+CT------CAATTA
+> 50:285391-285441 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--ATA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 51:304391-304441 + modified_1.fna
+ACTTGT-AAT---GCA--------------------G----CATTCATC--AAA--CATTTTAAA------GGAAATAGA
+CT------CAATTA
+> 52:313036-313086 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA-AGCGCT-AAATAGA
+CT------CAATTA
+> 53:313226-313276 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTAAAA------TAAAATCGA
+CT------CAATTA
+> 54:313321-313371 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TTAAATAGA
+CT------CAATTA
+> 55:315031-315081 + modified_1.fna
+A--TGT-AAT-C-GCG--------------------A----CATTCATA--AAA--TATTTGAAA------TAAAATAGT
+CT------CAATTA
+> 56:318736-318786 + modified_1.fna
+ACTTGT-AAT---GCC--------------------A----AATACATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 57:321491-321541 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATTGA
+CT------CAATTA
+> 58:341156-341206 + modified_1.fna
+ACTTGT-AAT---GCA--------------------T----CGTTCATC--CAA--TATTTGAAA------TAAAGTAGA
+CT------CAATTA
+> 59:348566-348616 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 60:348851-348901 + modified_1.fna
+ATTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 61:354741-354791 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATT--AAA--GATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 62:359491-359541 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATGCAAC--AAA--TATTTGAAA------TAAAATAGA
+CTAAA---CAATTA
+> 63:360631-360681 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AGA--TATTTGAAA------TAAAATAGA
+GT------CAATTA
+> 64:372316-372366 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 65:383241-383291 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAT------TAATATGGA
+CT------CAATTA
+> 66:385616-385666 + modified_1.fna
+ATTTGT-AAG---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 67:387896-387946 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 68:392646-392696 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAG--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 69:400531-400581 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATA--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 70:410031-410081 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCCTC--AAA--TAT-TGAAA------TAAAATAGA
+CT------CTAATA
+> 71:411741-411791 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TGAAATAGA
+CT------CAATTA
+> 72:417156-417206 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CTTTCATC--AAA--TATTTGAAA------TAAAAGAGA
+CT------CAATTA
+> 73:417726-417776 + modified_1.fna
+AATTGT-AAT---GCA--------------------A----CGTTCATC--AAA--TATTTGAAA------TAAAAGAGA
+CT------CAATTA
+> 74:424851-424901 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 75:430646-430696 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--ATA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 76:437201-437251 + modified_1.fna
+ACTTGT-AAT---CCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATATA
+CT------TAATTA
+> 77:449456-449506 + modified_1.fna
+ACTTGT-GAT---GCA--------------------A----CATTCATC--AAA--TATTTGTAA------TAAAATAGA
+CT------CAATTA
+> 78:456676-456726 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTAATC--AAA--TATTTGAAA------TAAAAAAGA
+CT------CAATTA
+> 79:459051-459101 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CA---ATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 80:464751-464801 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATGCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 81:471401-471451 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--GAC--TATTTGGAA------TAAAATAGA
+CT------CAATTA
+> 82:480426-480476 + modified_1.fna
+ACTTTT-AAT---GCA--------------------A----CATTCATC--GAA--TATTTGAAA------TAAAATAGA
+CT------CACTTA
+> 83:484891-484941 + modified_1.fna
+ACTTGT-AAT---GCAATTTT--------------TA----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+GA------CAATTA
+> 84:489736-489786 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A-------TCATC--AAA--TATTTGAAA------CAAAATAGA
+CT------CAAATA
+> 85:493156-493206 + modified_1.fna
+AGTTGT-AAT---GCA--------------------A----CATTCATA--AAA--TAATTGAAA------TAAAATAGA
+CT------CAATTA
+> 86:495911-495961 + modified_1.fna
+ACTGGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TGAAATAGA
+CT------CAATTA
+> 87:504936-504986 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----TATTCATC--AAA--TATTTGAAA------TAAAATCGA
+CT------CAATTA
+> 88:509686-509736 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 89:510256-510306 + modified_1.fna
+ACTTGG-AAT---GCA--------------------A----CATTCATC--AAA--TAGTTGCAA------TAAAATAGA
+CT------CAATTA
+> 90:514531-514581 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 91:522606-522656 + modified_1.fna
+ACTTGT-AGT---GCA--------------------A----CATTCAAC--AAA--TATTTCAAA------TAAAATAGA
+CT------CAATTA
+> 92:525456-525506 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCACC--AAA--T---TGAAA------TAAAATAGA
+CT------AAATTA
+> 93:528971-529021 + modified_1.fna
+ACTTGT-AAT---GCA--------------------C----CATCCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAAATA
+> 94:531441-531491 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATACATC--AAA--TATTTGCAA------TAAAATAGA
+CC------CAATTA
+> 95:539611-539661 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCAAC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 96:542556-542606 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAG--TAGTTGAAA------TAAAATAGA
+CT------CAATTA
+> 97:543886-543936 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCATC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 98:547781-547831 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCGTG--TAA--TATTTGAAA------TAAAATACA
+CT------CAATTA
+> 99:553766-553816 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CTTTCATC--AGA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+> 100:555761-555811 + modified_1.fna
+ACTTGT-AAT---GCA--------------------A----CATTCAGC--AAA--TATTTGAAA------TAAAATAGA
+CT------CAATTA
+=
