@@ -1147,7 +1147,9 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	//createInterval
 	Interval iv;
 	iv.SetMatches(mlist);
-	CompactGappedAlignment<>* cga = new CompactGappedAlignment<>( iv );
+	CompactGappedAlignment<> tmp_cga;
+	CompactGappedAlignment<>* cga = tmp_cga.Copy();
+	new (cga)CompactGappedAlignment<>(iv);
 	vector< CompactGappedAlignment<>* > cga_list;
 	CompactGappedAlignment<>* result;
 	//detectAndApplyBackbone
@@ -1174,9 +1176,9 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	if(extension_bb->Multiplicity() != M_i->Multiplicity() )
 		return FAILED;
 
-	CompactGappedAlignment<> tmp_cga;
 	cga_list.push_back( tmp_cga.Copy() );
 	result->copyRange( *(cga_list.back()), extension_bb->LeftEnd(0), extension_bb->AlignmentLength()-1 );
+	result->Free();
 
 	if(debug_extension)
 	{
