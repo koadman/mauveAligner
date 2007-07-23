@@ -5,6 +5,7 @@
 \usepackage{color}
 \usepackage{epsfig}
 \usepackage{times}
+\usepackage{url}
 \begin{document}
 
 \title{Improving local multiple alignment of interspersed DNA repeats with gapped extension.}
@@ -37,13 +38,14 @@ Barcelona, Spain\\
 {\center \scriptsize $^\dag$ These authors contributed equally to this work \\}
 
 \abstracts{
-The identification of homologous DNA is a fundamental building block in comparative genomic and molecular evolution studies.  To date, methods to identify and align all homologous nucleotides in one or more genomes have suffered poor scalability and limited accuracy.  We propose a method that couples a gapped extension heuristic with a previously described effecient filtration method for local multiple alignment.  During gapped extension, we use the MUSCLE implementation of progressive multiple alignment with iterative refinement.  The resulting gapped extensions are global alignments, and often contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of unrelated sequence.  We evaluate the performance of our method and previous approaches on a hybrid dataset of real genomic DNA with simulated interspersed repeats.  Our method compares favorably in terms of sensitivity, positive predictive value, and identifying the boundary of homology.
+The identification of homologous DNA is a fundamental building block of comparative genomic and molecular evolution studies.  To date, methods to identify and align all homologous nucleotides in one or more genomes have suffered poor scalability and limited accuracy.  We propose a method that couples a gapped extension heuristic with a previously described effecient filtration method for local multiple alignment.  During gapped extension, we use the MUSCLE implementation of progressive multiple alignment with iterative refinement.  The resulting gapped extensions are global multiple alignments, and often contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of unrelated sequence.  We evaluate the performance of our method and previous approaches on a hybrid dataset of real genomic DNA with simulated interspersed repeats.  Our method compares favorably in terms of sensitivity, positive predictive value, and localizing boundaries of homology.
+The described methods have been implemented in the free, open-source \texttt{procrastAligner} software, available from \url{http://somewhere.net}
 }
 
 \keywords{sequence alignment}
 
 \section{Introduction}
-The importance of accurate homology identification to comparative genomics should not be underestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blastz,ref-ssearch} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
+The importance of accurate homology identification to comparative genomics should not be underestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blastz,ref-ssearch} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements in the form of pairwise local alignments.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
 
 Local pairwise alignments can be merged to create a multiple alignment by a variety of methods~\cite{ref-tba,ref-aba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.  Multiple alignment has been demonstrated to be more accurate than pairwise alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Highly repetitive regions in the input sequences can cause serious efficiency problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS elements in microbes are two common examples of the overwhelming abundance of repetitive sequence in naturally occurring genomes.
 
@@ -51,10 +53,10 @@ Local multiple alignment has the inherent potential to avoid pitfalls associated
 ~\cite{ref-clustalw,ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? We thus present a novel heuristic for directly computing local multiple alignments via gapped extension of chained seed matches.
 
 \section{A heuristic for local multiple alignment}
-Our method for computing local multiple alignments exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed multi-matches (see Figure~\ref{fig-main}). Gapped alignments arise when extending seeds to fully capture surrounding sequence homology. Our method assumes that a fixed number of nucleotides flanking a seed match are likely to be homologous and computes a global multiple alignment on the flanking region.  Our assumption of flanking homology often proves to be erroneous and results in an alignment of unrelated sequences.  In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.  We employ a hidden Markov model to detect any such unrelated regions embedded in the global multiple alignment.  Unrelated regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.
+Our method for computing local multiple alignments exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of ungapped multi-match seeds (see Figure~\ref{fig-main}). Gapped alignments arise when extending seeds to fully capture surrounding sequence homology. Our method assumes that a fixed number of nucleotides flanking a seed match are likely to be homologous and computes a global multiple alignment on the flanking region.  Our assumption of flanking homology often proves to be erroneous and results in an alignment of unrelated sequences.  In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.  To resolve the problem, we employ a hidden Markov model which detects unrelated regions embedded in the global multiple alignment.  Unrelated regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.
 
 Our method for local multiple alignment, as depicted in Figure~\ref{fig-main},
-has five primary steps: (1) identifying multi-matches in the input sequence, (2) chaining individual multi-matches, (3) gapped extension of high scoring chains (4) identification of unrelated regions using a hidden Markov model, and (5) unalignment of all unrelated sequence to produce final local multiple alignment.
+has seven primary steps: (1) identifying multi-match seeds in the input sequence, (2) chaining individual seeds, (3) multiple alignment of regions between chained seeds, (4) gapped extension of seed chains (5) detection of unrelated regions using a hidden Markov model, (6) application of transitive homology relationships, and (7) unalignment of any unrelated sequence to produce final local multiple alignment.  Steps 2-7 are applied repeatedly to seeds identified in step 1 to produce local multiple alignments of all homologous nucleotides in the input sequence.
 
 
 \begin{figure}[p]
@@ -63,12 +65,14 @@ has five primary steps: (1) identifying multi-matches in the input sequence, (2)
 %\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
 %\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.7in}}
 \end{center}
-\caption{Overview of the method, starting with an input sequence and ending with a set of local multiple alignments. First we (1) detect multi-matches in input sequence(s) using palindromic spaced seeds, then we perform (2) chaining and extension of all multi-matches within $w$ nt of each other.  In the present example, one chain exists and contains two matches and three match components labeled 1, 2, and 3.  We then perform gapped alignment of the region between chained matches (3).   In step (4), we perform a gapped extension by computing a global multiple alignment on the regions to the left and right of each chain component.  The resulting alignment may contain unrelated sequence, so in step (5) we apply a hidden Markov model to detect the poorly aligned regions indicative of unrelated sequence.  In step (5), heavily diverged homologous sequences may be incorrectly classified as unrelated. Step (6) computes transitive homology relationships to ensure a consistent alignment and aid detection of divergent homologous sequences.  Finally, in step (7) we unalign regions found to be non-homologous.  If we find after step (2) that the alignment boundaries have been extended, we return to step (4) for another round of chaining.}
+\vspace{-1.6cm}
+\caption{Overview of the method, starting with an input sequence and ending with a set of local multiple alignments. First we (1) detect multi-matches in the input sequence(s) using palindromic spaced seeds, then we perform (2) chaining and extension of all multi-matches within $w$ nt of each other.  In the present example, one chain exists and contains two matches each with three match components labeled 1, 2, and 3.  We then perform gapped alignment of the region between chained matches (3).   In step (4), we perform a gapped extension by computing a global multiple alignment on the regions to the left and right of each chain component.  The resulting alignment may contain unrelated sequence, so in step (5) we apply a hidden Markov model to detect poorly aligned regions indicative of unrelated sequence.  Step (6) computes transitive homology relationships to ensure a consistent alignment and aid detection of divergent homologous sequences.  Finally, in step (7) we unalign regions found to be non-homologous.  If we find after step (2) that the alignment boundaries have been extended, we return to step (4) for another round of chaining.}
 \label{fig-main}
 \end{figure}
 
 \subsection{Extracting multi-matches from the input sequence}
 
+\textbf{FIXME:  this paragraph defines lots of notation that never gets used.  we need to define terms like w and k which came from the previous procrast paper and are also used in this one!}
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all
 significant local multiple alignments on subsequences of $\mathcal{S}$. Our
@@ -94,10 +98,10 @@ has been referred to by others as \textit{consistency} and
 
 \subsection{Creating chains of multi-matches}
 
-Once a list of multi-matches has been generated, we employ an efficient chaining algorithm to identify overlapping and nested chains of multi-matches~\cite{ref-procrast}. A brief review of the method follows.
-In order to chain over each region of sequence only once,
-we chain matches with the same multiplicity within $w$
-characters. When a match can no
+Once a list of multi-matches has been generated, we employ an efficient chaining and filtration algorithm to identify overlapping and nested chains of multi-matches~\cite{ref-procrast}. A brief review of the method follows.
+In order to chain process each region of sequence $\mathcal{O}(1)$ times, matches are prioritized for chaining in order of decreasing multiplicity.  Our method chains seed multi-matches of the same multiplicity occurring within $w$
+characters of each other. 
+When a multi-match can no
 longer be chained without including a gap larger than $w$
 characters, our method identifies the neighboring \textit{subset}
 matches within $w$ characters. We then \textit{link} each
@@ -108,11 +112,12 @@ the subset match later when it has the highest multiplicity of any
 match waiting to be extended. When chaining a match with a linked
 superset, we immediately include the entire region covered by the linked superset
 match and in doing so eliminate the need to re-examine sequence already covered by
-a previously chained match.
+a previously chained match.  As such, the chaining algorithm is fast, requiring only $\mathcal{O}(wN \log wN)$ time.
 
 \subsection{Gapped extension of high scoring chains}
 
-After chaining a multi-match $M_i$, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain to decide whether its worth spending computational resources on gapped extension. We can require that two seeds were present in the chain, allowing lower seed sizes $k$ to be used, an idea has been used in other local alignment heuristics~\cite{ref-blastz,ref-gappedblast,ref-blat}.To perform a gapped extension in each direction, we use MUSCLE to align the left/right region immediately surrounding the unextended local multiple alignments. The size of the extension window we send to MUSCLE is calculated to optimize efficiency and sensitivity. That is, the extension window is drastically reduced for small chains with high multiplicity ($|M_{i}|\geq 30$), since the probability of gapped extension is drastically reduced. The extension window size was empirically calculated to be estimated by the following exponential equation: $l = 70e^{-0.01*|M_{i}|}$
+After chaining a multi-match $M_i$, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain to decide whether expending computational resources on gapped extension will be worthwhile. We can require that two or more seeds be present in the chain and use lower seed weights ($k$), a technique which has previously been proven successful~\cite{ref-blastz,ref-gappedblast,ref-blat}.  To perform a gapped extension in each direction, we use MUSCLE to align a fixed number of nucleotides ($l$) to the left and right of the current local multiple alignment. 
+Small values of $l$ restrict the alignment search space, while larger values require more computation but are potentially more sensitive.  We have experimentally determined that setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a good tradeoff between speed and sensitivity.  The resulting extension window is small for high multiplicity chains ($|M_{i}|\geq 30$), keeping the search space manageable.
 %\begin{equation}
 % \max(w, \sqrt{(\max(150^{2}-(2*|M_{i}|)^{2},0)}));
 %\end{equation}
@@ -127,24 +132,24 @@ The MUSCLE alignment software dutifully reports the highest scoring global multi
 \begin{equation}
 s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 \end{equation}
-where $p(x,y)$ is the fraction of the observed aligned pairs of $x\&y$ in the training set used and $q_{1}(x)$ and $q_{2}(x)$ denote the background frequencies of nucleotides x and y, respectively. The resulting $s(x,y)$ was normalized so that the largest was 100, and the rest rounded to the nearest integer. We can first derive the background nucleotide frequencies in the training set from the known $47.5\%G+C$ content, or $f_{GC}=0.475$ and $f_{AT}=0.525$. Due to strand and species symmetry, we then have the following set of emission frequencies for the Unrelated state: \begin{center}$N_{AA}=N_{AT}=N_{TA}=N_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2}) = 0.06890625$ \\
-$N_{CC}=N_{CG}=N_{GC}=N_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) = 0.05640625$ \\
-$N_{AC}=N_{AG}=N_{TC}=N_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) = 0.06234375$ \\
-$N_{CA}=N_{CT}=N_{GA}=N_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) = 0.06234375$ \\
+where $p(x,y)$ is the fraction of the observed aligned pairs of nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and $q_{2}(x)$ denote the background frequencies of $x$ and $y$, respectively. Chiaramonte \textit{et al.} scaled the resulting $s(x,y)$ values by an unreported value $\psi$ so the largest was 100, with the rest rounded to the nearest integer.  Given that the training data has $47.5\%G+C$ content and considering strand and species symmetry, we can compute emission frequencies for the Unrelated state of our HMM: \begin{center}$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2}) = 0.06890625$ \\
+$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) = 0.05640625$ \\
+$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) = 0.06234375$ \\
+$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) = 0.06234375$ \\
 \end{center}
 
-Then we can use the HOXD matrix to estimate each emission prob in the homologous
-state as, for example:
+Where $f_{GC}=0.475$ and $f_{AT}=0.525$ are background frequencies of G/C and A/T, respectively.
+Then we derive emission probabilities for the Homologous state as, for example:
 \begin{equation}
-\log_{2}\bigg(\frac{H_{AA}}{N_{AA}}\bigg) = 91x,
+\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = 91\psi,
 \end{equation}
-where $frac{1}{x}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follow:
-\begin{center}$\log_{2}\bigg(\frac{N_{AC}}{N_{AC}}\bigg) = -114x,$
-$\log_{2}\bigg(\frac{H_{AG}}{N_{AC}}\bigg) = -31x$ \\
-$\log_{2}\bigg(\frac{H_{AT}}{N_{AC}}\bigg) = -123x,$
-$\log_{2}\bigg(\frac{H_{CG}}{N_{CC}}\bigg) = -125x$ \\
-$\log_{2}\bigg(\frac{H_{AA}}{N_{AA}}\bigg) = \ \ \ 91x,$
-$\log_{2}\bigg(\frac{H_{CC}}{N_{CC}}\bigg) = \ \ \ 100x$ \\
+where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follow:
+\begin{center}$\log_{2}\bigg(\frac{U_{AC}}{U_{AC}}\bigg) = -114\psi,$
+$\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = -31\psi$ \\
+$\log_{2}\bigg(\frac{H_{AT}}{U_{AC}}\bigg) = -123\psi,$
+$\log_{2}\bigg(\frac{H_{CG}}{U_{CC}}\bigg) = -125\psi$ \\
+$\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \ \ \ 91\psi,$
+$\log_{2}\bigg(\frac{H_{CC}}{U_{CC}}\bigg) = \ \ \ 100\psi$ \\
 \end{center}
 
 This leaves us with six equations and seven free variables, so with this alone we can solve the system of equations. The additional restriction that all emissions frequencies must sum to 1 to make a probability distribution, gives:
@@ -154,7 +159,7 @@ H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
 %$0.03072937146$
 %$32.54215601$
 Since we can solve each of the above six for $H_{XY}$ we can then substitute those values in to the
-normalizing equation and solve for $x$. We calculated $x$ to be $0.03072$, and the scaling factor $\frac{1}{x}$ to be $32.5421$ . Once that we have these values, we can directly calculate the remaining values.
+normalizing equation and solve for $\psi$. We calculated $\psi$ to be $0.03072$, and the scaling factor $\frac{1}{\psi}$ to be $32.5421$ . Once that we have these values, we can directly calculate the remaining values.
 
 Emission frequencies for nucleotide substitutions can be derived from any strand/species symmetrical nucleotide substitution matrix, but gap open and extend frequencies can not.  To empirically estimate values for the unrelated state we aligned a 10kb, 48\% GC content region taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates 37,300-38,300) with an unrelated sequence.  We generated an unrelated sequence with identical nucleotide composition by reversing the extracted sequence without complementation.  We then forced an alignment with MUSCLE and counted the number of gap open and gap extend columns in the alignment of unrelated sequences.  Gap open and extend frequencies for the homologous state were estimated by constructing an alignment of 10kb of orthologous sequence shared among a pair of divergent organisms.  We aligned the 48\%GC segment between genes fruR and secA from \textit{E. coli} K12 (Accession U00096.21) and \emph{Y. pestis} CO92 (Accession AL590842.1). We add the empirically derived gap-open and extend frequencies for each state and normalize the emission frequencies to a probability distribution.  The resulting emission probabilities are reported in Figure~\ref{fig-hmm}.
 
