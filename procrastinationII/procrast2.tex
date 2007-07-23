@@ -7,7 +7,7 @@
 \usepackage{times}
 \begin{document}
 
-\title{Improving local multiple alignment of DNA sequence using a hidden Markov model for gapped extension.}
+\title{Improving local multiple alignment of interspersed DNA repeats with gapped extension.}
 
 \author{Todd J. Treangen$^\dag*$}
 
@@ -21,10 +21,6 @@ $^*$E-mail: treangen@lsi.upc.edu}
 Brisbane, Australia\\
 $^*$E-mail: a.darling@imb.uq.edu.au}
 
-
-\author{Guillaume Achaz}
-\address{Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6,\\
- Paris, France}
 
 \author{ Mark A. Ragan}
 
@@ -41,7 +37,7 @@ Barcelona, Spain\\
 {\center \scriptsize $^\dag$ These authors contributed equally to this work \\}
 
 \abstracts{
-The identification of homologous DNA via sequence alignment is a fundamental building block in comparative genomics.  We present a method for accurately and sensitively identifying homologous DNA sequence in multiple genomes. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions based around global multiple alignment and a hidden Markov model based homology test. Our proposed method places high priority on precision and sensitivity, and in doing so, we are able to generate local multiple alignments currently not possible using existing methods. In practice, we are able to sensitively identify conserved, potentially repetitive, regions in one or more DNA sequences. 
+The identification of homologous DNA is a fundamental building block in comparative genomic and molecular evolution studies.  To date, methods to identify and align all homologous nucleotides in one or more genomes have suffered poor scalability and limited accuracy.  We propose a method that couples a gapped extension heuristic with a previously described effecient filtration method for local multiple alignment.  During gapped extension, we use the MUSCLE implementation of progressive multiple alignment with iterative refinement.  The resulting gapped extensions are global alignments, and often contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of unrelated sequence.  We evaluate the performance of our method and previous approaches on a hybrid dataset of real genomic DNA with simulated interspersed repeats.  Our method compares favorably in terms of sensitivity, positive predictive value, and identifying the boundary of homology.
 }
 
 \keywords{sequence alignment}
@@ -55,10 +51,10 @@ Local multiple alignment has the inherent potential to avoid pitfalls associated
 ~\cite{ref-clustalw,ref-tcoffee} especially when combined with tree-independent iterative refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. Rather than merging pairwise alignments, why not exploit years of research into multiple alignment heuristics by directly constructing a multiple alignment? We thus present a novel heuristic for directly computing local multiple alignments via gapped extension of chained seed matches.
 
 \section{A heuristic for local multiple alignment}
-Our method for computing local multiple alignments exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed matches (see Figure~\ref{fig-main}). Gapped alignments arise when extending seeds to fully capture surrounding sequence homology. Our method assumes that a fixed number of nucleotides flanking a seed match are likely to be homologous and computes a global multiple alignment on the flanking region.  Our assumption of flanking homology often proves to be erroneous and results in an alignment of unrelated sequences.  In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length. We aim to bridge this gap in precision in current homology identification methods through a novel gapped extension heuristic for local multiple alignment. We use a hidden Markov model to detect any such unrelated regions embedded in the global multiple alignment.  Unrelated regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.
+Our method for computing local multiple alignments exploits the MUSCLE multiple alignment algorithm to compute gapped extensions of seed multi-matches (see Figure~\ref{fig-main}). Gapped alignments arise when extending seeds to fully capture surrounding sequence homology. Our method assumes that a fixed number of nucleotides flanking a seed match are likely to be homologous and computes a global multiple alignment on the flanking region.  Our assumption of flanking homology often proves to be erroneous and results in an alignment of unrelated sequences.  In the context of \textit{local} multiple alignment, the fundamental problem with such an approach is that current methods for progressive alignment with iterative refinement compute \textit{global} alignments, i.e. they implicitly assume that input sequences are homologous over their entire length.  We employ a hidden Markov model to detect any such unrelated regions embedded in the global multiple alignment.  Unrelated regions are then removed from the alignment and the local-multiple alignment is trimmed to reflect the updated boundaries of homology.
 
 Our method for local multiple alignment, as depicted in Figure~\ref{fig-main},
-can be divided into five independent steps: (1) extraction of multi-matches from the input sequence, (2) chaining of all multi-matches, (3) gapped extension of high scoring chains (4) identification of unrelated regions using a hidden Markov model, and (5) unalignment of all unrelated sequence to produce final local multiple alignment.
+has five primary steps: (1) identifying multi-matches in the input sequence, (2) chaining individual multi-matches, (3) gapped extension of high scoring chains (4) identification of unrelated regions using a hidden Markov model, and (5) unalignment of all unrelated sequence to produce final local multiple alignment.
 
 
 \begin{figure}[p]
@@ -196,9 +192,9 @@ Using these empirically derived transition and emission probabilities, we apply 
 We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
 the human genome~\cite{ref-procrast}. Figure~\ref{fig-align} shows an example local multiple alignment of an ALU family as generated with \texttt{procrastAligner}. To highlight the benefits of our proposed heuristic for gapped extension, we compare ~\texttt{procrastAligner}'s performance to that to a related Eulerian method for local multiple alignment, eulerAlign~\cite{ref-related1}. The Eulerian method uses
 a \textit{de Bruijn} graph for filtration, but goes beyond filtration to compute gapped alignments using banded dynamic
-programming. 
+programming.
 
-For this comparison we have inserted mutated copies of randomly generated patterns into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method~\cite{ref-mycoplasma}. We generated and inserted DNA patterns into the genome as follows. To evaluate sensitivity and specificity of the methods as a function of multiplicity we generated 5 patterns for 10 selected multiplicities between 2 and 100 (2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200). To generate each pattern, we determined a length for each multiplicity so that the total number of sites was equal to 5000 for all patterns (larger pattern lengths for lower multiplicities and vice versa). Next, we constructed the DNA pattern by using a background nucleotide frequency equivalent to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Then, we randomly mutated each copy of the pattern following a star tree topology ( i.e. all branches have the same length).  Some branches received multiple mutations while others received none, consistent with a marked poisson process since the times between events on a given branch follow a poisson distribution. Also, some sites in the pattern were taken to be more likely to contain mutations by using a gamma-distributed rate variation ($\theta = 1.0, k = \frac{l}{2}$). The length of indels were calculated using a Poisson distribution, and insertions \& deletions were taken to occur with equal probability (p=0.5). For each generated pattern, sequence divergence was varied from 0 substitutions + indels per site (i.e. no divergence) to 0.01, 0.02, 0.04, 0.06, 0.08, 0.1, 0.15 and 0.2 substitutions + indels per site. Each mutation rate yielded of 0, 50, 100, 200, 300, 400, 500, 7500, 1000, and 2000 total mutations per star tree, respectively.
+For this comparison we have inserted mutated copies of randomly generated patterns into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method~\cite{ref-mycoplasma}. We generated and inserted DNA patterns into the genome as follows. To evaluate sensitivity and specificity of the methods as a function of multiplicity we generated 5 patterns for 10 selected multiplicities between 2 and 200 (2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200). To generate each pattern, we determined a length for each multiplicity so that the total number of sites was equal to 5000 for all patterns (larger pattern lengths for lower multiplicities and vice versa). Next, we constructed the DNA pattern by using a background nucleotide frequency equivalent to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Then, we randomly mutated each copy of the pattern following a star tree topology ( i.e. all branches have the same length).  Some branches received multiple mutations while others received none, consistent with a marked poisson process since the times between events on a given branch follow a poisson distribution. Also, some sites in the pattern were taken to be more likely to contain mutations by using a gamma-distributed rate variation ($\theta = 1.0, k = \frac{l}{2}$). The length of indels were calculated using a Poisson distribution, and insertions \& deletions were taken to occur with equal probability (p=0.5). For each generated pattern, sequence divergence was varied from 0 substitutions + indels per site (i.e. no divergence) to 0.01, 0.02, 0.04, 0.06, 0.08, 0.1, 0.15 and 0.2 substitutions + indels per site. Each mutation rate yielded of 0, 100, 200, 400, 500, 7500, 1000, and 2000 total mutations per star tree, respectively.
 
 Now all copies are ready to be inserted into the sequence. We set the minimum distance between the between any two copies equal to the length of the pattern, which allows tandem repeats but not mosaic repeats. Then, following a uniform distribution we inserted each copy into the genome.  We next used each program (parameter configuration listed below) to find all significant multiple local alignments in each of the 110 modified \emph{M. genitalium} genomes and recorded their respective alignment accuracy as a function of multiplicity and sequence divergence. We calculated each the sensitivity by counting the number of correctly aligned pairwise columns of the inserted pattern contained in the output of each program, out of the total number of pairwise columns, for each pattern. We calculated the positive predictive value (PPV) as
 $\frac{TP}{TP + FP}$, where TP is the total number of calculated pairwise alignment tuples that were present in
@@ -214,7 +210,7 @@ one of the tuple components are present in the simulated data yet it doesn't exi
 
 \section{Discussion}
 
-We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended previous results by converting chains of ungapped multi-matches into to local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test. Our proposed method places high priority on precision and sensitivity, and in doing so, we were able to generate local multiple alignments more sensitive than existing methods. 
+We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended previous results by converting chains of ungapped multi-matches into to local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test. Our proposed method places high priority on precision and sensitivity, and in doing so, we were able to generate local multiple alignments more sensitive than existing methods.
 
 \section{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL.
@@ -222,7 +218,7 @@ We have implemented our method in a program, \texttt{procrastAligner}, available
 \section{ Acknowledgments }
 Thanks to APAC for compute hours! AED was supported by NSF grant DBI-0630765. TJT was
 supported by Spanish Ministry MECD Grant TIN2004-03382 and AGAUR
-Training Grant FI-IQUC-2005. 
+Training Grant FI-IQUC-2005.
 
 
 \bibliographystyle{ws-procs9x6}
