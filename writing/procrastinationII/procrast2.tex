@@ -204,11 +204,15 @@ programming.  To our knowledge, \texttt{procrastAligner} and \texttt{eulerAlign}
 We evaluate accuracy of each method when aligning simulated repeat families that have been inserted into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate alignment methods~\cite{ref-mycoplasma}. We simulated repeat families with 11 multiplicities ranging between 2 and 200 ($x$-axis in Figure~\ref{fig-results}).  Each repeat copy has an average length based on its family's multiplicity ($length=\frac{5000}{multiplicity}$).  Thus, high copy-number repeats are short.  Evolution of repeat families was simulated on a star tree topology.  The branch lengths were varied between 0 and 20 ($y$-axis in Figure~\ref{fig-results}), with the nucleotide substitution rate fixed at 0.085 per unit time, and the indel rate fixed at 0.015 per unit time.  Rate heterogeneity among sites was modeled with a gamma distribution ($\theta = 1.0, k = \frac{l}{2}$).  Indel size was Poisson distributed with intensity 3, and insertions and deletions were taken to be equally likely.  Mutation event times were simulated according to a marked Poisson process.  Each family's ancestral sequence was randomly generated using nucleotide frequencies equal to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Insertion sites for repeat copies were chosen uniformly randomly in the \textit{M. genitalium} genome, allowing tandem repeats but prohibiting mosaic repeats.
 
 \subsection{Alignment accuracy metrics}
-We next used each program (parameter configuration listed below) to find local multiple alignments in each of the 110 modified \emph{M. genitalium} genomes and recorded their respective alignment accuracy as a function of multiplicity and sequence divergence. We calculated each the sensitivity by counting the number of correctly aligned pairwise columns of the inserted pattern contained in the output of each program, out of the total number of pairwise columns, for each pattern. We calculated the positive predictive value (PPV) as
-$\frac{TP}{TP + FP}$, where TP is the total number of calculated pairwise alignment tuples that were present in
-the simulated data, and FP is the total number of calculated pairwise alignment tuples with
-one of the tuple components are present in the simulated data yet it doesn't exist in the simulated data.  Results of this experiment are reported in Figure~\ref{fig-results}. Parameters used for each program were configured to optimize each program's chances of accurately aligning each pattern and were set as follows:  \begin{center}\texttt{procrastAlign}:\texttt{ --z=13 --w=50 } \\ \texttt{eulerAlign}:\texttt{ -k 15 -l -i 1000 -v}\end{center}
+We next used each program (parameter configuration listed below) to find local multiple alignments in each of the 110 modified \emph{M. genitalium} genomes and recorded their respective alignment accuracy as a function of multiplicity and sequence divergence. We calculated sum-of-pairs nucleotide sensitivity as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}$, where $\mathrm{TP}$ is the number of aligned nucleotide pairs in the program's output which are also aligned in the simulated repeat family.  $\mathrm{FN}$ is the number of aligned nucleotide pairs in the simulated repeat family which are missing from the program's output.  This sensitivity measure is identical to the sum-of-pairs accuracy defined by BaliBASE\cite{ref-balibase}.  We calculate the positive predictive value (PPV) as
+$\frac{TP}{TP + FP}$, where TP is defined as above, and FP is the total number of nucleotide pairs from the program's output where one or both nucleotides are part of the simulated repeat family and the pair of nucleotides was incorrectly aligned.  \textbf{fixme: how was it done?  the way i just described, or the way you've described here: with
+one of the tuple components are present in the simulated data yet it doesn't exist in the simulated data??}.  
 
+\subsection{Accuracy when aligning interspersed repeats}
+We applied \textt{procrastAligner} and \texttt{eulerAlign} to the hybrid simulated/real dataset.  Parameters used for each program were configured to optimize each program's chance of accurately aligning each pattern as follows:  \begin{center}\texttt{procrastAlign}:\texttt{ --z=13 --w=50 } \\ \texttt{eulerAlign}:\texttt{ -k 15 -l -i 1000 -v}\end{center}
+Simulations for each of the 110 combinations of branch length and multiplicity were replicated five times and alignments generated in parallel using a 128 node compute cluster.  Results of the experiments are reported in Figure~\ref{fig-results}.
+
+\textbf{fixme: summarize the major points of the results here or in discussion}
 
 \begin{figure}[t]
 \centering \epsfig{file=./figures/alu_align.eps,width=5.0in}
@@ -219,12 +223,13 @@ one of the tuple components are present in the simulated data yet it doesn't exi
 \section{Discussion}
 
 We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended our previous results by converting chains of ungapped multi-matches into gapped local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test.  Experimental results demonstrate that the described method offers a level of alignment accuracy far exceeding that of previous methods.
+\textbf{it would be nice to say something about the need for better scoring metrics and statistics here}
 
 \subsection{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL.
 
 \section{ Acknowledgments }
-The authors would like to thank Dr. Yu Zhang for providing the \texttt{eulerAlign} program. 
+The authors would like to thank Dr. Yu Zhang for providing the \texttt{eulerAlign} program.
 Accuracy evaluations utilized a compute resource grant from the Australian Partnership for Advanced Computing.  AED was supported by NSF grant DBI-0630765. TJT was
 supported by Spanish Ministry MECD Grant TIN2004-03382 and AGAUR
 Training Grant FI-IQUC-2005.
