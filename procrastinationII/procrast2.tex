@@ -117,7 +117,7 @@ a previously chained match.  As such, the chaining algorithm is fast, requiring 
 \subsection{Gapped extension of high scoring chains}
 
 After chaining a multi-match $M_i$, we perform gapped alignment on all collinear regions located between two adjacent components to generate unextended local multiple alignments. We first evaluate the chain to decide whether expending computational resources on gapped extension will be worthwhile. We can require that two or more seeds be present in the chain and use lower seed weights ($k$), a technique which has previously been proven successful~\cite{ref-blastz,ref-gappedblast,ref-blat}.  To perform a gapped extension in each direction, we use MUSCLE to align a fixed number of nucleotides ($l$) to the left and right of the current local multiple alignment.
-Small values of $l$ restrict the alignment search space, while larger values require more computation but are potentially more sensitive.  We have experimentally determined that setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a good tradeoff between speed and sensitivity.  The resulting extension window is small for high multiplicity chains ($|M_{i}|\geq 30$), keeping the search space manageable.
+Small values of $l$ restrict the alignment search space, while larger values require more computation but are potentially more sensitive.  We have experimentally determined that setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a good tradeoff between speed and sensitivity.  The resulting extension window is small for high multiplicity chains ($|M_{i}|\geq 30$), keeping the alignment search space tractable.
 %\begin{equation}
 % \max(w, \sqrt{(\max(150^{2}-(2*|M_{i}|)^{2},0)}));
 %\end{equation}
@@ -152,18 +152,18 @@ $\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \ \ \ 91\psi,$
 $\log_{2}\bigg(\frac{H_{CC}}{U_{CC}}\bigg) = \ \ \ 100\psi$ \\
 \end{center}
 
-This leaves us with six equations and seven free variables, so with this alone we can solve the system of equations. The additional restriction that all emissions frequencies must sum to 1 to make a probability distribution, gives:
+The system of six equations has seven free variables.  Moreover, the $H_{xy}$ must sum to 1 to make a probability distribution:
 \begin{equation}
 H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
 \end{equation}
 %$0.03072937146$
 %$32.54215601$
-Since we can solve each of the above six for $H_{XY}$ we can then substitute those values in to the
-normalizing equation and solve for $\psi$. We calculated $\psi$ to be $0.03072$, and the scaling factor $\frac{1}{\psi}$ to be $32.5421$ . Once that we have these values, we can directly calculate the remaining values.
+We can solve the above six equations for $H_{xy}$ and substitute the resulting expressions in to the
+normalizing equation to solve for $\psi$. For the HOXD matrix, $\psi=0.03072$, and the scaling factor $\frac{1}{\psi}=32.5421$. Given $\psi$, we can calculate values for all $H_{xy}$ in the HMM, as shown in Figure~\ref{fig-hmm}.
 
-Emission frequencies for nucleotide substitutions can be derived from any strand/species symmetrical nucleotide substitution matrix, but gap open and extend frequencies can not.  To empirically estimate values for the unrelated state we aligned a 10kb, 48\% GC content region taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates 37,300-38,300) with an unrelated sequence.  We generated an unrelated sequence with identical nucleotide composition by reversing the extracted sequence without complementation.  We then forced an alignment with MUSCLE and counted the number of gap open and gap extend columns in the alignment of unrelated sequences.  Gap open and extend frequencies for the homologous state were estimated by constructing an alignment of 10kb of orthologous sequence shared among a pair of divergent organisms.  We aligned the 48\%GC segment between genes fruR and secA from \textit{E. coli} K12 (Accession U00096.21) and \emph{Y. pestis} CO92 (Accession AL590842.1). We add the empirically derived gap-open and extend frequencies for each state and normalize the emission frequencies to a probability distribution.  The resulting emission probabilities are reported in Figure~\ref{fig-hmm}.
+Emission frequencies for nucleotide substitutions can be derived from any strand/species symmetric nucleotide substitution matrix, but gap open and extend frequencies can not.  To empirically estimate values for the unrelated state we aligned a 10kb, 48\% GC content region taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates 37,300-38,300) with an unrelated sequence.  We generated an unrelated sequence with identical nucleotide composition by reversing the extracted sequence without complementation.  We then forced an alignment with MUSCLE and counted the number of gap open and gap extend columns in the alignment of unrelated sequences.  Gap open and extend frequencies for the homologous state were estimated by constructing an alignment of 10kb of orthologous sequence shared among a pair of divergent organisms.  We aligned the 48\%GC segment between genes fruR and secA from \textit{E. coli} K12 (Accession U00096.21) and \emph{Y. pestis} CO92 (Accession AL590842.1). We add the empirically derived gap-open and extend frequencies for each state and normalize the emission frequencies to a probability distribution.  The resulting emission probabilities are reported in Figure~\ref{fig-hmm}.
 
-Using these empirically derived transition and emission probabilities, we apply the posterior HMM decoder implemented in Gerton Lunter's HMMoC software~\cite{hmmoc} to compute the posterior probability that each alignment column represents homologous sequence.  Columns with a p.p. below 0.5 are considered to be unrelated.  We then apply the transitive homology principle to our predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. We trim the alignment to exclude all columns beyond the Homologous state. We then improve our original boundaries and trigger another round of chaining (and consequently another round of extension) in the same direction on the currently active, extend match. Else, we first determine if our chain boundaries have been improved, and then signal that we are done chaining/extending the current match in the current direction. If we have already processed the current chain in both directions, we stop entirely and proceed to the next multi-match in the priority queue.
+Using the empirically derived transition and emission probabilities, we apply the posterior HMM decoder implemented in Gerton Lunter's HMMoC software~\cite{hmmoc} to compute the posterior probability that each alignment column represents homologous sequence.  Columns with a p.p. below 0.5 are considered to be unrelated.  We then apply the transitive homology principle to our predictions, resulting in a final set of consistent homology predictions.  See Figure~\ref{fig-main}, steps 5 and 6 for an example. We trim the alignment to exclude all columns beyond the Homologous state. If the original boundaries were improved, we trigger another round of chaining (and consequently another round of extension) in the same direction on the currently active match $M_i$.  When gapped extension fails to improve boundaries in one direction, extension in the other direction is attempted until no further extension is possible.
 
 
 \section{Results}
@@ -196,10 +196,11 @@ average accuracy values are shown here.  White points indicate perfect alignment
 %\end{table}
 
 We have previously demonstrated the sensitivity of our chaining method in finding Alu repeats in
-the human genome~\cite{ref-procrast}. Figure~\ref{fig-align} shows an example local multiple alignment of an ALU family as generated with \texttt{procrastAligner}. To highlight the benefits of our proposed heuristic for gapped extension, we compare ~\texttt{procrastAligner}'s performance to that to a related Eulerian method for local multiple alignment, eulerAlign~\cite{ref-related1}. The Eulerian method uses
+the human genome~\cite{ref-procrast}. Figure~\ref{fig-align} shows part of a  local multiple alignment of one such ALU family as generated with \texttt{procrastAligner}. To highlight the benefits of our proposed heuristic for gapped extension, we compare ~\texttt{procrastAligner}'s performance to the Eulerian path method for local multiple alignment as implemented by \texttt{eulerAlign}~\cite{ref-related1}. The Eulerian path method uses
 a \textit{de Bruijn} graph for filtration, but goes beyond filtration to compute gapped alignments using banded dynamic
-programming.
+programming.  To our knowledge, \texttt{procrastAligner} and \texttt{eulerAlign} represent the only two automated methods to construct local multiple alignments directly from genomic DNA.
 
+\subsection{Accuracy when aligning interspersed repeats}
 For this comparison we have inserted mutated copies of randomly generated patterns into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate our method~\cite{ref-mycoplasma}. We generated and inserted DNA patterns into the genome as follows. To evaluate sensitivity and specificity of the methods as a function of multiplicity we generated 5 patterns for 10 selected multiplicities between 2 and 200 (2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200). To generate each pattern, we determined a length for each multiplicity so that the total number of sites was equal to 5000 for all patterns (larger pattern lengths for lower multiplicities and vice versa). Next, we constructed the DNA pattern by using a background nucleotide frequency equivalent to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Then, we randomly mutated each copy of the pattern following a star tree topology ( i.e. all branches have the same length).  Some branches received multiple mutations while others received none, consistent with a marked poisson process since the times between events on a given branch follow a poisson distribution. Also, some sites in the pattern were taken to be more likely to contain mutations by using a gamma-distributed rate variation ($\theta = 1.0, k = \frac{l}{2}$). The length of indels were calculated using a Poisson distribution, and insertions \& deletions were taken to occur with equal probability (p=0.5). For each generated pattern, sequence divergence was varied from 0 substitutions + indels per site (i.e. no divergence) to 0.01, 0.02, 0.04, 0.06, 0.08, 0.1, 0.15 and 0.2 substitutions + indels per site. Each mutation rate yielded of 0, 100, 200, 400, 500, 7500, 1000, and 2000 total mutations per star tree, respectively.
 
 Now all copies are ready to be inserted into the sequence. We set the minimum distance between the between any two copies equal to the length of the pattern, which allows tandem repeats but not mosaic repeats. Then, following a uniform distribution we inserted each copy into the genome.  We next used each program (parameter configuration listed below) to find all significant multiple local alignments in each of the 110 modified \emph{M. genitalium} genomes and recorded their respective alignment accuracy as a function of multiplicity and sequence divergence. We calculated each the sensitivity by counting the number of correctly aligned pairwise columns of the inserted pattern contained in the output of each program, out of the total number of pairwise columns, for each pattern. We calculated the positive predictive value (PPV) as
@@ -210,7 +211,7 @@ one of the tuple components are present in the simulated data yet it doesn't exi
 
 \begin{figure}[t]
 \centering \epsfig{file=./figures/alu_align.eps,width=5.0in}
-\caption{Partial alignment of Alu-Sc subfamily found in \emph{H. sapiens} C1 esterase inhibitor gene generated with \textbf{procrastAlign}. Each row represents an aligned ALU. Highlighted columns indicate conserved sequence among all all 10 sequences.}
+\caption{Partial alignment of Alu-Sc subfamily found in the \emph{H. sapiens} C1 esterase inhibitor gene.  Alignment generated with \texttt{procrastAlign}. Each row represents an aligned ALU. Highlighted columns indicate conserved sequence among all all 10 sequences.}
 \label{fig-align}
 \end{figure}
 
@@ -218,11 +219,12 @@ one of the tuple components are present in the simulated data yet it doesn't exi
 
 We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended previous results by converting chains of ungapped multi-matches into to local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test. Our proposed method places high priority on precision and sensitivity, and in doing so, we were able to generate local multiple alignments more sensitive than existing methods.
 
-\section{Implementation}
+\subsection{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL.
 
 \section{ Acknowledgments }
-Thanks to APAC for compute hours! AED was supported by NSF grant DBI-0630765. TJT was
+The authors would like to thank Dr. Yu Zhang for providing the \texttt{eulerAlign} program. 
+Accuracy evaluations utilized a compute resource grant from the Australian Partnership for Advanced Computing.  AED was supported by NSF grant DBI-0630765. TJT was
 supported by Spanish Ministry MECD Grant TIN2004-03382 and AGAUR
 Training Grant FI-IQUC-2005.
 
