@@ -336,6 +336,8 @@ try{
 	map<int,bool> hitlist;
 
 	map<int64,bool> specificity;
+
+	map<uint,pair<int,int>> borders;
 	
 	int64 matchhits = 0;
     int64 matchhitmult = 0;
@@ -350,7 +352,7 @@ try{
 		//for each alignment returned by procrastAligner, highest multiplicity first
 		bool alufound = false;
 
-		cout << "checking alignment #" << j << " for ALUs..." << endl;
+		//cout << "checking alignment #" << j << " for ALUs..." << endl;
 		for ( int i = 0; i < alus.size(); i++)
 		{
 			
@@ -360,6 +362,7 @@ try{
 				for ( int a = 0; a < alus.at(i)->length(); a++)
 				{
 					
+
 					//column in alignment coincides with an alu
 					if(totcoverage.at(j).find((alus.at(i)->start)+a) != totcoverage.at(j).end())
 					{
@@ -404,7 +407,7 @@ try{
 		if(!alufound)
 		{
 			ignoreAlignment[j] = true;
-			cout << "ignoring alignment " << j << endl;
+			//cout << "ignoring alignment " << j << endl;
 			
 			//calculate regions only appearing in procrastAligner alignments
 			for(int k = 0; k < align_list.at(j).size();k++)
@@ -429,18 +432,46 @@ try{
 			for(int k = 0; k < align_list.at(j).size();k++)
 			{			
 				gnSeqI len = absolut((int64)align_list.at(j).at(k).second)-absolut((int64)align_list.at(j).at(k).first);
-				//cout << align_list.at(j).at(k).second;
-				//cout << " " << align_list.at(j).at(k).first;
-				//cout << "len " << len << endl;
-				
+				bool benhit = false;
+				int lb = 0;
+				int rb = 0;
+				uint rnum = 0;
 				for(int n = 0; n<len;n++)
 				{
-					
 					if(align_list.at(j).at(k).first<0)
 					{
-						
+						// j = lma #
+						// k = component #
+						// first,second = start,end pos
 						if(aluCoverage.find(align_list.at(j).at(k).first-n)!= aluCoverage.end())
 						{
+							if (!benhit)
+							{
+								//find which alu is hit
+								for ( int i = 0; i < alus.size(); i++)
+								{
+									if( (abs((int)align_list.at(j).at(k).first-n) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first-n) <= alus.at(i)->end ))
+									{
+		
+										//the repeat #
+										rnum = i+1;
+										//find overlap
+										int leftend = 0;
+										int rightend = 0;
+										leftend = abs((int)alus.at(i)->start) - abs((int)align_list.at(j).at(k).first);
+										rightend =  abs((int)align_list.at(j).at(k).second) - abs((int)alus.at(i)->end);
+										// if component has worse boundaries, record them
+										if (abs((int)leftend) > abs((int)lb))
+											lb = leftend;
+										if (abs((int)rightend) > abs((int)rb))
+											rb = rightend;
+										
+										break;
+									}
+								} 
+								benhit = true;
+							}
+							
 							//current component of alignment pertains to alu
 							//spec.at(j).push_back(k)
 							lpn[align_list.at(j).at(k).first-n] = true;
@@ -454,8 +485,35 @@ try{
 					}
 					else
 					{
+						
 						if(aluCoverage.find(align_list.at(j).at(k).first+n)!= aluCoverage.end())
 						{
+							
+							//find which alu is hit
+							if (! benhit)
+							{
+								for ( int i = 0; i < alus.size(); i++)
+								{
+									if( (abs((int)align_list.at(j).at(k).first+n) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first+n) <= alus.at(i)->end ))
+									{
+										rnum = i+1;
+										//find overlap
+										int leftend = 0;
+										int rightend = 0;
+										leftend = abs((int)alus.at(i)->start) -abs((int)align_list.at(j).at(k).first);
+										rightend =   abs((int)alus.at(i)->end)-abs((int)align_list.at(j).at(k).second);
+										// if component has worse boundaries, record them
+										if (abs((int)leftend) > abs((int)lb))
+											lb = leftend;
+										if (abs((int)rightend) > abs((int)rb))
+											rb = rightend;
+										
+										break;
+									}
+								}
+								benhit = true;
+							}
+							
 							//current component of alignment pertains to alu
 							lpn[align_list.at(j).at(k).first+n] = true;
 							hit = true;
@@ -466,6 +524,20 @@ try{
 
 						mergedCoverage[align_list.at(j).at(k).first+n] = true;
 					}
+				}
+				//cout << "pattern #" << rnum << " worst calculated boundaries-> left:" << lb << " right:" << rb << endl;
+				if ( borders.find( rnum ) != borders.end() )
+				{
+					// if lma has better boundaries, record them
+					if ( abs((int)borders[rnum].first) > abs((int)lb) )
+						borders[rnum].first = lb;
+					if ( abs((int)borders[rnum].second) > abs((int)rb) )
+						borders[rnum].second = rb;
+					
+				}
+				else
+				{
+					borders[rnum] = make_pair(lb,rb);
 				}
 				if(hit)
 				{
@@ -489,12 +561,13 @@ try{
 	//this is the length of the repeats found by procrastAligner, 
 	//with overlaps removed
 	//remember the alignments to ignore!
-	
-	/*for(int i = 0; i < totcoverage.size();i++)
+	map<uint,pair<int,int>>::iterator iter;
+	for( iter = borders.begin(); iter != borders.end(); iter++ ) 
 	{
-		if(!ignoreAlignment[i])
-			lt += totcoverage.at(i).size();
-	}*/
+		if (iter->first == 0 )
+			continue;
+		cout << "component #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
+	}
 
 	lt = mergedCoverage.size();
 	//lt2 = coverage.size();
