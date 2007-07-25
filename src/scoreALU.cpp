@@ -337,8 +337,8 @@ try{
 
 	map<int64,bool> specificity;
 
-	map<uint,pair<int,int>> borders;
-	
+	map<uint,pair<int,int>> best_borders;
+	map<uint,pair<int,int>> worst_borders;
 	int64 matchhits = 0;
     int64 matchhitmult = 0;
 	for ( int j = 0; j < align_list.size(); j++)
@@ -445,12 +445,17 @@ try{
 						// first,second = start,end pos
 						if(aluCoverage.find(align_list.at(j).at(k).first-n)!= aluCoverage.end())
 						{
+							//FXIME: need to check if it hits all components!!
+
+							//take only the first position that hits a alu component
 							if (!benhit)
 							{
 								//find which alu is hit
 								for ( int i = 0; i < alus.size(); i++)
 								{
-									if( (abs((int)align_list.at(j).at(k).first-n) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first-n) <= alus.at(i)->end ))
+									
+									if( (abs((int)align_list.at(j).at(k).first-n) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first-n) < alus.at(i)->end ) 
+									||  (abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) < alus.at(i)->end ) )
 									{
 		
 										//the repeat #
@@ -458,13 +463,30 @@ try{
 										//find overlap
 										int leftend = 0;
 										int rightend = 0;
-										leftend = abs((int)alus.at(i)->start) - abs((int)align_list.at(j).at(k).first);
+										leftend = abs((int)align_list.at(j).at(k).first)-abs((int)alus.at(i)->start);
 										rightend =  abs((int)align_list.at(j).at(k).second) - abs((int)alus.at(i)->end);
+									
 										// if component has worse boundaries, record them
-										if (abs((int)leftend) > abs((int)lb))
-											lb = leftend;
-										if (abs((int)rightend) > abs((int)rb))
-											rb = rightend;
+										if ( worst_borders.find( rnum ) != worst_borders.end() )
+										{
+											// if component has worse boundaries for this alu, record them
+											if ( abs((int)worst_borders[rnum].first) < abs((int)leftend) )
+												worst_borders[rnum].first = leftend;
+											if ( abs((int)worst_borders[rnum].second) < abs((int)rightend) )
+												worst_borders[rnum].second = rightend;
+
+											// if component has worse boundaries for this alu, record them
+											if ( abs((int)best_borders[rnum].first) > abs((int)leftend) )
+												best_borders[rnum].first = leftend;
+											if ( abs((int)best_borders[rnum].second) > abs((int)rightend) )
+												best_borders[rnum].second = rightend;
+											
+										}
+										else
+										{
+											worst_borders[rnum] = make_pair(leftend,rightend);
+											best_borders[rnum] = make_pair(leftend,rightend);
+										}
 										
 										break;
 									}
@@ -488,14 +510,18 @@ try{
 						
 						if(aluCoverage.find(align_list.at(j).at(k).first+n)!= aluCoverage.end())
 						{
+							//FXIME: need to check if it hits all components!!
 							
-							//find which alu is hit
-							if (! benhit)
+							//take the first position that hits a alu component
+							if (! benhit )
 							{
+								//find out which alu is hit
 								for ( int i = 0; i < alus.size(); i++)
 								{
-									if( (abs((int)align_list.at(j).at(k).first+n) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first+n) <= alus.at(i)->end ))
+									if( (abs((int)align_list.at(j).at(k).first+n) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first+n) < alus.at(i)->end )
+									||  (abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) <= alus.at(i)->end ) )
 									{
+										//the repeat #
 										rnum = i+1;
 										//find overlap
 										int leftend = 0;
@@ -503,10 +529,26 @@ try{
 										leftend = abs((int)alus.at(i)->start) -abs((int)align_list.at(j).at(k).first);
 										rightend =   abs((int)alus.at(i)->end)-abs((int)align_list.at(j).at(k).second);
 										// if component has worse boundaries, record them
-										if (abs((int)leftend) > abs((int)lb))
-											lb = leftend;
-										if (abs((int)rightend) > abs((int)rb))
-											rb = rightend;
+										if ( worst_borders.find( rnum ) != worst_borders.end() )
+										{
+											// if component has worse boundaries for this alu, record them
+											if ( abs((int)worst_borders[rnum].first) < abs((int)leftend) )
+												worst_borders[rnum].first = leftend;
+											if ( abs((int)worst_borders[rnum].second) < abs((int)rightend) )
+												worst_borders[rnum].second = rightend;
+
+											// if component has better boundaries for this alu, record them
+											if ( abs((int)best_borders[rnum].first) > abs((int)leftend) )
+												best_borders[rnum].first = leftend;
+											if ( abs((int)best_borders[rnum].second) > abs((int)rightend) )
+												best_borders[rnum].second = rightend;
+											
+										}
+										else
+										{
+											worst_borders[rnum] = make_pair(leftend,rightend);
+											best_borders[rnum] = make_pair(leftend,rightend);
+										}
 										
 										break;
 									}
@@ -525,20 +567,7 @@ try{
 						mergedCoverage[align_list.at(j).at(k).first+n] = true;
 					}
 				}
-				//cout << "pattern #" << rnum << " worst calculated boundaries-> left:" << lb << " right:" << rb << endl;
-				if ( borders.find( rnum ) != borders.end() )
-				{
-					// if lma has better boundaries, record them
-					if ( abs((int)borders[rnum].first) > abs((int)lb) )
-						borders[rnum].first = lb;
-					if ( abs((int)borders[rnum].second) > abs((int)rb) )
-						borders[rnum].second = rb;
-					
-				}
-				else
-				{
-					borders[rnum] = make_pair(lb,rb);
-				}
+
 				if(hit)
 				{
 					matchhits+=1;
@@ -562,7 +591,13 @@ try{
 	//with overlaps removed
 	//remember the alignments to ignore!
 	map<uint,pair<int,int>>::iterator iter;
-	for( iter = borders.begin(); iter != borders.end(); iter++ ) 
+	for( iter = worst_borders.begin(); iter != worst_borders.end(); iter++ ) 
+	{
+		if (iter->first == 0 )
+			continue;
+		cout << "component #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
+	}
+	for( iter = best_borders.begin(); iter != best_borders.end(); iter++ ) 
 	{
 		if (iter->first == 0 )
 			continue;
