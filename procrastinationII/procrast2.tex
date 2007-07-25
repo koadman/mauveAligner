@@ -8,7 +8,7 @@
 \usepackage{url}
 \begin{document}
 
-\title{Improving local multiple alignment of interspersed DNA repeats with gapped extension.}
+\title{Improving local multiple alignment of interspersed DNA repeats with gapped extension}
 
 \author{Todd J. Treangen$^\dag*$}
 
@@ -39,10 +39,10 @@ Barcelona, Spain\\
 
 \abstracts{
 The identification of homologous DNA is a fundamental building block of comparative genomic and molecular evolution studies.  To date, methods to identify and align all homologous nucleotides in one or more genomes have suffered poor scalability and limited accuracy.  We propose a novel method that couples a gapped extension heuristic with a previously described efficient filtration method for local multiple alignment.  During gapped extension, we use the MUSCLE implementation of progressive multiple alignment with iterative refinement.  The resulting gapped extensions are global multiple alignments, and often contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of unrelated sequence.  We evaluate the performance of our method and previous approaches on a hybrid dataset of real genomic DNA with simulated interspersed repeats.  Our method compares favorably to existing methods in terms of sensitivity, positive predictive value, and localizing boundaries of homology.
-The described methods have been implemented in the free, open-source \texttt{procrastAligner} software, available from \url{http://somewhere.net}
+The described methods have been implemented in the free, open-source \texttt{procrastAligner} software, available from \url{http://somewhere.net}\textbf{FIXME: find a permanent home for procrastAligner}
 }
 
-\keywords{sequence alignment}
+\keywords{sequence alignment, local multiple alignment, interspersed repeats, gapped extension}
 
 \section{Introduction}
 The importance of accurate homology identification to comparative genomics should not be underestimated~\cite{Kumar07}. To date, pairwise local sequence alignment methods~\cite{ref-blastz,ref-ssearch} have been the prevailing technique to identify homologous nucleotides.  When more than two copies of a homologous sequence element are present in the data, pairwise homology detection methods generate a listing of all possible pairs of homologous elements in the form of pairwise local alignments.  Apart from the obvious inefficiency of considering all pairwise homology relationships, a collection of pairwise alignments is not ideal because they are rarely amenable to comparative genomic and phylogenetic analysis without further processing into a multiple alignment.
@@ -169,8 +169,10 @@ Using the empirically derived transition and emission probabilities, we apply th
 \section{Results}
 \begin{figure}[t]
 \centering \epsfig{file=./figures/repeat_accuracy.eps,width=5.2in}
-\caption{Accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} in recovering simulated repeat families implanted into the \textit{Mycoplasma genitalium} genome.  Sum-of-pairs nucleotide sensitivity and positive predictive value (PPV) were measured for 110 combinations of branch length and multiplicity.  Five replicates of each simulation were performed and
-average accuracy values are shown here.  White points indicate perfect alignment of the simulated repeat family.  Black points indicate the program completely failed to recover any portion of the repeat family.  Mutations per site can be calculated by multiplying branch length by the fixed substitution rate of 0.085, and indel rate of 0.015.  From the figure, it is apparent that \texttt{procrastAligner} performs well at higher mutation rates and multiplicities than \texttt{eulerAlign}.}
+\caption{Accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} in recovering simulated repeat families implanted into the \textit{Mycoplasma genitalium} genome.  Sum-of-pairs nucleotide sensitivity and positive predictive value (PPV) were measured for 110 combinations of branch length and multiplicity.  Two replicates of each simulation were performed and
+average accuracy values are shown here.  White points indicate perfect alignment of the simulated repeat family.  Black points indicate the program completely failed to recover any portion of the repeat family.  Mutations per site can be calculated by multiplying branch length by the fixed substitution rate of 0.085, and indel rate of 0.015.  
+For example, at branch length 20 there are 1.7 substitutions per site and 0.3 indels per site.
+From the figure, it is apparent that \texttt{procrastAligner} performs well at higher mutation rates and multiplicities than \texttt{eulerAlign}.}
 \label{fig-results}\vspace{-0.2cm}
 \end{figure}
 
@@ -204,13 +206,14 @@ programming.  To our knowledge, \texttt{procrastAligner} and \texttt{eulerAlign}
 We evaluate accuracy of each method when aligning simulated repeat families that have been inserted into the complete genome of \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized as a complex and repeat rich genome, presenting a biologically relevant and challenging example to evaluate alignment methods~\cite{ref-mycoplasma}. We simulated repeat families with 11 multiplicities ranging between 2 and 200 ($x$-axis in Figure~\ref{fig-results}).  Each repeat copy has an average length based on its family's multiplicity ($length=\frac{5000}{multiplicity}$).  Thus, high copy-number repeats are short.  Evolution of repeat families was simulated on a star tree topology.  The branch lengths were varied between 0 and 20 ($y$-axis in Figure~\ref{fig-results}), with the nucleotide substitution rate fixed at 0.085 per unit time, and the indel rate fixed at 0.015 per unit time.  Rate heterogeneity among sites was modeled with a gamma distribution ($\theta = 1.0, k = \frac{l}{2}$).  Indel size was Poisson distributed with intensity 3, and insertions and deletions were taken to be equally likely.  Mutation event times were simulated according to a marked Poisson process.  Each family's ancestral sequence was randomly generated using nucleotide frequencies equal to the composition of \emph{Mycoplasma genitalium} ($A=0.34,T=0.34,G=0.16,C=0.16$). Insertion sites for repeat copies were chosen uniformly randomly in the \textit{M. genitalium} genome, allowing tandem repeats but prohibiting mosaic repeats.
 
 \subsection{Alignment accuracy metrics}
-We next used each program (parameter configuration listed below) to find local multiple alignments in each of the 110 modified \emph{M. genitalium} genomes and recorded their respective alignment accuracy as a function of multiplicity and sequence divergence. We calculated sum-of-pairs nucleotide sensitivity as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}$, where $\mathrm{TP}$ is the number of aligned nucleotide pairs in the program's output which are also aligned in the simulated repeat family.  $\mathrm{FN}$ is the number of aligned nucleotide pairs in the simulated repeat family which are missing from the program's output.  This sensitivity measure is identical to the sum-of-pairs accuracy defined by BaliBASE\cite{ref-balibase}.  We calculate the positive predictive value (PPV) as $\frac{TP}{TP + FP}$, where TP is defined as above, and FP is the total number of nucleotide pairs from the program's output where one of the nucleotides are part of the simulated repeat family and the other nucleotide was incorrectly aligned.
+We used each program to find local multiple alignments in each of the 110 modified \emph{M. genitalium} genomes and recorded alignment accuracy as follows. We calculated sum-of-pairs nucleotide sensitivity as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}$, where $\mathrm{TP}$ is the number of aligned nucleotide pairs in the program's output which are also aligned in the simulated repeat family.  $\mathrm{FN}$ is the number of aligned nucleotide pairs in the simulated repeat family which are missing from the program's output.  This sensitivity measure is identical to the sum-of-pairs accuracy defined by BaliBASE\cite{ref-balibase}.  We calculate the positive predictive value (PPV) as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}$, where $\mathrm{TP}$ is defined as above, and $\mathrm{FP}$ is the total number of nucleotide pairs from the program's output where one of the nucleotides are part of the simulated repeat family and the other nucleotide was incorrectly aligned.
 
 \subsection{Accuracy when aligning interspersed repeats}
 We applied \texttt{procrastAligner} and \texttt{eulerAlign} to the hybrid simulated/real dataset.  Parameters used for each program were configured to optimize each program's chance of accurately aligning each pattern as follows:  \begin{center}\texttt{procrastAlign}:\texttt{ --z=13 --w=50 } \\ \texttt{eulerAlign}:\texttt{ -k 15 -l -i 1000 -v}\end{center}
-Simulations for each of the 110 combinations of branch length and multiplicity were replicated five times and alignments generated in parallel using a 128 node compute cluster.  Results of the experiments are reported in Figure~\ref{fig-results}.
+Simulations for each of the 110 combinations of branch length and multiplicity were replicated two times and alignments generated in parallel using a 128 node compute cluster.  Results of the experiments are reported in Figure~\ref{fig-results}.
 
-\textbf{fixme: summarize the major points of the results here or in discussion}
+The figure illustrates the sensitivity and PPV of \texttt{procrastAligner} and \texttt{eulerAlign} on datasets ranging from 0 substitutions and indels per site to 1.7 substitutions and 0.3 indels per site.  As mutation rates and repeat multiplicity increase alignment accuracy decreases for both methods, with accuracy of \texttt{eulerAlign} decreasing faster than \texttt{procrastAligner}.  We conjecture that \texttt{procrastAligner}'s improved accuracy largely derives from its use of spaced seed patterns\cite{ref-procrast} and tolerance of gaps.  The Eulerian path method requires exactly matching $k$-mers to seed gapped alignment extensions.
+
 
 \begin{figure}[t]
 \centering \epsfig{file=./figures/alu_align.eps,width=5.0in}
@@ -220,8 +223,11 @@ Simulations for each of the 110 combinations of branch length and multiplicity w
 
 \section{Discussion}
 
-We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended our previous results by converting chains of ungapped multi-matches into gapped local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test.  Experimental results demonstrate that the described method offers a level of alignment accuracy far exceeding that of previous methods.
-\textbf{it would be nice to say something about the need for better scoring metrics and statistics here}
+
+We have presented a sensitive and efficient heuristic for local multiple alignment. We have extended our previous results by converting chains of ungapped multi-matches into gapped local multiple alignments. Our method is based around an efficient heuristic for local multiple alignment, featuring a novel method for gapped extensions joining global multiple alignment with a hidden Markov model based homology test.  Experimental results demonstrate that the described method offers a level of alignment accuracy far exceeding that of previous methods.  
+
+Further improvement of the alignment methodology will likely require increasingly sensitive methods for seed matching in conjunction with a statistical methodology to assign significance to local multiple alignments.  One possible avenue to increase seed matching sensitivity would be merging overlapping seed matches into a shorter, higher multiplicity match.  A second avenue would be use of palindromic seed families instead of using individual seed patterns.  
+With increased seed matching sensitivity comes additional false positive seed hits, so a statistical test for rejecting insignificant local alignments will likely be required.  Exact computation of $p$-values for local multiple alignments remains a daunting challenge, although fast approximation methods for pairwise alignments have shown promise\cite{repseek} and might be extended to multiple alignments.
 
 \subsection{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner}, available for Linux, Windows, and Mac OS X. Our open-source implementation is available as C++ source code licensed under the GPL.
