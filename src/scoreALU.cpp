@@ -337,8 +337,8 @@ try{
 
 	map<int64,bool> specificity;
 
-	map<uint,pair<int,int>> best_borders;
-	map<uint,pair<int,int>> worst_borders;
+	map< uint,pair<int,int> > best_borders;
+	map< uint,pair<int,int> > worst_borders;
 	int64 matchhits = 0;
     int64 matchhitmult = 0;
 	for ( int j = 0; j < align_list.size(); j++)
@@ -638,7 +638,7 @@ try{
 	//this is the length of the repeats found by procrastAligner, 
 	//with overlaps removed
 	//remember the alignments to ignore!
-	map<uint,pair<int,int>>::iterator iter;
+	map< uint,pair<int,int> >::iterator iter;
 	for( iter = worst_borders.begin(); iter != worst_borders.end(); iter++ ) 
 	{
 		if (iter->first == 0 )
