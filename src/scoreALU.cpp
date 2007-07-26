@@ -554,16 +554,32 @@ try{
 								if ( worst_borders.find( rnum ) != worst_borders.end() )
 								{
 									// if component has worse boundaries for this alu, record them
+									/*
 									if ( abs((int)worst_borders[rnum].first) < abs((int)leftend) )
 										worst_borders[rnum].first = leftend;
 									if ( abs((int)worst_borders[rnum].second) < abs((int)rightend) )
 										worst_borders[rnum].second = rightend;
-
-									// if component has worse boundaries for this alu, record them
 									if ( abs((int)best_borders[rnum].first) > abs((int)leftend) )
 										best_borders[rnum].first = leftend;
 									if ( abs((int)best_borders[rnum].second) > abs((int)rightend) )
 										best_borders[rnum].second = rightend;
+									*/
+
+									// if component has worse boundaries for this alu, record them
+									uint b1 =  (abs((int)best_borders[rnum].first)+abs((int)best_borders[rnum].second))/2;
+									uint b2 =  (abs((int)rightend)+abs((int)leftend))/2;
+
+									if ( b1 > b2 )
+									{
+										best_borders[rnum].first = leftend;
+										best_borders[rnum].second = rightend;
+									}
+									else if ( b2 > b1 )
+									{
+										worst_borders[rnum].first = leftend;
+										worst_borders[rnum].second = rightend;
+									}
+									
 									
 								}
 								else
@@ -602,6 +618,7 @@ try{
 								if ( worst_borders.find( rnum ) != worst_borders.end() )
 								{
 									// if component has worse boundaries for this alu, record them
+									/*
 									if ( abs((int)worst_borders[rnum].first) < abs((int)leftend) )
 										worst_borders[rnum].first = leftend;
 									if ( abs((int)worst_borders[rnum].second) < abs((int)rightend) )
@@ -612,6 +629,20 @@ try{
 										best_borders[rnum].first = leftend;
 									if ( abs((int)best_borders[rnum].second) > abs((int)rightend) )
 										best_borders[rnum].second = rightend;
+									*/
+									uint b1 =  (abs((int)best_borders[rnum].first)+abs((int)best_borders[rnum].second))/2;
+									uint b2 =  (abs((int)rightend)+abs((int)leftend))/2;
+
+									if ( b1 > b2 )
+									{
+										best_borders[rnum].first = leftend;
+										best_borders[rnum].second = rightend;
+									}
+									else if ( b2 > b1 )
+									{
+										worst_borders[rnum].first = leftend;
+										worst_borders[rnum].second = rightend;
+									}
 									
 								}
 								else
@@ -638,19 +669,37 @@ try{
 	//this is the length of the repeats found by procrastAligner, 
 	//with overlaps removed
 	//remember the alignments to ignore!
+	ofstream boundary_file;
+	alignment_fname.append(".boundary");
+	boundary_file.open(alignment_fname.c_str());
 	map< uint,pair<int,int> >::iterator iter;
+	uint avg_worst_left = 0;
+	uint avg_worst_right = 0;
+	uint avg_best_left = 0;
+	uint avg_best_right = 0;
 	for( iter = worst_borders.begin(); iter != worst_borders.end(); iter++ ) 
 	{
-		if (iter->first == 0 )
-			continue;
+		avg_worst_left += abs(iter->second.first);
+		avg_worst_right += abs(iter->second.second);
 		cout << "worst: component #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
 	}
 	for( iter = best_borders.begin(); iter != best_borders.end(); iter++ ) 
 	{
-		if (iter->first == 0 )
-			continue;
+		avg_best_left += abs( iter->second.first);
+		avg_best_right += abs(iter->second.second);
 		cout << "best: component #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
 	}
+
+	avg_worst_left /= worst_borders.size();
+	avg_worst_right /= worst_borders.size();
+	avg_best_left /= best_borders.size();
+	avg_best_right /= best_borders.size();
+	boundary_file << "left best: \t" << avg_best_left << endl;
+	boundary_file << "right best: \t" << avg_best_right << endl;
+	boundary_file << "left worst: \t" << avg_worst_left << endl;
+	boundary_file << "right worst: \t" << avg_worst_right << endl;
+	boundary_file << "#" << endl;
+	boundary_file.close();
 
 	lt = mergedCoverage.size();
 	//lt2 = coverage.size();
