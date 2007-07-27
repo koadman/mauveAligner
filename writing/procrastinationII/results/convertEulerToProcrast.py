@@ -6,14 +6,16 @@ import math
 
 
 if __name__ == "__main__":
+
      random.seed()
+     
      infileName = ""
      outfileName = ""
      rsize = 0
      rnumber = 0
      shuffleperseq = 1
      if len(sys.argv) < 2:
-         print "\nUsage: <euler output file> <converted procrastAlign file>"
+         print "\nUsage: <euler output file> <procrast output file>"
          sys.exit(1)
      else:
          infileName = sys.argv[1]
@@ -33,6 +35,9 @@ if __name__ == "__main__":
          if line.find("#") != -1:
              lma_count +=1
              if key != "":
+                 #add the last row
+                 if len(aln) > 0:
+                     alns.append(aln)
                  alignments[key] = alns[::]
              alns = []
              aln = ""
@@ -41,8 +46,10 @@ if __name__ == "__main__":
                  key = "#procrastAlignment 0%s"%lma_count
              else:
                  key = "#procrastAlignment %s"%lma_count
+             
              lmas[key] = []
              alignments[key] = []
+             
              
          elif line.find(">") != -1:
              if len(aln) > 0:
@@ -52,20 +59,31 @@ if __name__ == "__main__":
              ep = line.find("\n")
              spep = line[sp+1:ep]
              guion = spep.find("-")
+             
              spos = int(spep[:guion])
              epos = int(spep[guion+1:])
+             
              lmas[key].append([spos, epos])
              #key = "rubbish"
          else:
+             
              inaln = 1
              ep = line.find("\n")
              aln += line
              aln = aln.replace('\n','')
              aln = aln.replace(' ','')
-    
+             print key, aln
+             #if len(aln) > 0:
+             #    alignments[key].append(aln)
+             #continue
      
+     
+  
+     #aln = ""
      #pick up leftovers
      if len(alns) > 0 and key != "":
+         if len(aln) > 0:
+             alns.append(aln)
          lma_count +=1
          alignments[key] = alns[::]
      
@@ -74,6 +92,8 @@ if __name__ == "__main__":
      xmfafile = open(outfileName+".xmfa",'w')
      xmfafile.write("#FormatVersion Mauve1\n#Sequence1File    modified.fna\n#Sequence1Entry    1\n#Sequence1Format    FastA\n")
      for key in sorted_keys:
+         if len(alignments[key]) == 0:
+             continue
          startpos = lmas[key]
          ccnt = 0
          width = 80
@@ -82,11 +102,15 @@ if __name__ == "__main__":
              #print spos[0]
              pos = 0
              xmfafile.write("> %d:%d-%d + modified_%d.fna\n"%(ccnt+1,int(spos[0]),int(spos[1]),ccnt+1))
-             while pos+width < len(alignments[key][ccnt-1]):
-                 xmfafile.write(alignments[key][ccnt-1][pos:pos+width])
+             #print ccnt, len(alignment)
+             #print ccnt, len(alignments[key])
+             #print alignments[key][ccnt-1]
+             print ccnt, len(alignments[key]), len(startpos)
+             while pos+width < len(alignments[key][ccnt]):
+                 xmfafile.write(alignments[key][ccnt][pos:pos+width])
                  xmfafile.write("\n")
                  pos+= width
-             xmfafile.write(alignments[key][ccnt-1][pos:])
+             xmfafile.write(alignments[key][ccnt][pos:])
              xmfafile.write("\n")
              ccnt +=1
          xmfafile.write("=\n")
@@ -111,6 +135,7 @@ if __name__ == "__main__":
              procrastout.write(`value`)
              procrastout.write("\t")
          procrastout.write("\n")
+         
          
      print "finished converting %d lmas from euler to procrast format"%len(lmas.keys())
      procrastout.close()
