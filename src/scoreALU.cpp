@@ -440,25 +440,20 @@ try{
 						// first,second = start,end pos
 						if(aluCoverage.find(align_list.at(j).at(k).first-n)!= aluCoverage.end())
 						{
-							
 							//find which alu is hit
 							for ( int i = 0; i < alus.size(); i++)
-							{
-								
+							{	
+								//is this ok for reverse strand?
 								if( (abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->end ) 
 								||  (abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) < alus.at(i)->end ) )
 								{
-	
 									//the repeat #
-									
 									if (rnum != i+1 && rnum != 0)
 										inall = false;
 									rnum = i+1;				
 									break;
 								}
-								
 							}
-							
 							//current component of alignment pertains to alu
 							//spec.at(j).push_back(k)
 							lpn[align_list.at(j).at(k).first-n] = true;
@@ -474,13 +469,12 @@ try{
 					}
 					else
 					{
-						
 						if(aluCoverage.find(align_list.at(j).at(k).first+n)!= aluCoverage.end())
 						{
-							
 							//find out which alu is hit
 							for ( int i = 0; i < alus.size(); i++)
 							{
+								
 								if( (abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->end )
 								||  (abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) <= alus.at(i)->end ) )
 								{
@@ -491,9 +485,7 @@ try{
 									rnum = i+1;
 									break;
 								}
-							}
-					
-							
+							}	
 							//current component of alignment pertains to alu
 							lpn[align_list.at(j).at(k).first+n] = true;
 							hit = true;
@@ -516,16 +508,12 @@ try{
 					
 				}
 			}
-			
-			//need to first check if it hits all components!!
-			if (inall)
+			//punt: DONT need to first check if it hits all components!!
+			if (inall || 1)
 			{
 				for(int k = 0; k < align_list.at(j).size();k++)
 				{			
 					gnSeqI len = absolut((int64)align_list.at(j).at(k).second)-absolut((int64)align_list.at(j).at(k).first);
-					bool benhit = false;
-					int lb = 0;
-					int rb = 0;
 					uint rnum = 0;
 					
 					if(align_list.at(j).at(k).first<0)
@@ -537,11 +525,10 @@ try{
 						//find which alu is hit
 						for ( int i = 0; i < alus.size(); i++)
 						{
-							
+							//is this ok for reverse strand?
 							if( (abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->end ) 
 							||  (abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) <= alus.at(i)->end ) )
 							{
-
 								//the repeat #
 								rnum = i+1;
 								//find overlap
@@ -549,8 +536,14 @@ try{
 								int rightend = 0;
 								leftend = abs((int)alus.at(i)->start)-abs((int)align_list.at(j).at(k).first);
 								rightend =   abs((int)alus.at(i)->end)-abs((int)align_list.at(j).at(k).second);
-							
-								// if component has worse boundaries, record them
+								if (debug_pos && (abs(leftend)>500 || abs(rightend)>500))
+								{
+									cout << "alu\talignment" << endl;
+									cout << alus.at(i)->start << "\t" << align_list.at(j).at(k).first << endl;
+									cout << alus.at(i)->end << "\t" << align_list.at(j).at(k).second << endl;
+
+								}
+								
 								if ( worst_borders.find( rnum ) != worst_borders.end() )
 								{
 									// if component has worse boundaries for this alu, record them
@@ -562,9 +555,6 @@ try{
 										best_borders[rnum].first = leftend;
 									if ( abs((int)best_borders[rnum].second) > abs((int)rightend) )
 										best_borders[rnum].second = rightend;
-
-									
-										
 								}
 								else
 								{
@@ -575,15 +565,17 @@ try{
 								break;
 							}
 						} 
-					
 					}
 					else
 					{
-						
 						//find out which alu is hit
 						for ( int i = 0; i < alus.size(); i++)
 						{
-							if( (abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->end )
+							//if( (abs((int)align_list.at(j).at(k).first) <= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) >= alus.at(i)->end ) )
+							//if( (abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) <= alus.at(i)->end ) )
+							//if( ((abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->end ) && (abs((int)align_list.at(j).at(k).second) > alus.at(i)->end) )
+							//||  ((abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) <= alus.at(i)->end ) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->start) ) )
+							if( (abs((int)align_list.at(j).at(k).first) >= alus.at(i)->start) && (abs((int)align_list.at(j).at(k).first) < alus.at(i)->end ) 
 							||  (abs((int)align_list.at(j).at(k).second) > alus.at(i)->start) && (abs((int)align_list.at(j).at(k).second) <= alus.at(i)->end ) )
 							{
 								//the repeat #
@@ -591,14 +583,18 @@ try{
 								//find overlap
 								int leftend = 0;
 								int rightend = 0;
-								if (debug_pos)
-								{
-									cout << alus.at(i)->start << " " << align_list.at(j).at(k).first << endl;
-									cout << alus.at(i)->end << " " << align_list.at(j).at(k).second << endl;
-								}
+								
 								leftend = abs((int)alus.at(i)->start) -abs((int)align_list.at(j).at(k).first);
 								rightend =   abs((int)alus.at(i)->end)-abs((int)align_list.at(j).at(k).second);
-								// if component has worse boundaries, record them
+
+								if (debug_pos && (abs(leftend)>500 || abs(rightend)>500))
+								{
+									cout << "alu\talignment" << endl;
+									cout << alus.at(i)->start << "\t" << align_list.at(j).at(k).first << endl;
+									cout << alus.at(i)->end << "\t" << align_list.at(j).at(k).second << endl;
+
+								}
+								
 								if ( worst_borders.find( rnum ) != worst_borders.end() )
 								{
 									// if component has worse boundaries for this alu, record them		
@@ -633,8 +629,6 @@ try{
 		alufound = false;
 	}
 	gnSequence empty_seq;
-
-	
 	//this is the length of the repeats found by procrastAligner, 
 	//with overlaps removed
 	//remember the alignments to ignore!
