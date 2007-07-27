@@ -644,13 +644,13 @@ try{
 	{
 		avg_worst_left += abs(iter->second.first);
 		avg_worst_right += abs(iter->second.second);
-		cout << "worst: component #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
+		boundary_file << "worst boundaries for repeat copy #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
 	}
 	for( iter = best_borders.begin(); iter != best_borders.end(); iter++ ) 
 	{
 		avg_best_left += abs( iter->second.first);
 		avg_best_right += abs(iter->second.second);
-		cout << "best: component #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
+		boundary_file << "best boundaries for repeat copy #" << iter->first << "\t left: " << iter->second.first << "\t right: " << iter->second.second << endl;
 	}
 
 	if (worst_borders.size() > 0 )
