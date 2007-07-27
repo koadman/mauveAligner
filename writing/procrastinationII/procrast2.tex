@@ -12,25 +12,25 @@
 
 \author{Todd J. Treangen$^\dag*$}
 
-\address{Dept. of Computer Science, Technical Univ. of Catalonia\\
+\address{Dept. of Computer Science, Technical University of Catalonia\\
 Barcelona, Spain\\
 $^*$E-mail: treangen@lsi.upc.edu}
 
 \author{Aaron E. Darling$^\dag*$}
 
-\address{Institute for Molecular Bioscience, Univ. of Queensland\\
+\address{Institute for Molecular Bioscience, University of Queensland\\
 Brisbane, Australia\\
 $^*$E-mail: a.darling@imb.uq.edu.au}
 
 
 \author{ Mark A. Ragan}
 
-\address{Institute for Molecular Bioscience, Univ. of Queensland\\
+\address{Institute for Molecular Bioscience, University of Queensland\\
 Brisbane, Australia}
 
 \author{ Xavier Messeguer}
 
-\address{Dept. of Computer Science, Technical Univ. of Catalonia\\
+\address{Dept. of Computer Science, Technical University of Catalonia\\
 Barcelona, Spain}
 
 \maketitle
@@ -88,7 +88,7 @@ divergent sequences\cite{ref-mlagan,ref-aubergene}.  As the number of
 homologous sequences grows, we might expect that the number of
 inconsistent relationships in a collection of pairwise alignments
 would grow quadratically, whereas a direct multiple alignment method
-would provide an increasingly accurate alignment.  Highly repetitive
+would provide an increasingly accurate alignment.  Moreover, highly repetitive
 regions in the input sequences can cause serious efficiency problems
 for pairwise methods, as they create $O(r^{2})$ pairwise alignments in
 the presence of a repeat with $r$ copies.  Mammalian Alu repeats and
@@ -208,7 +208,7 @@ include the entire region covered by the linked superset match and
 thus eliminate the need to re-examine sequence already covered by a
 previously chained match.
 
-\subsection{Gapped extension of high scoring chains}
+\subsection{Gapped extension of high-scoring chains}
 
 After chaining a multi-match $M_i$, we perform gapped alignment on all
 collinear regions located between two adjacent components to generate
@@ -222,7 +222,7 @@ gapped extension in each direction, we use MUSCLE to align a fixed
 number of nucleotides ($l$) to the left and right of the current local
 multiple alignment.  Small values of $l$ restrict the alignment search
 space, while larger values require more computation but are
-potentially more sensitive.  We have experimentally determined that
+potentially more sensitive.  We have empirically determined that
 setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a
 good tradeoff between speed and sensitivity.  The resulting extension
 window is small for high multiplicity chains ($|M_{i}|\geq 30$),
@@ -238,7 +238,7 @@ keeping the alignment search space tractable.
 sequence. The HMM has states which model alignment columns containing
 homologous and unrelated sequence.  Emissions correspond to alignment
 columns, for example \texttt{AA} indicates A aligned to A.  gO
-indicates gap open and gE gap extend. Alignment columns are treated as
+indicates gap-open and gE gap extend. Alignment columns are treated as
 strand-symmetric, so that AC also indicates CA and the reverse
 complements TG and GT.}
 \label{fig-hmm}\vspace{-0.2cm}
@@ -254,21 +254,21 @@ observable states are the pairwise alignment columns, which are all
 possible pairs in $\texttt{{\{A,G,C,T,-\}}}$ with strand and species
 symmetry, i.e. \texttt{AG=GA=TC=CT}.  The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD
-substitution matrix presented by Chiaramonte \textit{et al}
-2002\cite{hoxd}. We solved for the emission frequencies in the
+substitution matrix presented by Chiaramonte \textit{et al}\cite{hoxd}. 
+We solved for the emission frequencies in the
 homologous and unrelated state using the same equation used in to
 calculate the values of the HOXD substitution matrix on 47.5\%G+C
 content sequence\cite{hoxd}:
 \begin{equation}
 s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 \end{equation}
-where $p(x,y)$ is the fraction of the observed aligned pairs of
+{w}here $p(x,y)$ is the fraction of the observed aligned pairs of
 nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
 $q_{2}(x)$ denote the background frequencies of $x$ and $y$,
 respectively. Chiaramonte \textit{et al.} scaled the resulting
 $s(x,y)$ values by an unreported value $\psi$ so the largest was 100,
 with the rest rounded to the nearest integer.  Given that the training
-data has $47.5\%G+C$ content and considering strand and species
+data has $47.5\%$~$G+C$ content and considering strand and species
 symmetry, we can compute emission frequencies for the Unrelated state
 of our HMM:
 \begin{center}$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})
@@ -287,7 +287,7 @@ the Homologous state as, for example:
 \begin{equation}
 \log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
 \end{equation}
-where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follow:
+where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follows:
 \begin{center}$\log_{2}\bigg(\frac{H_{AC}}{U_{AC}}\bigg) = \frac{-114}{\psi},$
 $\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = \frac{-31}{\psi}$ \\
 $\log_{2}\bigg(\frac{H_{AT}}{U_{AC}}\bigg) = \frac{-123}{\psi},$
@@ -308,15 +308,15 @@ $\psi$. For the HOXD matrix the scaling factor $\psi=32.5421$. Given
 $\psi$, we can calculate values for all $H_{xy}$ in the HMM.
 
 Emission frequencies for nucleotide substitutions can be derived from
-any strand/species symmetric nucleotide substitution matrix, but gap
-open and extend frequencies can not.  To empirically estimate values
-for the unrelated state we aligned a 10kb, 48\% GC content region
+any strand/species symmetric nucleotide substitution matrix, but gap-open
+and extend frequencies can not.  To empirically estimate values
+for the unrelated state we aligned a 10-kb, 48\%~GC content region
 taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates
 37,300-38,300) with an unrelated sequence.  We generated an unrelated
 sequence with identical nucleotide composition by reversing the
 extracted sequence without complementation.  We then forced an
-alignment with MUSCLE and counted the number of gap open and gap
-extend columns in the alignment of unrelated sequences.  Gap open and
+alignment with MUSCLE and counted the number of gap-open and gap-extend
+columns in the alignment of unrelated sequences.  Gap-open and
 extend frequencies for the homologous state were estimated by
 constructing an alignment of 10kb of orthologous sequence shared among
 a pair of divergent organisms.  We aligned the 48\%GC segment between
@@ -358,7 +358,7 @@ recover any portion of the repeat family.  Mutations per site can be
 calculated by multiplying branch length by the fixed substitution rate
 of 0.085, and indel rate of 0.015.  For example, at branch length 20
 there are 1.7 substitutions per site and 0.3 indels per site.  From
-the figure, it is apparent that \texttt{procrastAligner} performs well
+the figure, it is apparent that \texttt{procrastAligner} performs better
 at higher mutation rates and multiplicities than \texttt{eulerAlign}.}
 \label{fig-results}\vspace{-0.2cm}
 \end{figure}
@@ -381,7 +381,7 @@ construct local multiple alignments directly from genomic DNA.
 We evaluate accuracy of each method when aligning simulated repeat
 families that have been inserted into the complete genome of
 \emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized
-as a complex and repeat rich genome, presenting a biologically
+as a complex and repeat-rich genome, presenting a biologically
 relevant and challenging example to evaluate alignment
 methods\cite{ref-mycoplasma}. We simulated repeat families with 11
 multiplicities ranging between 2 and 200 ($x$-axis in
@@ -430,7 +430,7 @@ follows:\\\texttt{procrastAlign}:\texttt{--z=13--w=50},
 \ \ \ \ \ \ \texttt{eulerAlign}:\texttt{-k 15 -l -i 1000 -v} \\
 Simulations for each of the 110 combinations of branch length and
 multiplicity were replicated two times and alignments generated in
-parallel using a 128 node compute cluster.  Results of the experiments
+parallel using a 156 node compute cluster.  Results of the experiments
 are reported in Figure~\ref{fig-results}. The figure illustrates the
 sensitivity and PPV of \texttt{procrastAligner} and
 \texttt{eulerAlign} on datasets ranging from 0 substitutions and
