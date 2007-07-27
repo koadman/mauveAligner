@@ -87,10 +87,19 @@ if __name__ == "__main__":
                  #print spos
                  pos = 0
                  for tpos in startpos[ccnt:]:
-                     for site in xrange(len(alignment[ccnt-1])):
+                     #strip leading gaps
+                     tmp1 = alignment[ccnt-1].lstrip('-')
+                     lgaps = len(alignment[ccnt-1])-len(tmp1)
+                     tmp2 = alignment[ccnt].lstrip('-')
+                     lgaps2 = len(alignment[ccnt])-len(tmp2)
+                     len_aln = min(len(tmp1),len(tmp2))
+                     
+                     for site in xrange(len_aln):   
                          #print alignment[ccnt-1][site],alignment[ccnt][site]
-                         if alignment[ccnt-1][site] != "-" and alignment[ccnt][site] != "-":
+                         if alignment[ccnt-1][lgaps+site] != "-" and alignment[ccnt][lgaps2+site] != "-":
                              ttup = [spos+site,tpos+site]
+                             
+                             #order doesn't matter, just see if its aligned
                              ckey = "%d:%d"%(spos+site,tpos+site)
                              calc_dict[ckey] = 1
                              ckey = "%d:%d"%(tpos+site,spos+site)
@@ -103,22 +112,57 @@ if __name__ == "__main__":
      
      truepos = 0
      falseneg = 0
+     falsepos = 0
      correct_keys = correct_tuples.keys()
      total_correct = len(correct_keys)
      #total_calc = len(calc_tuples)
      calc_keys = calc_dict.keys()
      total_calc = len(calc_keys)
+     pos_dict = {}
+     for key in calc_dict.keys():
+         first = key.split(':')[0]
+         second = key.split(':')[1]
+         pos_dict[first] = 1
+         pos_dict[second] = 1
+     i = 0
      
+     boundary_dict = {}
+     
+     #scan through correct tuples
      for key in correct_keys:
-         #print key
+         
+         i +=1
+         #parse out tuple positions
+         first = key.split(':')[0]
+         second = key.split(':')[1]
+         #if procrast/euler output has tuple, its a truepos!
+         # e.g. correct = (1,10)
+         #   calculated = (1,10)
          if calc_dict.has_key(key):
-             truepos +=1
+             truepos +=1 
+         #if the correctly aligned tuple wasnt in the output, 
+         #and one of the positions are aligned to something else, bad news!
+         # e.g. correct = (1,10)
+         #   calculated = (1,40)
+         # thats a falsepos
+         elif pos_dict.has_key(first) or pos_dict.has_key(second):
+             #if both are in a repeat, could be due to a muscle error or related
+             if not pos_dict.has_key(first) or not pos_dict.has_key(second):        
+                 falsepos +=1
+         # else it must be something other, falseneg?
+         # this is a tuple that could be aligning something important other 
+         # than the inserted repeats
          else:
              falseneg +=1
-     
+             
      print "true positives: ", truepos
+     print "false positives: ", falsepos
+     print "false negatives: ", falseneg
      print "possible: ", total_correct
-     print "sensitivity: ", float(truepos)/float(total_correct)
-     print "specificity: ", float(truepos)/float(total_calc)
-     
-      
+     if truepos+falseneg == 0:
+         falseneg =1
+     print "sensitivity: ", float(truepos)/(float(truepos)+float(falseneg))
+     #print "specificity: ", float(truepos)/float(total_calc)
+     if truepos+falsepos == 0:
+         falsepos = 1
+     print "ppv: ", float(truepos)/(float(truepos)+float(falsepos))
