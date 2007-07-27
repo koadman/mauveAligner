@@ -54,16 +54,15 @@ of real genomic DNA with simulated interspersed repeats.  Our method
 compares favorably to existing methods in terms of sensitivity,
 positive predictive value, and localizing boundaries of homology.  The
 described methods have been implemented in the free, open-source
-\texttt{procrastAligner} software, available from
-\url{http://somewhere.net}\textbf{FIXME: find a permanent home for
-procrastAligner} }
+\texttt{procrastAligner} software, available from: \ \
+\url{http://alggen.lsi.upc.es/recerca/align/procrastination}}
 
 \keywords{sequence alignment, local multiple alignment, interspersed repeats, gapped extension}
 
 \section{Introduction}
 The importance of accurate homology identification to comparative
 genomics should not be underestimated\cite{Kumar07}. To date, pairwise
-local sequence alignment methods\cite{ref-blastz,ref-ssearch} have
+local sequence alignment methods\cite{ref-blastz,ref-ssearch,ref-pattern} have
 been the prevailing technique to identify homologous nucleotides.
 When more than two copies of a homologous sequence element are present
 in the data, pairwise homology detection methods generate a listing of
@@ -174,7 +173,7 @@ significant local multiple alignments on subsequences of
 $\mathcal{S}$. Our method first extracts candidate ungapped
 alignments, or multi-matches, among subsequences in $\mathcal{S}$,
 denoted as $\mathbf{M}$. To extract multi-matches from the input
-sequence, we utilize a palindromic spaced seed pattern, which is
+sequence, we utilize a palindromic spaced seed pattern\cite{ref-zhang}, which is
 analyzed at each position in the input sequence.  Previously we have
 demonstrated that palindromic spaced seeds offer good efficiency and
 reasonable sensitivity on a variety of input
@@ -465,7 +464,6 @@ extensions joining global multiple alignment with a hidden Markov
 model based homology test.  Experimental results demonstrate that the
 described method offers a level of alignment accuracy far exceeding
 that of previous methods.
-
 Further improvement of the alignment methodology will likely require
 increasingly sensitive methods for seed matching in conjunction with a
 statistical methodology to assign significance to local multiple
@@ -484,7 +482,8 @@ alignments\cite{ref-related1}.
 \subsection{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner},
 available for Linux, Windows, and Mac OS X. Our open-source
-implementation is available as C++ source code licensed under the GPL.
+implementation is available as C++ source code licensed under the GPL , and can be downloaded from: \\
+\url{http://alggen.lsi.upc.es/recerca/align/procrastination}.
 
 \section{ Acknowledgments }
 The authors would like to thank Yu Zhang for providing the
