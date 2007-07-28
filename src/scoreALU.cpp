@@ -313,7 +313,7 @@ try{
 	}//end of read procrastAligner output hack
 	//alignment.ReadStandardAlignment( align_in );
 	align_in.close();
-	
+	cout << "alu data processed!" << endl;
 	int aluhits = 0;
 	int matches = 0;
 	//a first attempt at generating the sensitivity & specificity of our method
@@ -341,6 +341,7 @@ try{
 	map< uint,pair<int,int> > worst_borders;
 	int64 matchhits = 0;
     int64 matchhitmult = 0;
+	cout << "checking which alus are aligned" << endl;
 	for ( int j = 0; j < align_list.size(); j++)
 	{
 		//if alufound in any component of curr alignment, consider 'aligned'
@@ -407,7 +408,7 @@ try{
 		if(!alufound)
 		{
 			ignoreAlignment[j] = true;
-			//cout << "ignoring alignment " << j << endl;
+			cout << "ignoring alignment " << j << endl;
 			
 			//calculate regions only appearing in procrastAligner alignments
 			for(int k = 0; k < align_list.at(j).size();k++)
@@ -424,6 +425,7 @@ try{
 		}
 		else
 		{
+			cout << "ALU was aligned!" << endl;
 			bool hit = false;
 			bool debug_pos = false;
 			bool inall = true;
