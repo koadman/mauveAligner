@@ -226,11 +226,8 @@ try{
 	gnSeqI lo=0;
 	//total length of repeats masked by both programs
 	gnSeqI lc = 0;
-	
-
 	ReadAluFile( alu_in, alus, lr );
 	alu_in.close();
-
 	string cur_line;
 	uint seqI = 0;
     //this will suffice for now, but should plan on using
@@ -247,7 +244,6 @@ try{
 	while( getline( align_in, cur_line) )
 	{
 		vector< int64 > start_list;
-		
 		getline( align_in, cur_line);
 		stringstream parse_str( cur_line );
 		int64 start = 0;
@@ -255,36 +251,34 @@ try{
 		int64 length = 0;
 		string aln_len_str;
 		parse_str >> aln_len_str;
-		
 		while( parse_str >> start )
 		{
 			start_list.push_back(start);
-
 		}
 		getline( align_in, cur_line);
 		stringstream parse_string(cur_line);
 		//parse_str.( cur_line );
 		string lens;
 		parse_string >> lens;
-
-		uint region_count = 0;
-		
+		uint region_count = 0;	
 		while( parse_string >> length )
 		{
-			
 			//cout << length << endl;
+			if ( region_count >= start_list.size() )
+			{
+				//something's wrong
+				cout << "alu data failed!" << endl;
+				break;
+			}
 			pos.first = start_list.at(region_count);
 			if (start_list.at(region_count) < 0 )
 			{
 				pos.second = start_list.at(region_count)-length;
-
 				//simply add up the alignment coverage in the map
 				for(int i = 0; i < length; i++)
 				{
-					
 					alncoverage[pos.first-i] = true;
-					coverage[pos.first-i] = true;
-					
+					coverage[pos.first-i] = true;		
 					ccount++;
 				}
 			}
@@ -293,16 +287,13 @@ try{
 				pos.second = start_list.at(region_count)+length;
 				//for both strands
 				for(int i = 0; i < length; i++)
-				{
-					
+				{	
 					alncoverage[pos.first+i] = true;
 					coverage[pos.first+i] = true;
-					
 					ccount++;
 				}
 			}
 			pos_list.push_back(pos);
-			
 			region_count++;
 		}
 		totcoverage.push_back(alncoverage);
@@ -425,7 +416,7 @@ try{
 		}
 		else
 		{
-			cout << "ALU was aligned!" << endl;
+			//cout << "ALU was aligned!" << endl;
 			bool hit = false;
 			bool debug_pos = false;
 			bool inall = true;
