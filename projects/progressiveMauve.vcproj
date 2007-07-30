@@ -301,7 +301,7 @@
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\..\muscle\;..\..\muscle\libMUSCLE;..\..\libGenome;..\..\libClustalW;..\..\libMems\;..\..\boost\boost_1_34_0\"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_CONSOLE;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="0"
 				EnableEnhancedInstructionSet="0"
 				OpenMP="true"
