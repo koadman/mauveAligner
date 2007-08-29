@@ -30,6 +30,7 @@
 #include "libMems/Islands.h"
 #include "libMems/MuscleInterface.h"
 #include "libMems/ClustalInterface.h"
+#include "libMems/DistanceMatrix.h"
 
 #include "boost/filesystem/operations.hpp"
 
@@ -625,21 +626,6 @@ try{
 			// only count each base pair once!
 			if( !eliminate_overlaps )
 				EliminateOverlaps( match_list );
-
-			allocateDetailList( match_list, coverage_list );
-			getLCBDetailList( match_list, coverage_list );
-		}
-		if( calculate_coverage ){
-			if( coverage_list_file == "" || coverage_list_file == "-" )
-				PrintDetailList( match_list.seq_table.size(), coverage_list, cout );
-			else{
-				ofstream coverage_file( coverage_list_file.c_str() );
-				if( !coverage_file.is_open() ){
-					cerr << "Error opening " << coverage_list_file << endl;
-					return -2;
-				}
-				PrintDetailList( match_list.seq_table.size(), coverage_list, coverage_file );
-			}
 		}
 
 		if( tree_filename != "" ){
@@ -805,14 +791,6 @@ try{
 			}
 			gnas.output( alignment_output_format, alignment_lcb_out );
 		}
-	}
-
-	if( detail_list_out != NULL ){
-		vector< pair< uint64, uint64 > > detail_list;
-		allocateDetailList( interval_list, detail_list );
-		for( uint lcbI = 0; lcbI < interval_list.size(); lcbI++ )
-			getLCBDetailList( interval_list[ lcbI ], detail_list );
-		PrintDetailList( interval_list.seq_table.size(), detail_list, *detail_list_out );
 	}
 
 	//
