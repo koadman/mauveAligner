@@ -185,6 +185,8 @@ try{
 	MauveOption opt_gap_extend( mauve_options, "gap-extend", required_argument, "<number> Gap extend penalty" );
 	MauveOption opt_substitution_matrix( mauve_options, "substitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
 	MauveOption opt_weight( mauve_options, "weight", required_argument, "<number> Minimum pairwise LCB score" );
+	MauveOption opt_go_homologous( mauve_options, "hmm-p-go-homologous", required_argument, "<number> Probability of transitioning from the unrelated to the homologous state [0.00001]" );
+	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.0000001]" );
 
 	if( argc <= 0 ){
 		print_usage( "mauveAligner", mauve_options );
@@ -195,6 +197,9 @@ try{
 		return -1;
 	}
 
+	// default values for homology HMM transitions
+	double pgh = 0.000001;
+	double pgu = 0.00000001;
 
 	// set the Muscle path
 	MuscleInterface& mi = MuscleInterface::getMuscleInterface();
@@ -225,7 +230,6 @@ try{
 	if( opt_scratch_path_2.set )
 		FileSML::registerTempPath( opt_scratch_path_2.arg_value.c_str() );
 
-
 	// set the random number generator to a fixed seed for repeatability
 	// this should be changed if the algorithm ever depends on true pseudo-randomness
 	SetTwisterSeed(37);
@@ -248,9 +252,9 @@ try{
 		ofstream bb_out( bb_fname.c_str() );
 		backbone_list_t bb_list;
 		if( opt_island_score.set )
-			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), atoi( opt_island_score.arg_value.c_str() ) );
+			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), pgh, pgu, atoi( opt_island_score.arg_value.c_str() ) );
 		else
-			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme());
+			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), pgh, pgu);
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		ofstream bbcols_out( bbcols_fname.c_str() );
@@ -563,7 +567,7 @@ try{
 			if( opt_island_score.set )
 				island_score = atoi( opt_island_score.arg_value.c_str() );
 			backbone_list_t bb_list;
-			detectAndApplyBackbone(interval_list, bb_list, getDefaultScoringScheme(), island_score);
+			detectAndApplyBackbone(interval_list, bb_list, getDefaultScoringScheme(), pgh, pgu, island_score);
 			writeBackboneColumns( bbcols_out, bb_list );
 			if( opt_backbone_output.set )
 			{
