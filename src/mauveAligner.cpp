@@ -139,6 +139,7 @@ try{
 	int64 permutation_weight = -1;
 
 	boolean lcb_match_input_format = false;
+	int opt_max_extension_iters = -1;
 
 	uint seqI;
 	boolean print_version = false;
@@ -199,6 +200,7 @@ try{
 		opt_permutation_matrix_output,
 		opt_permutation_matrix_min_weight,
 		opt_lcb_match_input,
+		opt_max_extension_iterations,
 	};
 	struct option long_opts[] = {
 		{"mums", no_argument, &config_opt, opt_mums},
@@ -243,6 +245,7 @@ try{
 		{"permutation-matrix-output", required_argument, &config_opt, opt_permutation_matrix_output},
 		{"permutation-matrix-min-weight", required_argument, &config_opt, opt_permutation_matrix_min_weight},
 		{"lcb-match-input", no_argument, &config_opt, opt_lcb_match_input},
+		{"max-extension-iterations", required_argument, &config_opt, opt_max_extension_iterations},
 
 		{0, 0, 0, 0}	// for correct termination of option list
 						// getopt_long can segfault without this
@@ -392,6 +395,9 @@ try{
 						break;
 					case opt_lcb_match_input:
 						lcb_match_input_format = true;
+						break;
+					case opt_max_extension_iterations:
+						opt_max_extension_iters = atoi(optarg);
 						break;
 					default:
 						print_usage( argv[0] );
@@ -703,6 +709,10 @@ try{
 		permutation_weight *= match_list.seq_table.size();
 		aligner.SetPermutationOutput( permutation_filename, permutation_weight );
 	}
+	if( opt_max_extension_iters != -1 )
+	{
+		aligner.SetMaxExtensionIterations(opt_max_extension_iters);
+	}
 
 	IntervalList interval_list;
 	interval_list.seq_table = match_list.seq_table;
@@ -889,6 +899,7 @@ void print_usage( const char* pname ){
 	cerr << "\t    --no-recursion Don't perform recursive anchor identification (implies --no-gapped-alignment)" << endl;
 	cerr << "\t    --no-lcb-extension If determining LCBs, don't attempt to extend the LCBs\n";
 	cerr << "\t    --seed-size=<number> Initial seed match size, default is log_2( average seq. length )" << endl;
+	cerr << "\t    --max-extension-iterations=<number> Limit LCB extensions to this number of attempts, default is 4\n";
 	cerr << "\t    --eliminate-inclusions Eliminate linked inclusions in subset matches.\n";
 	cerr << "\t    --weight=<number> Minimum LCB weight in base pairs per sequence" << endl;
 	cerr << "\t    --match-input=<file> Use specified match file instead of searching for matches\n";
