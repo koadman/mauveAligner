@@ -262,6 +262,11 @@ try{
 	// this should be changed if the algorithm ever depends on true pseudo-randomness
 	SetTwisterSeed(37);
 
+	if( opt_go_homologous.set )
+		pgh = strtod( opt_go_homologous.arg_value.c_str(), NULL );
+	if( opt_go_unrelated.set )
+		pgu = strtod( opt_go_unrelated.arg_value.c_str(), NULL );
+
 	// for debugging only:
 	if( opt_apply_backbone.set )
 	{
