@@ -147,6 +147,33 @@ int main( int argc, char* argv[] )
 	return doAlignment(argc, argv);
 }
 
+void getPatternText( int64 seed_pattern, char pattern[65] )
+{
+	char pat[65] = {
+		'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+		'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+		'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+		'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+		'\0'};
+	for( int i = 63; i >= 0; i-- )
+	{
+		pat[i] = seed_pattern & 0x1 ? '1' : '0';
+		seed_pattern >>= 1;
+	}
+	memcpy( pattern, pat, 65 );
+}
+
+void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >& sml_files, int seed_weight, int seed_rank )
+{
+	int64 seed_pattern = getSeed(seed_weight, seed_rank);
+	// convert seed pattern to text;
+	char pattern[65];
+	getPatternText(seed_pattern, pattern);
+	sml_files.resize(seq_files.size());
+	for( int seqI = 0; seqI < seq_files.size(); seqI++ )
+		sml_files[seqI] = seq_files[seqI] + "." + pattern + ".sml";
+}
+
 /**
  * progressive alignment.  wheee.
  */
@@ -187,6 +214,7 @@ try{
 	MauveOption opt_weight( mauve_options, "weight", required_argument, "<number> Minimum pairwise LCB score" );
 	MauveOption opt_go_homologous( mauve_options, "hmm-p-go-homologous", required_argument, "<number> Probability of transitioning from the unrelated to the homologous state [0.00001]" );
 	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.0000001]" );
+	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
 
 	if( argc <= 0 ){
 		print_usage( "mauveAligner", mauve_options );
@@ -357,7 +385,7 @@ try{
 			// fill seq_table with empty sequences
 			for( seqI = 0; seqI < pairwise_match_list.seq_filename.size(); seqI++ )
 				pairwise_match_list.seq_table.push_back( new gnSequence() );
-	}else{
+	}else if( !opt_seed_family.set ){
 		if( pairwise_match_list.seq_table.size() > 4 )
 		{
 			UniqueMatchFinder umf;
@@ -369,6 +397,42 @@ try{
 			pmf.FindMatches( pairwise_match_list );
 		}
 		cout << "done.\n";
+	}else{
+		// use an entire seed family to do the search
+		if( mer_size == 0 )
+		{
+			size_t avg = 0;
+			for( int seqI = 0; seqI < pairwise_match_list.seq_table.size(); seqI++ )
+				avg += pairwise_match_list.seq_table[seqI]->length();
+			avg /= pairwise_match_list.seq_table.size();
+			mer_size = getDefaultSeedWeight( avg );
+		}
+		// search with the longest seeds first so that overlapping matches tend to get contained
+		vector< pair< int, int > > length_ranks(3);
+		length_ranks[0] = make_pair( getSeedLength( getSeed(mer_size, 0) ), 0 );
+		length_ranks[1] = make_pair( getSeedLength( getSeed(mer_size, 1) ), 1 );
+		length_ranks[2] = make_pair( getSeedLength( getSeed(mer_size, 2) ), 2 );
+		std::sort( length_ranks.begin(), length_ranks.end() );
+
+		UniqueMatchFinder umf;
+		for( int seedI = 2; seedI >= 0; seedI-- )
+		{
+			umf.LogProgress( &cout );
+			int64 seed_pattern = getSeed(mer_size, length_ranks[seedI].second );
+			char pattern[65];
+			getPatternText( seed_pattern, pattern );
+			cout << "\nSearching with seed pattern " << pattern << "\n";
+			MatchList cur_list;
+			cur_list.seq_filename = pairwise_match_list.seq_filename;
+			cur_list.seq_table = pairwise_match_list.seq_table;
+			getDefaultSmlFileNames( cur_list.seq_filename, cur_list.sml_filename, mer_size, length_ranks[seedI].second );
+			cur_list.LoadSMLs(mer_size, &cout, length_ranks[seedI].second);
+			umf.FindMatches( cur_list );
+			umf.ClearSequences();
+		}
+		umf.GetMatchList(pairwise_match_list);
+		cout << "done\n";
+		// FIXME:  need to remove perfect overlaps!!
 	}
 	
 	if( opt_mums.set )
