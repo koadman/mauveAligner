@@ -349,7 +349,7 @@ try{
 	
 	if( seq_files.size() == 1 ){
 		LoadMFASequences( pairwise_match_list, seq_files[0], &cout );
-		pairwise_match_list.CreateMemorySMLs( mer_size, &cout, true );
+		pairwise_match_list.CreateMemorySMLs( mer_size, &cout );
 	}else{
 		pairwise_match_list.seq_filename = seq_files;
 		pairwise_match_list.sml_filename = sml_files;
@@ -430,8 +430,13 @@ try{
 			MatchList cur_list;
 			cur_list.seq_filename = pairwise_match_list.seq_filename;
 			cur_list.seq_table = pairwise_match_list.seq_table;
-			getDefaultSmlFileNames( cur_list.seq_filename, cur_list.sml_filename, mer_size, length_ranks[seedI].second );
-			cur_list.LoadSMLs(mer_size, &cout, length_ranks[seedI].second);
+			if( seq_files.size() == 1 )
+				cur_list.CreateMemorySMLs( mer_size, &cout, length_ranks[seedI].second );
+			else
+			{
+				getDefaultSmlFileNames( cur_list.seq_filename, cur_list.sml_filename, mer_size, length_ranks[seedI].second );
+				cur_list.LoadSMLs(mer_size, &cout, length_ranks[seedI].second);
+			}
 			umf.FindMatches( cur_list );
 			umf.ClearSequences();
 		}
