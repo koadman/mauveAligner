@@ -439,6 +439,8 @@ try{
 			}
 			umf.FindMatches( cur_list );
 			umf.ClearSequences();
+			for( size_t smlI = 0; smlI < cur_list.sml_table.size(); smlI++ )
+				delete cur_list.sml_table[smlI];	// free memory
 		}
 		umf.GetMatchList(pairwise_match_list);
 		cout << "done\n";
