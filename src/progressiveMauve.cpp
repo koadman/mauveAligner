@@ -208,6 +208,7 @@ try{
 	MauveOption opt_skip_refinement( mauve_options, "skip-refinement", no_argument, "Do not perform iterative refinement" );
 	MauveOption opt_skip_gapped_alignment( mauve_options, "skip-gapped-alignment", no_argument, "Do not perform gapped alignment" );
 	MauveOption opt_bp_dist_estimate_min_score( mauve_options, "bp-dist-estimate-min-score", required_argument, "<number> Minimum LCB score for estimating pairwise breakpoint distance" );
+	MauveOption opt_mem_clean( mauve_options, "mem-clean", no_argument, "Set this to true when debugging memory allocations" );
 	MauveOption opt_gap_open( mauve_options, "gap-open", required_argument, "<number> Gap open penalty" );
 	MauveOption opt_gap_extend( mauve_options, "gap-extend", required_argument, "<number> Gap extend penalty" );
 	MauveOption opt_substitution_matrix( mauve_options, "substitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
@@ -656,9 +657,12 @@ try{
 					writeBackboneSeqCoordinates( bb_list, interval_list, bb_seq_out );
 				}
 			}
-			for(size_t bbI = 0; bbI < bb_list.size(); bbI++ )
-				for(size_t bbJ = 0; bbJ < bb_list[bbI].size(); bbJ++ )
-					bb_list[bbI][bbJ]->Free();
+			if(opt_mem_clean.set)
+			{
+				for(size_t bbI = 0; bbI < bb_list.size(); bbI++ )
+					for(size_t bbJ = 0; bbJ < bb_list[bbI].size(); bbJ++ )
+						bb_list[bbI][bbJ]->Free();
+			}
 			interval_list.backbone_filename = bb_fname;
 		}else{
 			cerr << "Warning!  Could not open backbone file: " << bb_fname << endl;
@@ -671,18 +675,19 @@ try{
 
 // only explicitly free memory if absolutely necessary
 // since free() is very slow and the OS will reclaim it at program exit anyways
-#ifdef MEM_CLEAN
-	// free memory used by pairwise matches
-	for( size_t mI = 0; mI < pairwise_match_list.size(); mI++ )
-		pairwise_match_list[mI]->Free();
-	for( size_t seqI = 0; seqI < pairwise_match_list.seq_table.size(); seqI++ )
-		delete pairwise_match_list.seq_table[seqI];	// an auto_ptr or shared_ptr could be great for this
-	for( size_t seqI = 0; seqI < pairwise_match_list.sml_table.size(); seqI++ )
-		delete pairwise_match_list.sml_table[seqI];
+	if(opt_mem_clean.set)
+	{
+		// free memory used by pairwise matches
+		for( size_t mI = 0; mI < pairwise_match_list.size(); mI++ )
+			pairwise_match_list[mI]->Free();
+		for( size_t seqI = 0; seqI < pairwise_match_list.seq_table.size(); seqI++ )
+			delete pairwise_match_list.seq_table[seqI];	// an auto_ptr or shared_ptr could be great for this
+		for( size_t seqI = 0; seqI < pairwise_match_list.sml_table.size(); seqI++ )
+			delete pairwise_match_list.sml_table[seqI];
 
-	if( opt_output.set )
-		delete match_out;
-#endif
+		if( opt_output.set )
+			delete match_out;
+	}
 
 /**/
 }catch( gnException& gne ) {
