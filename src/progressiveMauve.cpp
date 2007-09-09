@@ -656,6 +656,9 @@ try{
 					writeBackboneSeqCoordinates( bb_list, interval_list, bb_seq_out );
 				}
 			}
+			for(size_t bbI = 0; bbI < bb_list.size(); bbI++ )
+				for(size_t bbJ = 0; bbJ < bb_list[bbI].size(); bbJ++ )
+					bb_list[bbI][bbJ]->Free();
 			interval_list.backbone_filename = bb_fname;
 		}else{
 			cerr << "Warning!  Could not open backbone file: " << bb_fname << endl;
