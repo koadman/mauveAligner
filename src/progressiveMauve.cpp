@@ -227,8 +227,8 @@ try{
 	}
 
 	// default values for homology HMM transitions
-	double pgh = 0.000001;
-	double pgu = 0.00000001;
+	double pgh = 0.0001;
+	double pgu = 0.000001;
 
 	// set the Muscle path
 	MuscleInterface& mi = MuscleInterface::getMuscleInterface();
