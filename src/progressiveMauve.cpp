@@ -495,6 +495,9 @@ try{
 		aligner.SetMaxGappedAlignmentLength( mgal );
 	}
 
+	if( opt_seed_family.set )
+		aligner.setUseSeedFamilies(true);
+
 	if( opt_scoring_scheme.set )
 	{
 		if( opt_scoring_scheme.arg_value == "ancestral" )
