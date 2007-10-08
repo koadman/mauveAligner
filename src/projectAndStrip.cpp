@@ -19,7 +19,7 @@
 #include "libMems/Islands.h"
 #include "libGenome/gnFASSource.h"
 #include <boost/tuple/tuple.hpp>
-#include "ProgressiveAligner.h"
+#include "libMems/ProgressiveAligner.h"
 
 using namespace std;
 using namespace genome;
@@ -32,6 +32,7 @@ int main( int argc, char* argv[] )
 	if( argc < 5 )
 	{
 		cerr << "Usage: projectAndStrip <input xmfa> <output xmfa> <seq1> <seq2>...<seqN>\n";
+		cerr << "\nNumeric sequence identifiers start at 0.\n";
 		return -1;
 	}
 	ifstream aln_in;
@@ -100,6 +101,10 @@ int main( int argc, char* argv[] )
 			}
 		}
 
+		for( size_t gI = 0; gI < gaga_list.size(); gI++ )
+			if( gaga_list[gI]->Orientation(0) == AbstractMatch::reverse )
+				gaga_list[gI]->Invert();
+
 		cout << "constructing LCBs\n";
 		vector< gnSeqI > bps;
 		IntervalList real_out_ivs;
@@ -122,9 +127,7 @@ int main( int argc, char* argv[] )
 
 		addUnalignedIntervals( real_out_ivs );
 		real_out_ivs.WriteStandardAlignment( aln_out );
-		cerr << "closing\n";
 		aln_out.close();
-		cerr << "finished\n";
 	}catch( gnException& gne ){
 		cerr << gne << endl;
 		return -1;
