@@ -155,12 +155,14 @@ void getPatternText( int64 seed_pattern, char pattern[65] )
 		'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
 		'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
 		'\0'};
+	int lastone = 64;
 	for( int i = 63; i >= 0; i-- )
 	{
 		pat[i] = seed_pattern & 0x1 ? '1' : '0';
+		lastone = pat[i] == '1' ? i : lastone;
 		seed_pattern >>= 1;
 	}
-	memcpy( pattern, pat, 65 );
+	memcpy( pattern, pat + lastone, 65 - lastone );
 }
 
 void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >& sml_files, int seed_weight, int seed_rank )
@@ -180,9 +182,7 @@ void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >
 int doAlignment( int argc, char* argv[] ){
 try{
 	OptionList mauve_options;
-	MauveOption opt_profile_profile( mauve_options, "profile-profile", no_argument, "(Not yet implemented) Align an alignment to another alignment" );
-	MauveOption opt_profile_1( mauve_options, "profile1", required_argument, "<file> (Not yet implemented) Read an existing sequence alignment in XMFA format and align it to other sequences or alignments" );
-	MauveOption opt_profile_2( mauve_options, "profile2", required_argument, "<file> (Not yet implemented) Read an existing sequence alignment in XMFA format and align it to another alignment" );
+	MauveOption opt_profile( mauve_options, "profile", required_argument, "<file> (Not yet implemented) Read an existing sequence alignment in XMFA format and align it to other sequences or alignments" );
 	MauveOption opt_apply_backbone( mauve_options, "apply-backbone", required_argument, "<file> Read an existing sequence alignment in XMFA format and apply backbone statistics to it" );
 	MauveOption opt_disable_backbone( mauve_options, "disable-backbone", no_argument, "Disable backbone detection" );
 	MauveOption opt_mums( mauve_options, "mums", no_argument, "Find MUMs only, do not attempt to determine locally collinear blocks (LCBs)" );
@@ -531,7 +531,7 @@ try{
 		aligner.setBpDistEstimateMinScore(d);
 	}
 
-	if( pairwise_match_list.size() != 0 )
+	if( pairwise_match_list.seq_table.size() != 0 )
 	{
 		aligner.setPairwiseMatches( pairwise_match_list );
 	}
@@ -590,13 +590,10 @@ try{
 	// then read in the profile
 	IntervalList profile_1;
 	IntervalList profile_2;
-	if( opt_profile_profile.set ){
-		if( !opt_profile_1.set || !opt_profile_2.set )
-		{
-			cerr << "Alignment input must be given with --profile1 and --profile2 to do a profile-profile alignment\n";
-			return -3;
-		}
-
+	if( opt_profile.set ){
+		cerr << "Profile-profile alignment not yet implemented\n";
+		return -3;
+/*
 		ifstream lcb_input_1( opt_profile_1.arg_value.c_str() );
 		if( !lcb_input_1.is_open() ){
 			cerr << "Error opening " << opt_profile_1.arg_value << endl;
@@ -610,20 +607,7 @@ try{
 			cerr << "Error reading " << opt_profile_1.arg_value << "\nPossibly corrupt file or invalid file format\n";
 			return -2;
 		}
-		ifstream lcb_input_2( opt_profile_2.arg_value.c_str() );
-		if( !lcb_input_2.is_open() ){
-			cerr << "Error opening " << opt_profile_2.arg_value << endl;
-			return -2;
-		}
-		try{
-			profile_2.ReadStandardAlignment( lcb_input_2 );
-			LoadSequences(profile_2, NULL);
-		}catch( gnException& gne ){
-			cerr << gne << endl;
-			cerr << "Error reading " << opt_profile_2.arg_value << "\nPossibly corrupt file or invalid file format\n";
-			return -2;
-		}
-
+*/
 
 	}
 
@@ -631,8 +615,8 @@ try{
 	interval_list.seq_table = pairwise_match_list.seq_table;
 	interval_list.seq_filename = pairwise_match_list.seq_filename;
 
-	if( opt_profile_profile.set )
-		aligner.alignPP(profile_1, profile_2, interval_list );
+	if( opt_profile.set )
+		; //aligner.alignPP(profile_1, profile_2, interval_list );
 	else
 		aligner.align( interval_list.seq_table, interval_list );
 
