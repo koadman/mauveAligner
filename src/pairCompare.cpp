@@ -1,5 +1,6 @@
 #include "libMems/IntervalList.h"
 #include "libMems/Islands.h"
+#include "libMems/DistanceMatrix.h"
 #include <sstream>
 #include <fstream>
 using namespace std;

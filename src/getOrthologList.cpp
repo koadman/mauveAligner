@@ -23,6 +23,7 @@
 #include "libMems/Backbone.h"
 #include "libGenome/gnFeature.h"
 #include "libGenome/gnFASSource.h"
+#include "libMems/DistanceMatrix.h"
 
 using namespace std;
 using namespace genome;

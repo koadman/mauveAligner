@@ -12,6 +12,7 @@
 
 #include "libMems/IntervalList.h"
 #include "libMems/Islands.h"
+#include "libMems/DistanceMatrix.h"
 
 using namespace std;
 using namespace genome;

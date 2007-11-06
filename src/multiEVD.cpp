@@ -15,8 +15,8 @@
 #include "libMems/MatchList.h"
 #include "libMems/MuscleInterface.h"
 #include "libGenome/gnSequence.h"
-
-#include "ProgressiveAligner.h"
+#include "libMems/MatchProjectionAdapter.h"
+#include "libMems/ProgressiveAligner.h"
 
 #include <sstream>
 
