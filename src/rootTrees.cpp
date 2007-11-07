@@ -1,5 +1,5 @@
 #include "libMems/PhyloTree.h"
-#include "TreeUtilities.h"
+#include "libMems/TreeUtilities.h"
 #include <vector>
 #include <sstream>
 #include <algorithm>
@@ -48,7 +48,8 @@ void rerootTree( PhyloTree< TreeNode >& t, node_id_t new_root )
 		if( containsNode( t, t[t.root].children[childI], new_root ) )
 		{
 			t[t.root].parents.push_back( t[t.root].children[childI] );
-			findAndErase( t[t.root].children, t[t.root].children[childI] );
+			std::vector<node_id_t>::iterator last = std::remove( t[t.root].children.begin(), t[t.root].children.end(), t[t.root].children[childI] );
+			t[t.root].children.erase(last,t[t.root].children.end());
 			break;
 		}
 	}
@@ -69,8 +70,10 @@ void rerootTree( PhyloTree< TreeNode >& t, node_id_t new_root )
 		for( uint childI = 0; childI < t[cur_node].children.size(); childI++ )
 		{
 			TreeNode& child_n = t[t[cur_node].children[childI]]; 
-			findAndErase( child_n.children, cur_node );
-			findAndErase( child_n.parents, cur_node );
+			std::vector<node_id_t>::iterator last = std::remove( child_n.children.begin(), child_n.children.end(), cur_node );
+			child_n.children.erase(last,child_n.children.end());
+			last = std::remove( child_n.parents.begin(), child_n.parents.end(), cur_node );
+			child_n.parents.erase(last,child_n.parents.end());
 			child_n.children.insert( child_n.children.end(), child_n.parents.begin(), child_n.parents.end() );
 			child_n.parents.clear();
 			child_n.parents.push_back(cur_node);
