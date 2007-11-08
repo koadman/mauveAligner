@@ -64,10 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomed.lib ..\..\libClustalW\lib\ClustalWd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAlignerd.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/mauveAligner.pdb"
@@ -149,10 +149,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -235,10 +235,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib "
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib "
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -321,10 +321,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome.lib ..\..\libClustalW\lib\ClustalW.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -407,10 +407,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genomefd.lib ..\..\libClustalW\lib\ClustalWfd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -492,10 +492,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64d.lib ..\..\libClustalW\lib\ClustalW64d.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAlignerd.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/mauveAligner.pdb"
@@ -577,10 +577,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64.lib ..\..\libClustalW\lib\ClustalW64.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;C:\development\boost_1_34_0\stage64\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;C:\development\boost_1_34_0\stage64\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -663,10 +663,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64fd.lib ..\..\libClustalW\lib\ClustalW64fd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -750,10 +750,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64.lib ..\..\libClustalW\lib\ClustalW64.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;C:\development\boost_1_34_0\stage64\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;C:\development\boost_1_34_0\stage64\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -837,10 +837,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib ..\..\libGenome\lib\genome64fd.lib ..\..\libClustalW\lib\ClustalW64fd.lib"
+				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
 				OutputFile="$(OutDir)/mauveAligner.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\libMems\lib;..\..\muscle\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;;&quot;..\..\boost\boost_1_34_0\lib&quot;"
+				AdditionalLibraryDirectories="..\..\libMems\lib;&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
