@@ -156,7 +156,7 @@ try{
 	char** av = argv;
 	// 'm' mer size
 	// 'r' recursive
-	const char* short_args= "m:s:o:i:t:I:F:M:L:O:vrRE";
+	const char* short_args= "";
 	enum opt_names{
 		opt_mums,
 		opt_no_recursion,
@@ -769,6 +769,8 @@ try{
 	}
 	
 	if( output_alignment ){
+		if( !gapped_alignment )
+			addUnalignedIntervals( interval_list );
 		if( alignment_output_file == "" || alignment_output_file == "-" ){
 			interval_list.WriteStandardAlignment( cout );
 		}else{
