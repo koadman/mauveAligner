@@ -6,6 +6,9 @@
 #include "libGenome/gnGBKSource.h"
 #include "libGenome/gnStringHeader.h"
 
+using namespace genome;
+using namespace std;
+
 int main( int argc, char* argv[] ){
 
 	if( argc != 3 ){
