@@ -216,6 +216,7 @@ try{
 	MauveOption opt_go_homologous( mauve_options, "hmm-p-go-homologous", required_argument, "<number> Probability of transitioning from the unrelated to the homologous state [0.00001]" );
 	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.0000001]" );
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
+	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
 
 	if( argc <= 0 ){
 		print_usage( "mauveAligner", mauve_options );
@@ -529,6 +530,10 @@ try{
 	{
 		double d = strtod( opt_bp_dist_estimate_min_score.arg_value.c_str(), NULL );
 		aligner.setBpDistEstimateMinScore(d);
+	}
+	if( opt_disable_cache.set )
+	{
+		aligner.SetUseCacheDb(false);
 	}
 
 	if( pairwise_match_list.seq_table.size() != 0 )
