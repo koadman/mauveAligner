@@ -213,6 +213,7 @@ try{
 	MauveOption opt_gap_extend( mauve_options, "gap-extend", required_argument, "<number> Gap extend penalty" );
 	MauveOption opt_substitution_matrix( mauve_options, "substitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
 	MauveOption opt_weight( mauve_options, "weight", required_argument, "<number> Minimum pairwise LCB score" );
+	MauveOption opt_min_scaled_penalty( mauve_options, "min-scaled-penalty", required_argument, "<number> Minimum breakpoint penalty after scaling the penalty by expected divergence" );
 	MauveOption opt_go_homologous( mauve_options, "hmm-p-go-homologous", required_argument, "<number> Probability of transitioning from the unrelated to the homologous state [0.00001]" );
 	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.0000001]" );
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
@@ -536,6 +537,10 @@ try{
 		aligner.SetUseCacheDb(false);
 	}
 
+	if( opt_min_scaled_penalty.set )
+	{
+		aligner.setMinimumBreakpointPenalty(strtod( opt_min_scaled_penalty.arg_value.c_str(), NULL ) );
+	}
 	if( pairwise_match_list.seq_table.size() != 0 )
 	{
 		aligner.setPairwiseMatches( pairwise_match_list );
