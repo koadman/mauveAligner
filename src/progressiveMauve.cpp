@@ -444,6 +444,8 @@ try{
 			umf.ClearSequences();
 			for( size_t smlI = 0; smlI < cur_list.sml_table.size(); smlI++ )
 				delete cur_list.sml_table[smlI];	// free memory
+			for( size_t curI = 0; curI < cur_list.size(); curI++ )
+				cur_list[curI]->Free();	// free more memory!
 		}
 		umf.GetMatchList(pairwise_match_list);
 		cout << "done\n";
@@ -467,6 +469,9 @@ try{
 		}
 	}
 	
+	// free any match search memory
+	SlotAllocator<MatchHashEntry>& allocator = SlotAllocator<MatchHashEntry>::GetSlotAllocator();
+	allocator.Purge();
 	
 	ProgressiveAligner aligner( pairwise_match_list.seq_table.size() );
 	if( opt_skip_gapped_alignment.set )
