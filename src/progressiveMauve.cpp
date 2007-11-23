@@ -399,10 +399,12 @@ try{
 			UniqueMatchFinder umf;
 			umf.LogProgress( &cout );
 			umf.FindMatches( pairwise_match_list );
+			umf.Clear();
 		}else{
 			PairwiseMatchFinder pmf;
 			pmf.LogProgress( &cout );
 			pmf.FindMatches( pairwise_match_list );
+			pmf.Clear();
 		}
 		cout << "done.\n";
 	}else{
@@ -449,7 +451,7 @@ try{
 		}
 		umf.GetMatchList(pairwise_match_list);
 		cout << "done\n";
-		// FIXME:  need to remove perfect overlaps!!
+		umf.Clear();
 	}
 	
 	if( opt_mums.set )

@@ -598,6 +598,7 @@ try{
 		}
 		match_log_out.close();
 		offset_log_out.close();
+		match_finder.Clear();
 	}
 		
 
