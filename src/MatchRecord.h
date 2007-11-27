@@ -198,6 +198,8 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 				mems::AbstractMatch* m = chain[mI];
 				if( m == NULL )
 					continue;
+                if (m->LeftEnd(seqI) == 0 && m->Length( seqI ) == 0)
+                    continue; //should we throw error here?
 				if( m->RightEnd(seqI) < mpaa.LeftEnd(seqI) )
 					continue;	// no overlap here!
 				if( m->LeftEnd(seqI) > mpaa.RightEnd(seqI) )
@@ -205,11 +207,11 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 				if( m->LeftEnd(seqI) < mpaa.LeftEnd(seqI) &&
 					m->RightEnd(seqI) >= mpaa.LeftEnd(seqI) )
 				{
-					// take the part of m to the left of mpaa and put it at the end of our chain
+	                // take the part of m to the left of mpaa and put it at the end of our chain
 					mems::AbstractMatch* m_left = m->Copy();
 					m_left->CropRight( m_left->RightEnd(seqI) - mpaa.LeftEnd(seqI) + 1, seqI );
 					m->CropLeft( m_left->Length(seqI), seqI );
-					chain.push_back(m_left);
+                    chain.push_back(m_left);
 				}
 				// now m is guaranteed to have left-end >= mpaa
 				if( m->RightEnd(seqI) <= mpaa.RightEnd(seqI) )
