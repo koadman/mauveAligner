@@ -180,7 +180,7 @@ void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >
  * progressive alignment.  wheee.
  */
 int doAlignment( int argc, char* argv[] ){
-try{
+//try{
 	OptionList mauve_options;
 	MauveOption opt_profile( mauve_options, "profile", required_argument, "<file> (Not yet implemented) Read an existing sequence alignment in XMFA format and align it to other sequences or alignments" );
 	MauveOption opt_apply_backbone( mauve_options, "apply-backbone", required_argument, "<file> Read an existing sequence alignment in XMFA format and apply backbone statistics to it" );
@@ -218,6 +218,7 @@ try{
 	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.0000001]" );
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
 	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
+	MauveOption opt_recursive( mauve_options, "no-recursion", no_argument, "Disable recursive anchor search" );
 
 	if( argc <= 0 ){
 		print_usage( "mauveAligner", mauve_options );
@@ -557,6 +558,8 @@ try{
 		MuscleInterface& mi = MuscleInterface::getMuscleInterface();
 		mi.SetExtraMuscleArguments(opt_muscle_args.arg_value);
 	}
+	if( opt_recursive.set )
+		aligner.SetRecursive(false);
 
 	PairwiseScoringScheme pss;
 	if( opt_gap_open.set )
@@ -693,7 +696,7 @@ try{
 			delete match_out;
 	}
 
-/**/
+/*
 }catch( gnException& gne ) {
 	cerr << "Unhandled gnException: " << gne << endl;
 	throw gne;
@@ -715,7 +718,7 @@ try{
 	throw;
 	return -13;
 }
-/**/
+*/
 	return 0;
 }
 
