@@ -560,6 +560,8 @@ int doAlignment( int argc, char* argv[] ){
 	}
 	if( opt_recursive.set )
 		aligner.SetRecursive(false);
+	else
+		aligner.SetRecursive(true);
 
 	PairwiseScoringScheme pss;
 	if( opt_gap_open.set )
