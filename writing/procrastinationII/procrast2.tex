@@ -235,7 +235,7 @@ keeping the alignment search space tractable.
 \centering \epsfig{file=./figures/hmm.eps,width=5.0in}
 \caption{Hidden Markov model used to detect pairwise alignments of unrelated
 sequence. The HMM has states which model alignment columns containing
-homologous and unrelated sequence.  Emissions correspond to alignment
+homologous and unrelated sequence. The input genome for this example has $47.5\%$~$G+C$ content. Emission probabilities correspond to alignment
 columns, for example \texttt{AA} indicates A aligned to A.  gO
 indicates gap-open and gE gap extend. Alignment columns are treated as
 strand-symmetric, so that AC also indicates CA and the reverse
@@ -265,10 +265,11 @@ s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
 $q_{2}(y)$ denote the background frequencies of $x$ and $y$,
 respectively. Chiaramonte \textit{et al.} scaled the resulting
-$s(x,y)$ values by an unreported value $\psi$ so the largest was 100,
-with the rest rounded to the nearest integer.  Bacterial genomes range in GC content from 30-75\%, and given that the training
-data has $47.5\%$~$G+C$ content,
-the extremes our HMM is not likely to perform very well.  We instead
+$s(x,y)$ values by $\psi=32.5421$ so the largest was 100,
+with the rest rounded to the nearest integer.  
+
+Bacterial genomes range in GC content from 30-75\%, and given that the training
+data has $47.5\%$~$G+C$ content,the extremes our HMM is not likely to perform very well.  We instead
 take the GC content of the whole genome into account and recompute
 the emission probabilities accordingly.  Transmission probabilities
 in the Unrelated state can be directly from the background nucleotide
@@ -288,28 +289,31 @@ substitution probability from background frequency, the product of which
 forms our HMM emission parameters.  We derive emission probabilities for
 the Homologous state as follows:
 \begin{equation}
-\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
+\label{eq2}
+\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi}\  \ \Rightarrow \ \ \  H_{AA} = 2^{(\frac{91}{\psi})}U_{AA}
 \end{equation}
-where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follows:
-\begin{center}$\log_{2}\bigg(\frac{H_{AC}}{U_{AC}}\bigg) = \frac{-114}{\psi},$
-$\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = \frac{-31}{\psi}$ \\
-$\log_{2}\bigg(\frac{H_{AT}}{U_{AC}}\bigg) = \frac{-123}{\psi},$
-$\log_{2}\bigg(\frac{H_{CG}}{U_{CC}}\bigg) = \frac{-125}{\psi}$ \\
-$\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \ \ \ \frac{91}{\psi},$
-$\log_{2}\bigg(\frac{H_{CC}}{U_{CC}}\bigg) = \ \ \ \frac{100}{\psi}$ \\
+where $\psi$ is scaling factor used normalize $H_{CC}$ to 100. The full list of equations follows:
+\begin{center}
+$H_{AC} = 2^{(\frac{-114}{\psi})}U_{AC},$\ \ \
+$H_{AG} = 2^{(\frac{-31}{\psi})}U_{AC},$\ \ 
+$H_{AT} = 2^{(\frac{-123}{\psi})}U_{AC}$ \\
+$H_{CG} = 2^{(\frac{-123}{\psi})}U_{CC},$\ \ \ \  
+$H_{AA} = 2^{(\frac{91}{\psi})}U_{AA},$\ \ 
+$H_{CC} = 2^{(\frac{100}{\psi})}U_{CC}$ \\
 \end{center}
 
 The system of six equations has seven free variables.  Moreover, the $H_{xy}$ must sum to 1 to make a probability distribution:
 \begin{equation}
+\label{eq3}
 H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
 \end{equation}
 %$0.03072937146$
 %$32.54215601$
-We can solve the above six equations for $H_{xy}$ and substitute the
-resulting expressions in to the normalizing equation to solve for
-$\psi$. For the HOXD matrix the scaling factor $\psi=32.5421$. Given
-$\psi$, we can calculate values for all $H_{xy}$ in the HMM.
-
+We can solve the above equation for $H_{xy}$ by substituting the
+resulting expressions from Equation~\ref{eq2} in to Equation~\ref{eq3}. 
+As a result, we can calculate values for all $H_{xy}$ in the HMM using the
+background nucleotide frequencies of the input genome.
+\linebreak
 Emission frequencies for nucleotide substitutions can be derived from
 any strand/species symmetric nucleotide substitution matrix, but gap-open
 and extend frequencies can not.  To empirically estimate values
