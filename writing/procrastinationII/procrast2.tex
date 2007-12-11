@@ -232,7 +232,7 @@ keeping the alignment search space tractable.
 
 \subsubsection{Identifying unrelated regions}
 \begin{figure}[t]
-\centering \epsfig{file=./figures/hmm.eps,width=4.8in}
+\centering \epsfig{file=./figures/hmm.eps,width=5.0in}
 \caption{Hidden Markov model used to detect pairwise alignments of unrelated
 sequence. The HMM has states which model alignment columns containing
 homologous and unrelated sequence.  Emissions correspond to alignment
@@ -253,7 +253,7 @@ observable states are the pairwise alignment columns, which are all
 possible pairs in $\texttt{{\{A,G,C,T,-\}}}$ with strand and species
 symmetry, i.e. \texttt{AG=GA=TC=CT}.  The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD
-substitution matrix presented by Chiaramonte \textit{et al}\cite{hoxd}.
+substitution matrix presented by Chiaromonte \textit{et al}\cite{hoxd}.
 We solved for the emission frequencies in the
 homologous and unrelated state using the same equation used in to
 calculate the values of the HOXD substitution matrix on 47.5\%G+C
@@ -263,26 +263,30 @@ s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 \end{equation}
 {w}here $p(x,y)$ is the fraction of the observed aligned pairs of
 nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
-$q_{2}(x)$ denote the background frequencies of $x$ and $y$,
+$q_{2}(y)$ denote the background frequencies of $x$ and $y$,
 respectively. Chiaramonte \textit{et al.} scaled the resulting
 $s(x,y)$ values by an unreported value $\psi$ so the largest was 100,
-with the rest rounded to the nearest integer.  Given that the training
-data has $47.5\%$~$G+C$ content and considering strand and species
+with the rest rounded to the nearest integer.  Bacterial genomes range in GC content from 30-75\%, and given that the training
+data has $47.5\%$~$G+C$ content,
+the extremes our HMM is not likely to perform very well.  We instead
+take the GC content of the whole genome into account and recompute
+the emission probabilities accordingly.  Transmission probabilities
+in the Unrelated state can be directly from the background nucleotide
+distribution.  Thus, considering strand and species
 symmetry, we can compute emission frequencies for the Unrelated state
 of our HMM:
-\begin{center}$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})
-= 0.06890625$ \\
-$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) =
-0.05640625$ \\
-$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) =
-0.06234375$ \\
-$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) =
-0.06234375$ \\
+\begin{center}
+$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})$
+$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2})$ 
+$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2})$ 
+$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2})$
 \end{center}
 
-Where $f_{GC}=0.475$ and $f_{AT}=0.525$ are background frequencies of
-G/C and A/T, respectively.  Then we derive emission probabilities for
-the Homologous state as, for example:
+Where $f_{GC}=$ and $f_{AT}$ are background frequencies of
+G/C and A/T in the input genome, respectively.  For the Homologous state, we need to separate
+substitution probability from background frequency, the product of which
+forms our HMM emission parameters.  We derive emission probabilities for
+the Homologous state as follows:
 \begin{equation}
 \log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
 \end{equation}
@@ -453,6 +457,22 @@ generated with \texttt{procrastAlign} with parameters: \texttt{--z=9
 --w=50}.  }
 \label{fig-align}
 \end{figure}
+
+\subsubsection{Boundary prediction}
+Another crucial part is boundary prediction.
+That said, do you think it would be a good idea to separate
+underpredictions from overpredictions?  I suggest this since
+overpredictions are what we really focus on in the manuscript (section
+2.3.1), as we emphasize that our method takes great care to avoid
+reporting unrelated sequence in the lma's. and in fact, we do a good
+job of this in all cases. poor performance on underpredictions speaks
+more towards a lack in sensitivity of our method, as it is unable to
+capture all of the homologous regions surrounding seed matches or
+chained matches due to several possible reasons. of course we want to
+perform well in both areas, but maybe we can mark the underpredictions
+in high multiplicity repeats as an area of future improvement via
+using families of spaced seeds or more involved seed match component
+processing/merging. thoughts?
 
 \section{Discussion}
 We have presented a sensitive and efficient heuristic for local
