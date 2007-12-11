@@ -8,6 +8,7 @@
 #include "libMems/Backbone.h"
 #include "libMems/ProgressiveAligner.h"
 
+#include <iomanip>
 #include <iostream>
 #include <algorithm>
 #include <cctype>
@@ -1016,7 +1017,7 @@ void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup 
  * @param	M_e		(output) A MatchRecord containing just the extension, or NULL if extension failed
  * @return	FAILED, OK, or FIXME
  */
-int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction, vector<GappedMatchRecord*>& novel_matches, const float pGoHomo, const float pGoUnrelated )
+int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction, vector<GappedMatchRecord*>& novel_matches, const float pGoHomo, const float pGoUnrelated, std::vector<double>& pEmitHomo,std::vector<double>& pEmitUnrelated )
 {
 	ccount +=1;
 	static bool debug_extension = false;
@@ -1193,7 +1194,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	CompactGappedAlignment<>* result;
 //  detectAndApplyBackbone
 	backbone_list_t bb_list;
-	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, DEFAULT_ISLAND_SCORE_THRESHOLD, pGoHomo, pGoUnrelated, direction != 1, direction == 1  );
+	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, DEFAULT_ISLAND_SCORE_THRESHOLD, pGoHomo, pGoUnrelated, pEmitHomo, pEmitUnrelated, direction != 1, direction == 1  );
 	cga->Free();
 
 	bool boundaries_improved = false;
@@ -1502,7 +1503,11 @@ void writeXmfa( MatchList& seedml, std::vector< GappedMatchRecord* >& extended_m
 	}
 }
 
-
+class ToUPPER
+{
+public:
+	char operator()( char a ){ return toupper(a); }
+};
 int main( int argc, char* argv[] )
 {
 //	debug_interval = true;
@@ -1633,12 +1638,121 @@ int main( int argc, char* argv[] )
 	SeedMatchEnumerator sme;
 	sme.FindMatches( seedml );
 	
+    // need single nuc & kmer frequency
+	string sequence = seedml.seq_table.at(0)->ToString();
+	string uppercase = sequence;
+	ToUPPER tupperware;
+	std::transform(sequence.begin(),sequence.end(), uppercase.begin(), tupperware);
+    kmersize =1;
+	map<string,gnSeqI> polyfreq;
+	map<string,gnSeqI> monofreq;
+	map<string, gnSeqI>::iterator it;
+	for (gnSeqI i = 0; i <= uppercase.size()-kmersize; i++)
+	{
+	   string kmer = uppercase.substr(i,kmersize);
+	   string nucleotide = uppercase.substr(i,1);
+	   if( nucleotide[0] != 'A' &&
+			nucleotide[0] != 'C' &&
+			nucleotide[0] != 'G' &&
+			nucleotide[0] != 'T' )
+			nucleotide[0] = 'A';
+	   for( size_t kI = 0; kI < kmer.size(); kI++ )
+		   if( kmer[kI] != 'A' &&
+				kmer[kI] != 'C' &&
+				kmer[kI] != 'G' &&
+				kmer[kI] != 'T' )
+				kmer[kI] = 'A';
+
+	   polyfreq[kmer] +=1;	
+	   monofreq[nucleotide] +=1;	
+	   //insert( const string& val );
+	   //it = find( const string& mer );
+       //it->second+=1;	   
+	}
+
+	vector<float> nucFrequency;
+	nucFrequency.push_back(float(monofreq["A"])/float(sequence.size()));
+	nucFrequency.push_back(float(monofreq["T"])/float(sequence.size()));
+	nucFrequency.push_back(float(monofreq["G"])/float(sequence.size()));
+	nucFrequency.push_back(float(monofreq["C"])/float(sequence.size()));
+    
+    std::vector<double> pEmitHomo(8,0.0);
+    std::vector<double> pEmitUnrelated(8,0.0); 
+    double s = 0.03028173853;
+    double gc_content = nucFrequency[2]+nucFrequency[3];
+    double at_content = nucFrequency[0]+nucFrequency[1];
+    double norm_factor = 0.0;
+    vector<int>& nulltest = std::vector <int> ();
+    //nulltest& = NULL;
+    cerr << nulltest.size();
+
+    cerr <<"G+C: " << fixed << setprecision(1) << gc_content*100.0 << "%" << endl;
+    cerr <<"A+T: " << fixed << setprecision(1) << at_content*100.0 << "%" << endl;
+
+    // Unrelated state emission probabilities
+    // use AT/GC background frequency instead of mononucleotide frequency since that is how it is described in the manuscript
+    pEmitUnrelated[0] = (at_content/2)*(at_content/2)+(at_content/2)*(at_content/2); // a:a, t:t
+    pEmitUnrelated[1] = (gc_content/2)*(gc_content/2)+(gc_content/2)*(gc_content/2); // c:c, g:g
+    pEmitUnrelated[2] = (at_content/2)*(gc_content/2)+(gc_content/2)*(at_content/2); //a:c, c:a, g:t, t:g
+    pEmitUnrelated[3] = pEmitUnrelated[2]; //a:g, g:a, c:t, t:c
+    pEmitUnrelated[4] = pEmitUnrelated[0]; //a:t, t:a 
+    pEmitUnrelated[5] = pEmitUnrelated[1]; //g:c, c:g 
+    
+    //NORMALIZE the values
+    norm_factor = (1-(0.0483+0.2535))/(pEmitUnrelated[0] + pEmitUnrelated[1] + pEmitUnrelated[2] + pEmitUnrelated[3] 
+                        + pEmitUnrelated[4] + pEmitUnrelated[5] + pEmitUnrelated[6]);
+    
+    pEmitUnrelated[0] = pEmitUnrelated[0]*norm_factor;
+    pEmitUnrelated[1] = pEmitUnrelated[1]*norm_factor;
+    pEmitUnrelated[2] = pEmitUnrelated[2]*norm_factor;
+    pEmitUnrelated[3] = pEmitUnrelated[3]*norm_factor;
+    pEmitUnrelated[4] = pEmitUnrelated[4]*norm_factor;
+    pEmitUnrelated[5] = pEmitUnrelated[5]*norm_factor;
+    pEmitUnrelated[6] = 0.0483;// gap open 
+    pEmitUnrelated[7] = 1 - (pEmitUnrelated[0] + pEmitUnrelated[1] + pEmitUnrelated[2] + pEmitUnrelated[3] 
+                        + pEmitUnrelated[4] + pEmitUnrelated[5] + pEmitUnrelated[6]);
+
+
+    // Homologous state emission probabilities 
+    // log2(Hxy/Uxy) = s(x,y)
+    // Hxy = 2^(s(x,y))*Uxy
+    // note: using log2, not ln!
+    pEmitHomo[0] = pow(2.0,91*s)*(at_content/2)*(at_content/2); // a:a, t:t
+    pEmitHomo[1] = pow(2.0,100*s)*(gc_content/2)*(gc_content/2); // c:c, g:g
+    pEmitHomo[2] = pow(2.0,-114*s)*(at_content/2)*(gc_content/2); //a:c, c:a, g:t, t:g
+    pEmitHomo[3] = pow(2.0,-31*s)*(at_content/2)*(gc_content/2); //a:g, g:a, c:t, t:c
+    pEmitHomo[4] = pow(2.0,-123*s)*(at_content/2)*(at_content/2); //a:t, t:a 
+    pEmitHomo[5] = pow(2.0,-125*s)*(gc_content/2)*(gc_content/2); //g:c, c:g 
+
+    //NORMALIZE the values
+    norm_factor = (1-(0.004461+0.050733))/(pEmitHomo[0] + pEmitHomo[1] + pEmitHomo[2] + pEmitHomo[3] 
+                    + pEmitHomo[4] + pEmitHomo[5] + pEmitHomo[6]);
+    
+    pEmitHomo[0] = pEmitHomo[0]*norm_factor;
+    pEmitHomo[1] = pEmitHomo[1]*norm_factor;
+    pEmitHomo[2] = pEmitHomo[2]*norm_factor;
+    pEmitHomo[3] = pEmitHomo[3]*norm_factor;
+    pEmitHomo[4] = pEmitHomo[4]*norm_factor;
+    pEmitHomo[5] = pEmitHomo[5]*norm_factor;
+    pEmitHomo[6] = 0.004461;// gap open
+    pEmitHomo[7] = 1 - (pEmitHomo[0] + pEmitHomo[1] + pEmitHomo[2] + pEmitHomo[3] 
+                        + pEmitHomo[4] + pEmitHomo[5] + pEmitHomo[6]);
+
 	//
 	// part 2, convert to match records
 	//
-	vector< UngappedMatchRecord* > match_record_list( seedml.size() );
+	vector< UngappedMatchRecord* > match_record_list(seedml.size());
 	size_t component_count = 0;
-	for( size_t mI = 0; mI < seedml.size(); ++mI )
+    bool all_components_overlap = false;
+    
+    bool prev_overlaps = false;
+    uint mi_multiplicity = 0;
+    uint mi2_multiplicity = 0;
+    uint num_components = 0;
+    int overlap_size = 1;
+    int hit_match =0;
+   
+    for( size_t mI = 0; mI < seedml.size(); ++mI )
 	{
 		UngappedMatchRecord tmp( seedml[mI]->SeqCount(), seedml[mI]->AlignmentLength() );
 		match_record_list[mI] = tmp.Copy();
@@ -1648,12 +1762,14 @@ int main( int argc, char* argv[] )
 			match_record_list[mI]->SetStart( seqI, seedml[mI]->Start( seqI ) );
 			match_record_list[mI]->SetLength( seedml[mI]->Length( seqI ), seqI );
 		}
-		component_count += seedml[mI]->SeqCount();
-		//match_record_list[mI]->
-		seedml[mI]->Free();
-	}
+        
+        component_count += seedml[mI]->SeqCount();
+        seedml[mI]->Free();
+    }
+    
 	
-	//
+   
+    //
 	// part 3, create a match position lookup table
 	//
 	vector< pair< gnSeqI, MatchPositionEntry > > mplt_sort_list( component_count );
@@ -1669,8 +1785,11 @@ int main( int argc, char* argv[] )
 	gnSeqI seq_length = seedml.seq_table[0]->length();
 	MatchPositionLookupTable match_pos_lookup_table( seq_length+1, make_pair( (UngappedMatchRecord*)NULL, 0 ) );
 	for( size_t i = 0; i < mplt_sort_list.size(); ++i )
+    {
+        //cerr << mplt_sort_list[i].first << endl;
 		match_pos_lookup_table[ mplt_sort_list[i].first ] = mplt_sort_list[i].second;
 
+    }
 
 	//
 	// part 4, create a procrastination queue
@@ -1857,7 +1976,7 @@ int main( int argc, char* argv[] )
 				// only extend if two matches are chained if two-hits == true
                 // its fast enough now that printing to screen actually slows things down...
 				if( extend_chains && (!two_hits || (two_hits && M_i->chained_matches.size() > 1 )))
-					rcode = ExtendMatch(M_i, seqtable, pss, w, direction, novel_matches, pGoHomo, pGoUnrelated);
+					rcode = ExtendMatch(M_i, seqtable, pss, w, direction, novel_matches, pGoHomo, pGoUnrelated, pEmitHomo, pEmitUnrelated);
                 
 				if (rcode == FAILED || rcode == FIXME || novel_matches.size() == 0)
 				{
@@ -1897,8 +2016,11 @@ int main( int argc, char* argv[] )
 	                    std::sort( mplt_sort_list.begin(), mplt_sort_list.end() );
                         //clobber the existing left end in the MPLT
                         //but what if we are replacing something we shouldn't...
+                        if (1)
+                        {
                         for( size_t i = 0; i < mplt_sort_list.size(); ++i)
                             match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
+                        }
                         //now, during the subsequent call to neighborhoodListLookup(), we should
                         //find the novel homologous region and process it accordingly...
                     }
