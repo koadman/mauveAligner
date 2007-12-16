@@ -1698,10 +1698,11 @@ int main( int argc, char* argv[] )
     pEmitUnrelated[4] = pEmitUnrelated[0]; //a:t, t:a 
     pEmitUnrelated[5] = pEmitUnrelated[1]; //g:c, c:g 
     
-    //NORMALIZE the values
+    
     norm_factor = (1-(0.0483+0.2535))/(pEmitUnrelated[0] + pEmitUnrelated[1] + pEmitUnrelated[2] + pEmitUnrelated[3] 
                         + pEmitUnrelated[4] + pEmitUnrelated[5] + pEmitUnrelated[6]);
-    
+
+    //NORMALIZE the values
     pEmitUnrelated[0] = pEmitUnrelated[0]*norm_factor;
     pEmitUnrelated[1] = pEmitUnrelated[1]*norm_factor;
     pEmitUnrelated[2] = pEmitUnrelated[2]*norm_factor;
@@ -1712,22 +1713,27 @@ int main( int argc, char* argv[] )
     pEmitUnrelated[7] = 1 - (pEmitUnrelated[0] + pEmitUnrelated[1] + pEmitUnrelated[2] + pEmitUnrelated[3] 
                         + pEmitUnrelated[4] + pEmitUnrelated[5] + pEmitUnrelated[6]);
 
+    //USE PRE-NORMALIZED VALUES!!
+    double H_AA = 0.4786859804;		//a:a, t:t
+    double H_CC = 0.4746499983;		//c:c, g:g
+    double H_AC = 0.005498448862;	//a:c, c:a, g:t, t:g
+    double H_AG = 0.03221280788;	//a:g, g:a, c:t, t:c
+    double H_AT = 0.004539270118;	//a:t, t:a
+    double H_CG = 0.004349958385;	//g:c, c:g
 
     // Homologous state emission probabilities 
-    // log2(Hxy/Uxy) = s(x,y)
-    // Hxy = 2^(s(x,y))*Uxy
-    // note: using log2, not ln!
-    pEmitHomo[0] = pow(2.0,91*s)*(at_content/2)*(at_content/2); // a:a, t:t
-    pEmitHomo[1] = pow(2.0,100*s)*(gc_content/2)*(gc_content/2); // c:c, g:g
-    pEmitHomo[2] = pow(2.0,-114*s)*(at_content/2)*(gc_content/2); //a:c, c:a, g:t, t:g
-    pEmitHomo[3] = pow(2.0,-31*s)*(at_content/2)*(gc_content/2); //a:g, g:a, c:t, t:c
-    pEmitHomo[4] = pow(2.0,-123*s)*(at_content/2)*(at_content/2); //a:t, t:a 
-    pEmitHomo[5] = pow(2.0,-125*s)*(gc_content/2)*(gc_content/2); //g:c, c:g 
+    pEmitHomo[0] = (at_content/0.525)*H_AA; // a:a, t:t
+    pEmitHomo[1] = (gc_content/0.525)*H_CC; // c:c, g:g
+    pEmitHomo[2] = H_AC; //a:c, c:a, g:t, t:g
+    pEmitHomo[3] = H_AG; //a:g, g:a, c:t, t:c
+    pEmitHomo[4] = (at_content/0.475)*H_AT; //a:t, t:a 
+    pEmitHomo[5] = (gc_content/0.475)*H_CG; //g:c, c:g 
 
-    //NORMALIZE the values
+    
     norm_factor = (1-(0.004461+0.050733))/(pEmitHomo[0] + pEmitHomo[1] + pEmitHomo[2] + pEmitHomo[3] 
                     + pEmitHomo[4] + pEmitHomo[5] + pEmitHomo[6]);
     
+    //NORMALIZE the values
     pEmitHomo[0] = pEmitHomo[0]*norm_factor;
     pEmitHomo[1] = pEmitHomo[1]*norm_factor;
     pEmitHomo[2] = pEmitHomo[2]*norm_factor;
