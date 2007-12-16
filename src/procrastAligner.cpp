@@ -1184,7 +1184,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 	if( direction == -1 )
 		mlist.push_back(rightside.Copy());
  
-//  createInterval
+//  createIntervald
 	Interval iv;
 	iv.SetMatches(mlist);
 	CompactGappedAlignment<> tmp_cga;
@@ -1683,9 +1683,6 @@ int main( int argc, char* argv[] )
     double gc_content = nucFrequency[2]+nucFrequency[3];
     double at_content = nucFrequency[0]+nucFrequency[1];
     double norm_factor = 0.0;
-    vector<int>& nulltest = std::vector <int> ();
-    //nulltest& = NULL;
-    cerr << nulltest.size();
 
     cerr <<"G+C: " << fixed << setprecision(1) << gc_content*100.0 << "%" << endl;
     cerr <<"A+T: " << fixed << setprecision(1) << at_content*100.0 << "%" << endl;
