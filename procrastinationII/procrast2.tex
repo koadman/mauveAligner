@@ -135,8 +135,6 @@ described by the authors\cite{ref-procrast}. Steps 2-7 are applied
 repeatedly to seeds identified in step 1 to produce local multiple
 alignments of all homologous nucleotides in the input sequence.
 
-\textbf{FIXME: WHAT ABOUT BAND-AID FILTER?}
-
 \begin{figure}[p]
 \begin{center}
 \epsfig{file=./figures/extension.eps,width=4.1in}
@@ -164,7 +162,7 @@ extended, we return to step (4) for another round of chaining.}
 \label{fig-main}
 \end{figure}
 
-\subsection{Extracting multi-matches from the input sequence}
+\subsection{Chaining \& Extracting multi-matches from the input sequence}
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
 defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all
 significant local multiple alignments on subsequences of
@@ -185,7 +183,6 @@ except for the identity case when $i=j$.  This constraint has been
 referred to by others as \textit{consistency} and
 \textit{transitivity}\cite{ref-transitivity} of matches.
 
-\subsection{Creating chains of multi-matches}
 Once a list of multi-matches has been generated, we employ an
 efficient chaining and filtration algorithm to identify overlapping
 and nested chains of multi-matches\cite{ref-procrast}. In order to
@@ -205,10 +202,7 @@ include the entire region covered by the linked superset match and
 thus eliminate the need to re-examine sequence already covered by a
 previously chained match.
 
-\textbf{FIXME: MAYBE SHOULD REDUCE \& MERGE SECTIONS 2.1 AND 2.2 INTO 1 SECTION?}
-
 \subsection{Gapped extension of high-scoring chains}
-
 After chaining a multi-match $M_i$, we perform gapped alignment on all
 collinear regions located between two adjacent components to generate
 unextended local multiple alignments. We first evaluate the chain to
@@ -251,11 +245,11 @@ sequence. We have configured a hidden Markov model (Figure
 consists of two hidden states, Homologous and Unrelated. The
 observable states are the pairwise alignment columns, which are all
 possible pairs in $\texttt{{\{A,G,C,T,-\}}}$ with strand and species
-symmetry, i.e. \texttt{AG=GA=TC=CT}.  The emission probabilities for
+symmetry, i.e. \texttt{AG=GA=TC=CT}. The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD
 substitution matrix presented by Chiaromonte \textit{et al}\cite{hoxd}.
 We solved for the emission frequencies in the
-Homologous and Unrelated state using the same equation used to
+homologous and unrelated state using the same equation used in to
 calculate the values of the HOXD substitution matrix on 47.5\%G+C
 content sequence\cite{hoxd}:
 \begin{equation}
@@ -263,52 +257,12 @@ s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 \end{equation}
 {w}here $p(x,y)$ is the fraction of the observed aligned pairs of
 nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
-$q_{2}(x)$ denote the background frequencies of $x$ and $y$,
+$q_{2}(y)$ denote the background frequencies of $x$ and $y$,
 respectively. Chiaramonte \textit{et al.} scaled the resulting
-$s(x,y)$ values by an unreported value $\psi$ so the largest was 100,
-with the rest rounded to the nearest integer.  Given that the training
-data has $47.5\%$~$G+C$ content and considering strand and species
-symmetry, we can compute emission frequencies for the Unrelated state
-of our HMM:
-\begin{center}$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})
-= 0.06890625$ \\
-$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) =
-0.05640625$ \\
-$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) =
-0.06234375$ \\
-$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) =
-0.06234375$ \\
-\end{center}
+$s(x,y)$ values by $\psi=32.5421$ so the largest was 100,
+with the rest rounded to the nearest integer.
 
-Where $f_{GC}=0.475$ and $f_{AT}=0.525$ are background frequencies of
-G/C and A/T, respectively.  Then we derive emission probabilities for
-the Homologous state as, for example:
-\begin{equation}
-\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
-\end{equation}
-where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follows:
-\begin{center}
-$\log_{2}\bigg(\frac{H_{AC}}{U_{AC}}\bigg) = \frac{-114}{\psi},$
-$\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = \frac{-31}{\psi}$ \\
-$\log_{2}\bigg(\frac{H_{AT}}{U_{AC}}\bigg) = \frac{-123}{\psi},$
-$\log_{2}\bigg(\frac{H_{CG}}{U_{CC}}\bigg) = \frac{-125}{\psi}$ \\
-$\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \ \ \ \frac{91}{\psi},$
-$\log_{2}\bigg(\frac{H_{CC}}{U_{CC}}\bigg) = \ \ \ \frac{100}{\psi}$ \\
-\end{center}
-
-The system of six equations has seven free variables.  Moreover, the $H_{xy}$ must sum to 1 to make a probability distribution:
-\begin{equation}
-H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
-\end{equation}
-%$0.03072937146$
-%$32.54215601$
-We can solve the above six equations for $H_{xy}$ and substitute the
-resulting expressions in to the normalizing equation to solve for
-$\psi$. For the HOXD matrix the scaling factor is $\psi=32.5421$. Given
-$\psi$, we can calculate values for all $H_{xy}$.
-
-Following this procedure, HMM probabilities can be derived using any
-strand/species symmetric nucleotide substitution matrix. However,
+HMM probabilities can be derived using any strand/species symmetric nucleotide substitution matrix. However,
 genomes can range in G+C content from 30-75\%, and at these extremes
 our HMM is not likely to perform very well.  To account for this, we
 have developed a method to adapt an arbitrary substitution matrix
@@ -487,7 +441,7 @@ further details on boundary under/overpredictions.
 
 \begin{figure}[t]
 \centering
-\epsfig{file=./figures/boundary.eps,width=4.0in}
+\epsfig{file=./figures/boundary.eps,width=4.6in}
 \caption{\textbf{Boundary predictions}. When performing boundary prediction accuracy, several cases are 
 taken into account: (1) \emph{Boundary underprediction}. Local multiple alignment \emph{a} underpredicts the true boundaries
 of component \textbf{1} of the interspersed repeat. This underprediction is penalized by recording a negative penalty for the difference
@@ -584,7 +538,7 @@ daunting challenge, although fast approximation methods for pairwise
 alignments have shown promise\cite{repseek} and potentially can be
 extended to multiple alignments\cite{ref-related1}.
 \begin{figure}[t!]
-\centering \epsfig{file=./figures/alu_align.eps,width=5.0in}
+\centering \epsfig{file=./figures/alu_align.eps,width=4.8in}
 \vspace{-1.0cm}
 \caption{Partial alignment of Alu repeat found in the \emph{H. sapiens} BAC
 clone RP11-355H10 (Accession AC010145.10). Each row represents an
