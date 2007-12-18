@@ -1,0 +1,69 @@
+%\documentclass[draft]{ws-procs9x6}
+\documentclass{llncs}
+\usepackage{color}
+\usepackage{epsfig}
+\usepackage{times}
+\usepackage{url}
+\begin{document}
+\chapter*{Supplementary Material}
+\section*{Calculating the Chiaromonte \textit{et al.} scaling factor}
+The emission probabilities for
+each possible pair of aligned nucleotides were extracted from the HOXD
+substitution matrix presented by Chiaromonte \textit{et al}\cite{hoxd}.
+We solved for the emission frequencies in the
+Homologous and Unrelated state using the same equation used to
+calculate the values of the HOXD substitution matrix on 47.5\%G+C
+content sequence\cite{hoxd}:
+\begin{equation}
+s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
+\end{equation}
+{w}here $p(x,y)$ is the fraction of the observed aligned pairs of
+nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
+$q_{2}(x)$ denote the background frequencies of $x$ and $y$,
+respectively. Chiaramonte \textit{et al.} scaled the resulting
+$s(x,y)$ values by an unreported value $\psi$ so the largest was 100,
+with the rest rounded to the nearest integer.  Given that the training
+data has $47.5\%$~$G+C$ content and considering strand and species
+symmetry, we can compute emission frequencies for the Unrelated state
+of our HMM:
+\begin{center}$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})
+= 0.06890625$ \\
+$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) =
+0.05640625$ \\
+$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) =
+0.06234375$ \\
+$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) =
+0.06234375$ \\
+\end{center}
+
+Where $f_{GC}=0.475$ and $f_{AT}=0.525$ are background frequencies of
+G/C and A/T, respectively.  Then we derive emission probabilities for
+the Homologous state as, for example:
+\begin{equation}
+\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
+\end{equation}
+where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follows:
+\begin{center}
+$\log_{2}\bigg(\frac{H_{AC}}{U_{AC}}\bigg) = \frac{-114}{\psi},$
+$\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = \frac{-31}{\psi}$ \\
+$\log_{2}\bigg(\frac{H_{AT}}{U_{AC}}\bigg) = \frac{-123}{\psi},$
+$\log_{2}\bigg(\frac{H_{CG}}{U_{CC}}\bigg) = \frac{-125}{\psi}$ \\
+$\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \ \ \ \frac{91}{\psi},$
+$\log_{2}\bigg(\frac{H_{CC}}{U_{CC}}\bigg) = \ \ \ \frac{100}{\psi}$ \\
+\end{center}
+
+The system of six equations has seven free variables.  Moreover, the $H_{xy}$ must sum to 1 to make a probability distribution:
+\begin{equation}
+H_{AA} + H_{AC} + H_{AG} + H_{AT} + H_{CC} + H_{CG} = 1
+\end{equation}
+%$0.03072937146$
+%$32.54215601$
+We can solve the above six equations for $H_{xy}$ and substitute the
+resulting expressions in to the normalizing equation to solve for
+$\psi$. For the HOXD matrix the scaling factor is $\psi=32.5421$. Given
+$\psi$, we can calculate values for all $H_{xy}$.
+
+\bibliographystyle{splncs}
+\bibliography{procrastination}
+\end{document}
+
