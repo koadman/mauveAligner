@@ -130,7 +130,7 @@ seeds, (3) multiple alignment of regions between chained seeds, (4)
 gapped extension of seed chains (5) detection of unrelated regions
 using a hidden Markov model, (6) application of transitive homology
 relationships, and (7) unalignment of any unrelated sequence to
-produce final local multiple alignment.  Steps 1-2 have been previously 
+produce final local multiple alignment.  Steps 1-2 have been previously
 described by the authors\cite{ref-procrast}. Steps 2-7 are applied
 repeatedly to seeds identified in step 1 to produce local multiple
 alignments of all homologous nucleotides in the input sequence.
@@ -295,12 +295,12 @@ in the sequence. Using this assumption we are able to adapt the
 Homologous state emission probabilities as follows:
 \begin{center}
 $H^{'}_{AG}=H_{AG}$, \ \ \ $H^{'}_{AC}=H_{AC}$ \\
-$H^{'}_{AA}=(\frac{f^{'}_{AT}}{f_{AT}})H_{AA}$, \ \ \ \ 
+$H^{'}_{AA}=(\frac{f^{'}_{AT}}{f_{AT}})H_{AA}$, \ \ \ \
 $H^{'}_{AT}=(\frac{f^{'}_{AT}}{f_{AT}})H_{AT}$\\
-$H^{'}_{CC}=(\frac{f^{'}_{GC}}{f_{GC}})H_{CC}$, \ \ \ \ 
+$H^{'}_{CC}=(\frac{f^{'}_{GC}}{f_{GC}})H_{CC}$, \ \ \ \
 $H^{'}_{CG}=(\frac{f^{'}_{GC}}{f_{GC}})H_{CG}$\\
 \end{center}
-where $H^{'}_{xy}$ are the $H_{xy}$ values adapted to the input genome's G+C content. 
+where $H^{'}_{xy}$ are the $H_{xy}$ values adapted to the input genome's G+C content.
 
 %more description need here? to supplemental material?
 \begin{comment}
@@ -436,13 +436,13 @@ simulated repeat family and the other nucleotide was incorrectly
 aligned. We calculate the sum-of-airs boundary prediction accuracy by
 computing all component pair scores by recording the over/under prediction
 error for the left/right end of each pair of repeat components. Overpredictions get a positive score, underpredictions
-a negative score, and perfect boundaries receive a 0 score. See Figure~\ref{fig-overunder} for 
+a negative score, and perfect boundaries receive a 0 score. See Figure~\ref{fig-overunder} for
 further details on boundary under/overpredictions.
 
 \begin{figure}[t]
 \centering
 \epsfig{file=./figures/boundary.eps,width=4.6in}
-\caption{\textbf{Boundary predictions}. When performing boundary prediction accuracy, several cases are 
+\caption{\textbf{Boundary predictions}. When performing boundary prediction accuracy, several cases are
 taken into account: (1) \emph{Boundary underprediction}. Local multiple alignment \emph{a} underpredicts the true boundaries
 of component \textbf{1} of the interspersed repeat. This underprediction is penalized by recording a negative penalty for the difference
 between the true left/right end boundaries and the calculated boundaries predicted by the local multiple alignment. (2) \emph{Boundary overprediction}. Local multiple alignment \emph{b} overpredicts the true boundaries of component \textbf{2} of the interspersed repeat. This underprediction is penalized by recording a positive penalty for the difference between the predicted calculated boundaries and the true left/right end boundaries. (3) \emph{Boundary under/overprediction}. Local multiple alignment \emph{c} overlaps repeat component \textbf{3}, and as a result, both under and overpredicts the true boundaries of this component of interspersed repeat. (4) \emph{Correct Boundary prediction}. Local multiple alignment \emph{d} correctly identifies the true right and/or left boundaries of repeat component \textbf{4}. This correct boundary prediction is not penalized (penalty=0).  }
@@ -454,7 +454,7 @@ hybrid simulated/real dataset.  Parameters used for each program were
 configured to optimize each program's chance of accurately aligning
 each pattern and were configured as
 follows:\\
-\texttt{procrastAligner} \texttt{--z=15 --w=20}, \ \ 
+\texttt{procrastAligner} \texttt{--z=15 --w=20}, \ \
 \texttt{eulerAlign} \texttt{-k 15 -l -i 1000 -v}
 Simulations for each of the 200 combinations of branch length and
 multiplicity were replicated three times and alignments generated in
@@ -498,18 +498,12 @@ OVERPREDICTIONS IN ARTIFICIALLY GENERATED DNA SEQUENCE?}
 \begin{figure}[t!]
 \centering
 \subfigure[]{
-\epsfig{file=./figures/procrast_overprediction_fig.ps,width=2.3in}
+\epsfig{file=./figures/procrast_boundary_fig.ps,width=2.325in}
 \label{fig:subfig1}}
 \subfigure[]{
-\epsfig{file=./figures/euler_overprediction_fig.ps,width=2.3in}
+\epsfig{file=./figures/euler_boundary_fig.ps,width=2.325in}
 \label{fig:subfig2}}
-\subfigure[]{
-\psfig{file=./figures/procrast_underprediction_fig.ps,width=2.3in}
-\label{fig:subfig3}}
-\subfigure[]{
-\epsfig{file=./figures/euler_underprediction_fig.ps,width=2.3in}
-\label{fig:subfig4}}
-\caption{\textbf{Boundary prediction performance}. Sum-of-pairs boundary prediction performance of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity. Figures \subref{fig:subfig1} and \subref{fig:subfig2} show the overprediction performance, while \subref{fig:subfig3} and \subref{fig:subfig4} show the underprediction performance of each method. The figure is presented as a collection of 25 box and whiskers plots using the scoring metric detailed in Section~\ref{sec:metrics}. The x-axis label is the multiplicity of the interspersed repeat in log-scale. i.e. 1 = $2^{1}$ = multiplicity 2, 8 = $2^{8}$ = multiplicity 256. The y-axis label is the prediction error in log-scale. Boundary predictions at 0 represent correctly identified repeat boundaries (see figure~\ref{fig-overunder}).The increasing mutation rates in intervals of 0.01 are shown immediately above each individual box and whiskers plot. In general, \texttt{procrastAligner} more accurately identifies the true interspersed repeat boundaries.}
+\caption{\textbf{Boundary prediction performance}. Sum-of-pairs boundary prediction performance of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity. Each figure is presented as a collection of 25 individual box-and-whiskers plots using the scoring metric detailed in Section~\ref{sec:metrics}. The  mutation rates increase in intervals of 0.01 and are shown immediately above each individual box-and-whiskers plots. Thus, each box-and-whiskers plot quantifies the boundary prediction accuracy of each method for a specific mutation rate. The x-axis label is the multiplicity of the interspersed repeat in log-scale. i.e. 1 = $2^{1}$ = multiplicity 2, 8 = $2^{8}$ = multiplicity 256. The y-axis label is the prediction error in log-scale. Boundary predictions at 0 represent correctly identified repeat boundaries, predictions greater than 0 represent overpredictions, and predictions less than 0 represent underpredictions (see figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} more accurately identifies the true interspersed repeat boundaries.}
 \label{fig-boundary}
 \end{figure}
 
@@ -565,7 +559,7 @@ DBI-0630765. TJT was supported by Spanish Ministry MECD Grant
 TIN2004-03382 and AGAUR Training Grant FI-IQUC-2005.
 
 
-\bibliographystyle{ws-procs9x6}
+\bibliographystyle{splncs}
 \bibliography{procrastination}
 
 \end{document}
