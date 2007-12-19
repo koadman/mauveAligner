@@ -16,7 +16,7 @@
 %
 \institute{ Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain\\
 \email{treangen@lsi.upc.edu},\\
-\and Institute for Molecular Bioscience, University of Queensland, Brisbane, Australia\\
+\and Institute for Molecular Bioscience, The University of Queensland, Brisbane, Australia\\
 \email{a.darling@imb.uq.edu.au},\\
  }
 
@@ -34,17 +34,17 @@ propose a novel method that couples a gapped extension heuristic with
 a previously described efficient filtration method for local multiple
 alignment.  During gapped extension, we use the MUSCLE implementation
 of progressive multiple alignment with iterative refinement.  The
-resulting gapped extensions are global multiple alignments and
-potentially contain alignments of unrelated sequence.  We detect and
+resulting gapped extensions potentially contain alignments of 
+unrelated sequence.  We detect and
 remove such undesirable alignments using a hidden Markov model to
-predict the posterior probability of unrelated sequence. The HMM
+predict the posterior probability of homology. The HMM
 emission frequencies for nucleotide substitutions can be derived from
 any strand/species symmetric nucleotide substitution matrix, and we
 have developed a method to adapt an arbitrary substitution matrix
 (i.e. HOXD) to organisms with different G+C content. We evaluate the
 performance of our method and previous approaches on a hybrid dataset
 of real genomic DNA with simulated interspersed repeats.  Our method
-compares favorably to existing methods in terms of sensitivity,
+outperforms existing methods in terms of sensitivity,
 positive predictive value, and localizing boundaries of homology.  The
 described methods have been implemented in the free, open-source
 \texttt{procrastAligner} software, available from: \\
@@ -56,7 +56,7 @@ described methods have been implemented in the free, open-source
 
 \section{Introduction}
 The importance of accurate homology identification to comparative
-genomics should not be underestimated\cite{Kumar07}. To date, pairwise
+genomics can not be overestimated\cite{Kumar07}. To date, pairwise
 local sequence alignment
 methods\cite{ref-blastz,ref-ssearch,ref-pattern} have been the
 prevailing technique to identify homologous nucleotides.  When more
@@ -229,17 +229,18 @@ keeping the alignment search space tractable.
 \centering \epsfig{file=./figures/hmm.eps,width=4.6in}
 \caption{Hidden Markov model used to detect pairwise alignments of unrelated
 sequence. The HMM has states which model alignment columns containing
-homologous and unrelated sequence. The input genome for this example has $47.5\%$~$G+C$ content. Emission probabilities are extracted from the HOXD substitution matrix and correspond to alignment
+homologous and unrelated sequence. Emission probabilities are extracted from the HOXD substitution matrix and correspond to alignment
 columns, for example \texttt{AA} indicates A aligned to A.  gO
 indicates gap-open and gE gap extend. Alignment columns are treated as
 strand-symmetric, so that AC also indicates CA and the reverse
-complements TG and GT.}
+complements TG and GT.  The emission probabilities are adjusted to the GC content of the input genome
+as described in the test.  The values shown here correspond to a 47.5\% GC genome.}
 \label{fig-hmm}\vspace{-0.2cm}
 \end{figure}
 The MUSCLE alignment software dutifully reports the highest scoring
 global multiple alignment of input sequences, regardless of whether
 they are related by common ancestry. As a consequence of the gapped
-extension process, it is likely that we forcibly align unrelated
+extension process, it is likely that our method forcibly aligns unrelated
 sequence. We have configured a hidden Markov model (Figure
 ~\ref{fig-hmm}) to detect alignments of unrelated sequence. The HMM
 consists of two hidden states, Homologous and Unrelated. The
@@ -343,7 +344,7 @@ reported in Figure~\ref{fig-hmm}.
 
 Using the empirically derived transition and emission probabilities,
 we apply the posterior HMM decoder implemented in Gerton Lunter's
-HMMoC software\cite{hmmoc} to compute the posterior probability that
+HMMoC software\cite{Lunter2007} to compute the posterior probability that
 each alignment column represents homologous sequence.  Columns with a
 p.p. below 0.5 are considered to be unrelated.  We then apply the
 transitive homology principle to our predictions, resulting in a final
@@ -379,12 +380,12 @@ at higher mutation rates and multiplicities than \texttt{eulerAlign}.}
 We have previously demonstrated the sensitivity of our chaining method
 in finding Alu repeats in the human
 genome\cite{ref-procrast}. Figure~\ref{fig-align} shows part of a
-local multiple alignment of one such ALU family as generated with
+local multiple alignment of one such Alu family as generated with
 \texttt{procrastAligner}. To highlight the benefits of our proposed
 heuristic for gapped extension, we compare ~\texttt{procrastAligner}'s
 performance to the Eulerian path method for local multiple alignment
 as implemented by \texttt{eulerAlign}\cite{ref-related1}. The Eulerian
-path method uses a \textit{de Bruijn} graph for filtration, but goes
+path method uses a \textit{de Bruijn} graph for filtration, and goes
 beyond filtration to compute gapped alignments using banded dynamic
 programming.  To our knowledge, \texttt{procrastAligner} and
 \texttt{eulerAlign} represent the only two automated methods to
@@ -393,15 +394,16 @@ construct local multiple alignments directly from genomic DNA.
 \subsection{Simulating interspersed repeats}
 We evaluate accuracy of each method when aligning simulated repeat
 families that have been inserted into the complete genome of
-\emph{Mycoplasma genitalium}. \emph{M. genitalium} has been recognized
-as a complex and repeat-rich genome, presenting a biologically
+\emph{Mycoplasma genitalium}. The \emph{M. genitalium} genome has been recognized
+as complex and repeat-rich, presenting a biologically
 relevant and challenging example to evaluate alignment
-methods\cite{ref-mycoplasma}. We simulated repeat families with 8
-multiplicities ranging between 2 and 256 ($x$-axis in
+methods\cite{ref-mycoplasma}. We simulated repeat families of 8
+different multiplicities ranging between 2 and 256 ($x$-axis in
 Figure~\ref{fig-results}).  Each repeat copy has an average length
 based on its family's multiplicity
 ($length=\frac{7680}{multiplicity}$), thus high copy-number repeats
-are short.  Evolution of repeat families was simulated on a star tree
+are short.  Evolution of repeat families was simulated on as a marked 
+Poisson process on a star tree
 topology.  The branch lengths were varied between 0 and 24 ($y$-axis
 in Figure~\ref{fig-results}), with the nucleotide substitution rate
 fixed at 0.09 per unit time, and the indel rate fixed at 0.01 per
@@ -413,7 +415,7 @@ according to a marked Poisson process.  Each family's ancestral
 sequence was randomly generated using nucleotide frequencies equal to
 the composition of \emph{Mycoplasma genitalium}
 ($A=0.34,T=0.34,G=0.16,C=0.16$). Insertion sites for repeat copies
-were chosen uniformly random in the \textit{M. genitalium} genome,
+were chosen uniformly at random in the 580kb \textit{M. genitalium} genome,
 allowing tandem repeats but prohibiting mosaic repeats.
 
 \subsection{Alignment accuracy metrics}
@@ -421,7 +423,7 @@ allowing tandem repeats but prohibiting mosaic repeats.
 We used each program to find local multiple alignments in each of the
 200 modified \emph{M. genitalium} genomes and recorded alignment
 accuracy as follows. We calculated sum-of-pairs nucleotide sensitivity
-as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}$, where
+as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}}$, where
 $\mathrm{TP}$ is the number of aligned nucleotide pairs in the
 program's output which are also aligned in the simulated repeat
 family.  $\mathrm{FN}$ is the number of aligned nucleotide pairs in
@@ -433,7 +435,7 @@ positive predictive value (PPV) as $\frac{\mathrm{TP}}{\mathrm{TP} +
 $\mathrm{FP}$ is the total number of nucleotide pairs from the
 program's output where one of the nucleotides are part of the
 simulated repeat family and the other nucleotide was incorrectly
-aligned. We calculate the sum-of-airs boundary prediction accuracy by
+aligned. We calculate the all-pairs boundary prediction accuracy by
 computing all component pair scores by recording the over/under prediction
 error for the left/right end of each pair of repeat components. Overpredictions get a positive score, underpredictions
 a negative score, and perfect boundaries receive a 0 score. See Figure~\ref{fig-overunder} for
@@ -456,6 +458,7 @@ each pattern and were configured as
 follows:\\
 \texttt{procrastAligner} \texttt{--z=15 --w=20}, \ \
 \texttt{eulerAlign} \texttt{-k 15 -l -i 1000 -v}
+\linebreak
 Simulations for each of the 200 combinations of branch length and
 multiplicity were replicated three times and alignments generated in
 parallel using a 156 node compute cluster.  Results of the experiments
@@ -478,7 +481,7 @@ In addition to sensitivity and PPV benchmarks, it is also important to
 asses the boundary prediction accuracy (i.e. how well the local
 multiple aligner can recover the true boundaries of interspersed
 repeats). Figure~\ref{fig-boundary} illustrates the ability of each
-program to accurately localize the known boundaries of interspersed
+program to accurately localize the known boundaries of the simulated interspersed
 repeats. We separate underpredictions from overpredictions in the
 analysis since the metric is interpreted differently for each of these
 cases. Poor boundary accuracy due to underpredictions speaks more
@@ -488,9 +491,9 @@ seed matches or chained matches due to several possible reasons. Poor
 boundary accuracy due to overpredictions signal alignment of Unrelated
 sequence. From Figure~\ref{fig-boundary} we see that while both
 programs have similar underprediction performance for low mutation
-rates, \emph{procrastAligner} performs notably better at higher
+rates, \texttt{procrastAligner} performs notably better at higher
 mutation rates. And for overpredictions, overall
-\emph{procrastAligner} shows better performance, although it is
+\texttt{procrastAligner} shows better performance, although it is
 evident that overprediction performance represents an area for
 improvement for both programs. \textbf{FIXME: ADD REFERENCE TO
 OVERPREDICTIONS IN ARTIFICIALLY GENERATED DNA SEQUENCE?}
@@ -498,17 +501,17 @@ OVERPREDICTIONS IN ARTIFICIALLY GENERATED DNA SEQUENCE?}
 \begin{figure}[t!]
 \centering
 \subfigure[]{
-\epsfig{file=./figures/procrast_boundary_fig.ps,width=2.325in}
+\epsfig{file=./figures/procrast_boundary_fig.eps,width=2.325in}
 \label{fig:subfig1}}
 \subfigure[]{
-\epsfig{file=./figures/euler_boundary_fig.ps,width=2.325in}
+\epsfig{file=./figures/euler_boundary_fig.eps,width=2.325in}
 \label{fig:subfig2}}
-\caption{\textbf{Boundary prediction performance}. Sum-of-pairs boundary prediction performance of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity. Each figure is presented as a collection of 25 individual box-and-whiskers plots using the scoring metric detailed in Section~\ref{sec:metrics}. The  mutation rates increase in intervals of 0.01 and are shown immediately above each individual box-and-whiskers plots. Thus, each box-and-whiskers plot quantifies the boundary prediction accuracy of each method for a specific mutation rate. The x-axis label is the multiplicity of the interspersed repeat in log-scale. i.e. 1 = $2^{1}$ = multiplicity 2, 8 = $2^{8}$ = multiplicity 256. The y-axis label is the prediction error in log-scale. Boundary predictions at 0 represent correctly identified repeat boundaries, predictions greater than 0 represent overpredictions, and predictions less than 0 represent underpredictions (see figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} more accurately identifies the true interspersed repeat boundaries.}
+\caption{\textbf{Boundary prediction performance}. All-pairs boundary prediction accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity.  Accuracy on each combination is presented as a box-and-whiskers plot using the scoring metric detailed in Section~\ref{sec:metrics}.  Branch lengths range from 0 to 0.24 and increase by intervals of 0.01.  The $x$-axis label represents the multiplicity of the interspersed repeat in log$_2$-scale. i.e. axis label 8 indicates $2^{8}$ = multiplicity 256. The $y$-axis label is the prediction error in log$_2$-scale nucleotides. Values at 0 represent correctly identified repeat boundaries, values greater than 0 represent overpredictions, and values less than 0 represent underpredictions (see Figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} identifies the true interspersed repeat boundaries more accurately than \texttt{eulerAlign}.}
 \label{fig-boundary}
 \end{figure}
 
 \section{Discussion}
-We have presented a sensitive and efficient heuristic for local
+We have presented a sensitive and efficient gapped-extension heuristic for local
 multiple alignment. We have extended our previous results by
 converting chains of ungapped multi-matches into gapped local multiple
 alignments. Our method is based around an efficient heuristic for
@@ -530,16 +533,16 @@ insignificant local alignments will likely be required.  Exact
 computation of $p$-values for local multiple alignments remains a
 daunting challenge, although fast approximation methods for pairwise
 alignments have shown promise\cite{repseek} and potentially can be
-extended to multiple alignments\cite{ref-related1}.
+extended to multiple alignments\cite{ref-related1,Prakash2005}.
 \begin{figure}[t!]
 \centering \epsfig{file=./figures/alu_align.eps,width=4.8in}
 \vspace{-1.0cm}
-\caption{Partial alignment of Alu repeat found in the \emph{H. sapiens} BAC
+\caption{Partial view of an Alu repeat alignment found by procrastAligner in the \emph{H. sapiens} BAC
 clone RP11-355H10 (Accession AC010145.10). Each row represents an
-aligned ALU. Highlighted columns indicate conserved sequence among all
-all 16 copies of the ALU. Start positions are shown to the left, negative
+aligned Alu. Highlighted columns indicate conserved sequence among all
+16 copies of the Alu. Start positions are shown to the left, negative
 values indicate complement strand.  Local multiple alignment was
-generated with \texttt{procrastAlign} with parameters: \texttt{--z=9
+generated with \texttt{procrastAligner} with parameters: \texttt{--z=9
 --w=50}.  }
 \label{fig-align}
 \end{figure}

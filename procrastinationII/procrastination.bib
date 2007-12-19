@@ -87,8 +87,6 @@
   year = 2005 }
 
 @article{ref-pattern,
-    abstract = {MOTIVATION: Genomics and proteomics studies routinely depend on homology searches based on the strategy of finding short seed matches which are then extended. The exploding genomic data growth presents a dilemma for DNA homology search techniques: increasing seed size decreases sensitivity whereas decreasing seed size slows down computation. RESULTS: We present a new homology search algorithm 'PatternHunter' that uses a novel seed model for increased sensitivity and new hit-processing techniques for significantly increased speed. At Blast levels of sensitivity, PatternHunter is able to find homologies between sequences as large as human chromosomes, in mere hours on a desktop. AVAILABILITY: PatternHunter is available at http://www.bioinformaticssolutions.com, as a commercial package. It runs on all platforms that support Java. PatternHunter technology is being patented; commercial use requires a license from BSI, while non-commercial use will be free.},
-    address = {Computer Science Department, University of Western Ontario, London N6A 5B8, Canada Bioinformatics Solutions Inc., 145 Columbia Street West, Waterloo, Ont. N2L 3L2, Canada.},
     author = {Ma, B.  and Tromp, J.  and Li, M. },
     citeulike-article-id = {332260},
     issn = {1367-4803},
@@ -98,7 +96,7 @@
     number = {3},
     pages = {440--445},
     priority = {2},
-    title = "{Pattern{H}unter: faster and more sensitive homology search}",
+    title = "{PatternHunter: faster and more sensitive homology search}",
     url = {http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve\&db=pubmed\&dopt=Abstract\&list_uids=11934743},
     volume = {18},
     year = {2002}
@@ -507,28 +505,14 @@ eprint = {http://www.genome.org/cgi/reprint/17/2/127.pdf}
   volume = 20 ,
   year = 2004 }
 
-@article{ref-pattern,
-    abstract = {MOTIVATION: Genomics and proteomics studies routinely depend on homology searches based on the strategy of finding short seed matches which are then extended. The exploding genomic data growth presents a dilemma for DNA homology search techniques: increasing seed size decreases sensitivity whereas decreasing seed size slows down computation. RESULTS: We present a new homology search algorithm 'PatternHunter' that uses a novel seed model for increased sensitivity and new hit-processing techniques for significantly increased speed. At Blast levels of sensitivity, PatternHunter is able to find homologies between sequences as large as human chromosomes, in mere hours on a desktop. AVAILABILITY: PatternHunter is available at http://www.bioinformaticssolutions.com, as a commercial package. It runs on all platforms that support Java. PatternHunter technology is being patented; commercial use requires a license from BSI, while non-commercial use will be free.},
-    address = {Computer Science Department, University of Western Ontario, London N6A 5B8, Canada Bioinformatics Solutions Inc., 145 Columbia Street West, Waterloo, Ont. N2L 3L2, Canada.},
-    author = {Ma, B.  and Tromp, J.  and Li, M. },
-    journal = {Bioinformatics},
-    keywords = {no-tag},
-    month = {March},
-    number = {3},
-    pages = {440--445},
-    title = "{Pattern{H}unter: faster and more sensitive homology search}",
-    volume = {18},
-    year = {2002}
-}
-
 @ARTICLE{ref-procrast,
-author = "Darling, Aaron E
- and Treangen, Todd J, and Zhang, L. and Kuiken, C. and Messeguer, X. and Perna, N. T.",
-   title = "{Procrastination leads to efficient filtration for local multiple alignment.}",
+  author = "Darling, Aaron E and Treangen, Todd J and Zhang, L. and Kuiken, C. and Messeguer, X. and Perna, N. T.",
+  title = "{Procrastination leads to efficient filtration for local multiple alignment.}",
   journal = "Algorithms in Bioinformatics",
-  pages = "126--137.",
+  pages = "126--137",
   volume = 4175,
-  year = 2006 }
+  year = 2006
+}
 
 @ARTICLE{ref-related1,
   author = "Yu Zhang and Michael S. Waterman",
@@ -551,7 +535,7 @@ author = "Darling, Aaron E
     number = {9},
     pages = {2031--2042},
     priority = {3},
-    title = {Genomic repeats, genome plasticity and the dynamics of Mycoplasma evolution.},
+    title = {Genomic repeats, genome plasticity and the dynamics of \textit{Mycoplasma} evolution.},
     url = {http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve\&db=pubmed\&dopt=Abstract\&list_uids=11972343},
     volume = {30},
     year = {2002}
@@ -693,7 +677,7 @@ alignment
 @article{repseek,
     abstract = {SUMMARY: Chromosomes or other long DNA sequences contain many highly similar repeated sub-sequences. While there are efficient methods for detecting strict repeats or detecting already characterized repeats, there is no software available for detecting approximate repeats in large DNA sequences allowing for weighted substitutions and indels in a coherent statistical framework. Here, we present an implementation of a two-steps method (seed detection followed by their extension) that detects those approximate repeats. Our method is computationally efficient enough to handle large sequences and is flexible enough to account for influencing factors such as sequence-composition biases both at the seed detection and alignment levels. AVAILABILITY: http://wwwabi.snv.jussieu.fr/public/RepSeek/.},
     address = {Atelier de Bioinformatique, Université Pierre et Marie Curie-Paris 6, 12, rue Cuvier, 75005 Paris, France; UMR 7138 Systématique, Adaptation, Evolution, Université Pierre et Marie Curie-Paris6, Bâtiment A, 7, quai St Bernard, 75252 Paris Cedex 05, France.},
-    author = {Achaz, Guillaume   and Boyer, Frédéric   and Rocha, Eduardo P C  P.  and Viari, Alain   and Coissac, Eric  },
+    author = {Achaz, Guillaume   and Boyer, Frédéric   and Rocha, Eduardo P C  and Viari, Alain   and Coissac, Eric  },
     citeulike-article-id = {989431},
     issn = {1460-2059},
     journal = {Bioinformatics},
@@ -864,3 +848,39 @@ annote = "In recent years improvements to existing programs and the introduction
  different alignment techniques should significantly improve the quality of
  automatic protein sequence alignment methods."#"The results also indicate
  guidelines for improvement of alignment algorithms."}
+
+
+@article{Prakash2005,
+    abstract = {SUMMARY: BLAST statistics have been shown to be extremely useful for searching for significant similarity hits, for amino acid and nucleotide sequences. Although these statistics are well understood for pairwise comparisons, there has been little success developing statistical scores for multiple alignments. In particular, there is no score for multiple alignment that is well founded and treated as a standard. We extend the BLAST theory to multiple alignments. Following some simple assumptions, we present and justify a significance score for multiple segments of a local multiple alignment. We demonstrate its usefulness in distinguishing high and moderate quality multiple alignments from low quality ones, with supporting experiments on orthologous vertebrate promoter sequences.},
+    address = {Department of Computer Science and Engineering Box 352350 University of Washington Seattle, WA 98195-2350, USA. amol@cs.washington.edu},
+    author = {Prakash, A.  and Tompa, M. },
+    citeulike-article-id = {1080433},
+    issn = {1367-4803},
+    journal = {Bioinformatics},
+    keywords = {motifdetection},
+    month = {June},
+    priority = {2},
+    title = {Statistics of local multiple alignments},
+    url = {http://view.ncbi.nlm.nih.gov/pubmed/15961477},
+    volume = {21 Suppl 1},
+    year = {2005}
+}
+
+
+
+@article{Lunter2007,
+    abstract = {Summary: Hidden Markov models are widely applied within computational biology. The large data sets and complex models involved demand optimized implementations, while efficient exploration of model space requires rapid prototyping. These requirements are not met by existing solutions, and hand-coding is time-consuming and error-prone. Here, I present a compiler that takes over the mechanical process of implementing HMM algorithms, by translating high-level XML descriptions into efficient C++ implementations. The compiler is highly customizable, produces efficient and bug-free code, and includes several optimizations.  Availability: http://genserv.anat.ox.ac.uk/software  Contact: gerton.lunter@dpag.ox.ac.uk 10.1093/bioinformatics/btm350},
+    author = {Lunter, Gerton},
+    citeulike-article-id = {1668324},
+    doi = {10.1093/bioinformatics/btm350},
+    journal = {Bioinformatics},
+    keywords = {hmm},
+    month = {September},
+    number = {18},
+    pages = {2485--2487},
+    priority = {0},
+    title = "{HMMoC a compiler for hidden Markov models}",
+    url = {http://dx.doi.org/10.1093/bioinformatics/btm350},
+    volume = {23},
+    year = {2007}
+}
