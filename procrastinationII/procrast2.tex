@@ -8,7 +8,7 @@
 \usepackage{url}
 \begin{document}
 
-\title{Improving local multiple alignment of interspersed DNA repeats with gapped extension}
+\title{Gapped extension for local multiple alignment of interspersed DNA repeats}
 
 \author{Todd J. Treangen\inst{1}$^\dag$, Aaron E. Darling\inst{2}$^\dag$, Mark A. Ragan\inst{2},Xavier Messeguer\inst{1}}
 %
@@ -163,16 +163,16 @@ extended, we return to step (4) for another round of chaining.}
 \label{fig-main}
 \end{figure}
 
-\subsection{Chaining multi-matches from the input sequence}
+\subsection{Chaining multi-match seeds from the input sequence}
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
-defined over an alphabet $\{A,C,G,T\}$, our goal is to identify all
-significant local multiple alignments on subsequences of
+defined over an alphabet $\{A,C,G,T\}$, our method identifies
+local multiple alignments on homologous subsequences of
 $\mathcal{S}$. Our method first extracts candidate ungapped
 alignments, or multi-matches, among subsequences in $\mathcal{S}$,
-denoted as $\mathbf{M}$. To extract multi-matches from the input
+and we denote the set of all such matches as $\mathbf{M}$. To extract multi-matches from the input
 sequence, we utilize a palindromic spaced seed pattern\cite{ref-zhang}, which is
-analyzed at each position in the input sequence.  Previously we have
-demonstrated that palindromic spaced seeds offer good efficiency and
+analyzed at each position in the input sequence.  
+Palindromic spaced seeds offer good efficiency and
 reasonable sensitivity on a variety of input
 sequences\cite{ref-procrast}.  We refer the number of matching regions
 in $\mathcal{S}$ by a given match $M_i \in \mathbf{M}$ as the
@@ -187,10 +187,11 @@ referred to by others as \textit{consistency} and
 Once a list of multi-matches has been generated, we employ an
 efficient chaining and filtration algorithm to identify overlapping
 and nested chains of multi-matches\cite{ref-procrast}. In order to
-chain process each region of sequence $\mathcal{O}(1)$ times, matches
-are prioritized for chaining in order of decreasing multiplicity.  Our
-method chains seed multi-matches of the same multiplicity $M_{i}$
-occurring within $w$ characters of each other.  When a multi-match can
+process each region of sequence $\mathcal{O}(1)$ times, matches
+are prioritized for chaining in order of decreasing multiplicity.  The
+method chains multi-match seeds of the same multiplicity $M_{i}$
+occurring within $w$ characters of each other, thus gaps of up to size
+$w$ are tolerated.  When a multi-match can
 no longer be chained without including a gap larger than $w$
 characters, neighboring \textit{subset} matches within $w$ characters
 are identified. Each neighboring subset match is then \textit{linked}
@@ -204,11 +205,12 @@ thus eliminate the need to re-examine sequence already covered by a
 previously chained match.
 
 \subsection{Gapped extension of high-scoring chains}
+Our new method computes gapped extensions of the chained multi-match seeds.
 After chaining a multi-match $M_i$, we perform gapped alignment on all
 collinear regions located between two adjacent components to generate
 unextended local multiple alignments. We first evaluate the chain to
 decide whether expending computational resources on gapped extension
-will be worthwhile. We can require that two or more seeds be present
+will be worthwhile. We can optionally require that two or more seeds be present
 in the chain and use lower seed weights ($k$), a technique which has
 previously been proven
 successful\cite{ref-blastz,ref-gappedblast,ref-blat}.  To perform a
@@ -225,7 +227,7 @@ keeping the alignment search space tractable.
 % \max(w, \sqrt{(\max(150^{2}-(2*|M_{i}|)^{2},0)}));
 %\end{equation}
 
-\subsubsection{Identifying unrelated regions}
+\subsection{Identifying unrelated regions}
 \begin{figure}[t]
 \centering \epsfig{file=./figures/hmm.eps,width=4.6in}
 \caption{\textbf{Hidden Markov model used to detect pairwise alignments of unrelated
@@ -251,7 +253,7 @@ symmetry, i.e. \texttt{AG=GA=TC=CT}. The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD
 substitution matrix presented by Chiaromonte \textit{et al}\cite{hoxd}.
 We solved for the emission frequencies in the
-homologous and unrelated state using the same equation used in to
+homologous and unrelated state using the same equation used to
 calculate the values of the HOXD substitution matrix on 47.5\%G+C
 content sequence\cite{hoxd}:
 \begin{equation}
@@ -262,7 +264,9 @@ nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
 $q_{2}(y)$ denote the background frequencies of $x$ and $y$,
 respectively. Chiaramonte \textit{et al.} scaled the resulting
 $s(x,y)$ values by $\psi=32.5421$ so the largest was 100,
-with the rest rounded to the nearest integer.
+with the rest rounded to the nearest integer.  The resulting emission
+probabilities for the Homologous and Unrelated states are given
+in Figure~\ref{fig-hmm}.
 
 HMM probabilities can be derived using any strand/species symmetric nucleotide substitution matrix,
 but any particular matrix makes specific assumptions about divergence time, mutation pressures,
@@ -282,32 +286,32 @@ $U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2})$
 \end{center}
 where the notation $U_{XY}$ indicates the probability of observing nucleotide X aligned to
 nucleotide Y in Unrelated sequence.  $f_{AT}$ is the fraction of nucleotides which are A/T and
-$f_{GC}$ is the fraction of GC in the input genome.  Note that $f_{AT}=1-f_{GC}$.
+$f_{GC}$ is the fraction of G/C in the input genome.  Note that $f_{AT}=1-f_{GC}$.
 
 
-\textbf{FIXME: NEW DESCRIPTION ON HOW WE ADAPT EMISSION PROBABILITIES... IS THIS OK?}
-Adapting emission probabilities in the Homologous state is a bit more
-involved, as we need to separate the substitution probability,
-$Q(x,y)$, from the background frequency, $\pi(x)$.  To perform this
-decomposition we need to divide the original $p(x,y)$ (fraction of the
-observed aligned pairs of nucleotides $x$ and $y$ in the training set)
-by $\pi(x)$ from the HOXD data (i.e. $\pi$=.475 for G/C and .525 for
-A/T) and then multiply by the $\pi(x)$ for the genome under
-consideration. A problem arises in the A/T$->$G/C mutations, however,
-since A/T has a different $\pi(x)$ than G/C and we don't know the
-direction of time, the time of divergence and the ancestral
-state. Thus, we make an assumption that the probability of either
-nucleotide at the root node is equal to their background frequencies
-in the sequence. Using this assumption we are able to adapt the
-Homologous state emission probabilities as follows:
+To adapt emission probabilities in the homologous state, we consider the
+probability of nucleotide substitution under the standard assumption 
+that sequences evolve according to a continuous-time reversible Markov process.
+Thus, the probability of nucleotide $X$ mutating to nucleotide $Y$ over time $t$
+can be written as: $H_{XY}=\pi_X Q(X,Y)t$, where $\pi_X$ represents the background
+frequency of nucleotide $X$ and $Q(X,Y)$ is the instantaneous substitution rate for $X$
+mutating to $Y$.
+Because the background frequencies on which the substitution matrix was computed are
+known (e.g. 47.5\%GC for HOXD), we can simply replace the $\pi_X$ from the HOXD matrix 
+with the $\pi'_X$ from the input genome. Given that the substitution process is
+strand-symmetric and reversible, we can compute adapted
+emission probabilities for the Homologous state as follows:
 \begin{center}
-$H^{'}_{AG}=H_{AG}$, \ \ \ $H^{'}_{AC}=H_{AC}$ \\
-$H^{'}_{AA}=(\frac{f^{'}_{AT}}{f_{AT}})H_{AA}$, \ \ \ \
-$H^{'}_{AT}=(\frac{f^{'}_{AT}}{f_{AT}})H_{AT}$\\
-$H^{'}_{CC}=(\frac{f^{'}_{GC}}{f_{GC}})H_{CC}$, \ \ \ \
-$H^{'}_{CG}=(\frac{f^{'}_{GC}}{f_{GC}})H_{CG}$\\
+$H'_{AG}=H_{AG}$, \ \ \ $H'_{AC}=H_{AC}$ \\
+$H'_{AA}=(\frac{f'_{AT}}{f_{AT}})H_{AA}$, \ \ \ \
+$H'_{AT}=(\frac{f'_{AT}}{f_{AT}})H_{AT}$\\
+$H'_{CC}=(\frac{f'_{GC}}{f_{GC}})H_{CC}$, \ \ \ \
+$H'_{CG}=(\frac{f'_{GC}}{f_{GC}})H_{CG}$\\
 \end{center}
-where $H^{'}_{xy}$ are the $H_{xy}$ values adapted to the input genome's G+C content.
+where $f'_{AT}$ and $f'_{GC}$ represent the input genome's AT and GC content, $H_{XY}$ 
+values are the original emission probabilities derived from the
+substitution matrix, and $H'_{XY}$ are emission probabilities adapted to 
+the input genome's G+C content.  \textbf{TODO: should we put a more detailed derivation in the appendix?}
 
 %more description need here? to supplemental material?
 \begin{comment}
@@ -328,9 +332,9 @@ the new data and adjust emissions accordingly (by dividing old and
 multiplying new, pre-gap-normalization.
 \end{comment}
 
-Emission frequencies for nucleotide substitutions can be derived from
-any strand/species symmetric nucleotide substitution matrix, but gap-open
-and extend frequencies can not.  To empirically estimate values
+Whereas emission frequencies for nucleotide substitutions can be derived from
+any strand/species symmetric nucleotide substitution matrix, the gap-open
+and extend frequencies can not.  To empirically estimate gap-open and extend values
 for the unrelated state we aligned a 10-kb, 48\%~G+C content region
 taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates
 37,300-38,300) with an unrelated sequence.  We generated an unrelated
@@ -372,7 +376,7 @@ combinations of branch length and multiplicity.  Three replicates of
 each simulation were performed and average accuracy values are shown
 here.  White points indicate perfect alignment of the simulated repeat
 family.  Black points indicate the program completely failed to
-recover any portion of the repeat family.  Mutations per site can be
+recover any portion of the repeat family.  Average mutations per site can be
 calculated by multiplying branch length by the fixed substitution rate
 of 0.09, and indel rate of 0.01.  For example, at branch length 20
 there are 1.8 substitutions per site and 0.2 indels per site.  From
@@ -450,16 +454,17 @@ further details on boundary under/overpredictions.
 \begin{figure}[t]
 \centering
 \epsfig{file=./figures/boundary_scores.eps,width=4.6in}
-\caption{\textbf{Boundary accuracy metric}. \scriptsize We define our boundary accuracy metric to be a sum-of-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R}. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundaries proposed by all local multiple alignments output using each program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}, containing the predicted boundaries for each component \emph{r} of \emph{R}. The vertical jagged lines represent breaks in otherwise contiguous sequence. There are four cases we need to consider for each component pair; each of these cases are diagrammed in the above figure: (1) \emph{Correct prediction}. Local multiple alignment {\emph{A}} correctly identifies the true right and/or left boundaries for repeat components: \emph{r1}, \emph{r2}, \emph{r3} and \emph{r4}. (2) \emph{Under \& overprediction}. Local multiple alignment \emph{B} overlaps repeat components \emph{r3} and \emph{r5}, and as a result, simultaneously under and overpredicts the true boundaries of this component of interspersed repeat. (3) \emph{Overprediction}. Local multiple alignment \emph{C} overpredicts the true boundaries of components \emph{r1} and \emph{r2} of the interspersed repeat. (D) \emph{Underprediction}. Local multiple alignment \emph{D} underpredicts the true boundaries of components \emph{r4} and \emph{r5}.
-We also list the resulting component pair scores by taking the maximum boundaries between any two components contained in the same local multiple alignment. Underprediction is penalized by recording a negative penalty for the difference between the true left/right end boundaries, overprediction is penalized by recording a positive penalty of the difference, and correct boundary prediction is not penalized (penalty=0). Component pairs that are not aligned in any of the reported local multiple alignments are not scored, indicated by \emph{na}. Using our scoring metric, the average absolute distance from the true boundary is 1.50 (left side) \& 1.75 (right side).  }
+\caption{\textbf{Pairwise boundary accuracy metric}. \scriptsize We define our boundary accuracy metric to be an all-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R} to the boundaries predicted by the alignment program. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundary of any local multiple alignments output by the program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}.  Boundary predictions can be classified as (1) correct, (2) overprediction, and (3) underprediction, with each discussed in turn: (1) \emph{Correct prediction}. Consider scoring components \emph{r1} and \emph{r3}.  Local multiple alignment \emph{A} overlaps both \emph{r1} and \emph{r3} and no other alignment overlaps both \emph{r1} and \emph{r3}.  The left and right boundaries of alignment \emph{A} match the boundaries of \emph{r1\&r3} exactly, thus we assign scores of 0 for \emph{r1\&r3}.  (2) \emph{Overprediction}. Consider scoring components \emph{r1} and \emph{r2}.  These components are overlapped by alignments \emph{A} and \emph{C}.  Alignment \emph{A} has perfect boundary predictions for \emph{r1\&r2}, while alignment \emph{C} extends beyond the true boundaries of components \emph{r1} and \emph{r2} by 4 nucleotides on the left and 5 nucleotides on the right.  Our scoring metric always uses the maximum predicted boundaries for a pair of components, thus the boundary predictions from \emph{C} are reported for \emph{r1\&r2}. (3) \emph{Underprediction.}  Consider scoring components \emph{r3} and \emph{r5}.  Alignment \emph{B} hits both \emph{r3} and \emph{r5}, but stops short of the right-side boundary by 8nt in \emph{r3} and 4nt in \emph{r5}.  We average the error and record -6 for the right-side of \emph{r3\&r5}.
+Finally, component pairs that are not contained by any computed alignments are not scored, as indicated by \emph{n/a}.}
 \label{fig-overunder}
 \end{figure}
 
 \subsection{Accuracy when aligning interspersed repeats}
 We applied \texttt{procrastAligner} and \texttt{eulerAlign} to the
-hybrid simulated/real dataset.  Parameters used for each program were
-configured to optimize each program's chance of accurately aligning
-each pattern. \texttt{procrastAligner} was configured using \texttt{--z=15 --w=20}, and \texttt{eulerAlign} with \texttt{-k 15 -l -i 1000 -v}.
+hybrid simulated/real dataset.  We ran \texttt{procrastAligner} 
+with command-line parameters \texttt{--z=15 --w=20}, and 
+\texttt{eulerAlign} with \texttt{-k 15 -l -i 1000 -v} based on suggestions
+from the program's author.
 Simulations for each of the 200 combinations of branch length and
 multiplicity were replicated three times and alignments generated in
 parallel on a 156 node compute cluster.  Results of the experiments
@@ -472,7 +477,7 @@ mutation rates and repeat multiplicity increase the alignment accuracy
 decreases for both methods, with accuracy of \texttt{eulerAlign}
 decreasing faster than \texttt{procrastAligner}.  Surprisingly, \texttt{eulerAlign}
 often fails to align low multiplicity repeats, even when mutation rates are low.
-Manual experimentation with \texttt{eulerAligner} parameters -v (tolerance for mismatches), -k (seed k-mer size) and -i (number of iterations) settings up to 10,000 failed to improve its performance on low-multiplicity repeats.
+Manual experimentation with \texttt{eulerAligner} parameters -v (tolerance for mismatches), -k (seed $k$-mer size) and -i (number of iterations) settings up to 10,000 failed to improve its performance on low-multiplicity repeats.
 We conjecture that \texttt{procrastAligner}'s overall improved accuracy largely derives
 from its use of spaced seed patterns\cite{ref-procrast} and tolerance
 of gaps. The Eulerian path method requires exactly matching $k$-mers
