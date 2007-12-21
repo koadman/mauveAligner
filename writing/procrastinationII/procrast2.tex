@@ -221,7 +221,7 @@ space, while larger values require more computation but are
 potentially more sensitive.  We have empirically determined that
 setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a
 good tradeoff between speed and sensitivity.  The resulting extension
-window is small for high multiplicity chains ($|M_{i}|\geq 30$),
+window is small for high multiplicity chains,
 keeping the alignment search space tractable.
 %\begin{equation}
 % \max(w, \sqrt{(\max(150^{2}-(2*|M_{i}|)^{2},0)}));
@@ -275,7 +275,7 @@ Genomes can range in G+C content from 30-75\%, and at the extremes,
 a substitution matrix derived on 47.5\% G+C sequence (such as HOXD) does not
 perform well.  We have thus developed a method to adapt HMM emission
 frequencies derived from an arbitrary substitution matrix
-to organisms with different G+C content (details not shown).  
+to organisms with different G+C content (see Appendix).  
 
 While emission frequencies for nucleotide substitutions can be derived from
 any strand/species-symmetric nucleotide substitution matrix, the gap-open
