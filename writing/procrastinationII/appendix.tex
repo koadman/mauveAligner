@@ -63,6 +63,62 @@ resulting expressions in to the normalizing equation to solve for
 $\psi$. For the HOXD matrix the scaling factor is $\psi=32.5421$. Given
 $\psi$, we can calculate values for all $H_{xy}$.
 
+Emission probabilities in the Unrelated state can be directly adapted to the
+background nucleotide distribution as follows:
+\begin{center}
+$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})$
+$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2})$
+$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2})$
+$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2})$
+\end{center}
+where the notation $U_{XY}$ indicates the probability of observing nucleotide X aligned to nucleotide Y in Unrelated sequence.  $f_{AT}$ is the fraction of nucleotides which are A/T and $f_{GC}$ is the fraction of G/C in the input genome.  Note that $f_{AT}=1-f_{GC}$.
+
+\section*{Adapting HMM emission frequencies from an arbitrary substitution matrix to organisms with different G+C content}
+HMM probabilities can be derived using any strand/species symmetric nucleotide substitution matrix,
+but any particular matrix makes specific assumptions about divergence time, mutation pressures,
+and sequence composition of the aligned sequences.
+Genomes can range in G+C content from 30-75\%, and at the extremes,
+a substitution matrix derived on 47.5\% GC sequence (such as HOXD) does not
+perform well.  We have thus developed a method to adapt HMM emission
+frequencies derived from an arbitrary substitution matrix
+to organisms with different G+C content
+
+Emission
+probabilities in the Unrelated state can be directly adapted to the
+background nucleotide distribution as follows:
+\begin{center}
+$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})$
+$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2})$
+$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2})$
+$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2})$
+\end{center}
+where the notation $U_{XY}$ indicates the probability of observing nucleotide X aligned to
+nucleotide Y in Unrelated sequence.  $f_{AT}$ is the fraction of nucleotides which are A/T and
+$f_{GC}$ is the fraction of G/C in the input genome.  Note that $f_{AT}=1-f_{GC}$.
+
+To adapt emission probabilities in the homologous state, we consider the
+probability of nucleotide substitution under the standard assumption
+that sequences evolve according to a continuous-time reversible Markov process.
+Thus, the probability of nucleotide $X$ mutating to nucleotide $Y$ over time $t$
+can be written as: $H_{XY}=\pi_X Q(X,Y)t$, where $\pi_X$ represents the background
+frequency of nucleotide $X$ and $Q(X,Y)$ is the instantaneous substitution rate for $X$
+mutating to $Y$. Because the background frequencies on which the substitution matrix was computed are
+known (e.g. 47.5\%GC for HOXD), we can simply replace the $\pi_X$ from the HOXD matrix
+with the $\pi'_X$ from the input genome. Given that the substitution process is
+strand-symmetric and reversible, we can compute adapted
+emission probabilities for the Homologous state as follows:
+\begin{center}
+$H'_{AG}=H_{AG}$, \ \ \ $H'_{AC}=H_{AC}$ \\
+$H'_{AA}=(\frac{f'_{AT}}{f_{AT}})H_{AA}$, \ \ \ \
+$H'_{AT}=(\frac{f'_{AT}}{f_{AT}})H_{AT}$\\
+$H'_{CC}=(\frac{f'_{GC}}{f_{GC}})H_{CC}$, \ \ \ \
+$H'_{CG}=(\frac{f'_{GC}}{f_{GC}})H_{CG}$\\
+\end{center}
+where $f'_{AT}$ and $f'_{GC}$ represent the input genome's AT and GC content,
+$H_{XY}$ values are the original emission probabilities derived from the
+substitution matrix, and $H'_{XY}$ are emission probabilities adapted to
+the input genome's G+C content.
+
 \bibliographystyle{splncs}
 \bibliography{procrastination}
 \end{document}
