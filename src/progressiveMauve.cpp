@@ -219,6 +219,7 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
 	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
 	MauveOption opt_recursive( mauve_options, "no-recursion", no_argument, "Disable recursive anchor search" );
+	MauveOption opt_penalize_repeats( mauve_options, "penalize-repeats", no_argument, "Penalize anchoring of repeat sequences" );
 
 	if( argc <= 0 ){
 		print_usage( "mauveAligner", mauve_options );
@@ -507,6 +508,9 @@ int doAlignment( int argc, char* argv[] ){
 
 	if( opt_seed_family.set )
 		aligner.setUseSeedFamilies(true);
+
+	if(opt_penalize_repeats.set)
+		penalize_repeats = true;
 
 	if( opt_scoring_scheme.set )
 	{
