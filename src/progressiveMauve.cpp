@@ -189,7 +189,6 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_seed_weight( mauve_options, "seed-weight", required_argument, "<number> Use the specified seed weight for calculating initial anchors" );
 	MauveOption opt_output( mauve_options, "output", required_argument, "<file> Output file name.  Prints to screen by default" );
 	MauveOption opt_backbone_output( mauve_options, "backbone-output", required_argument, "<file> Backbone output file name (optional)." );
-	MauveOption opt_island_score( mauve_options, "island-score", required_argument, "<positive integer> The random-walk alignment score threshold used to find islands.  Defaults to 2727." );
 	MauveOption opt_match_input( mauve_options, "match-input", required_argument, "<file> Use specified match file instead of searching for matches" );
 	MauveOption opt_input_id_matrix( mauve_options, "input-id-matrix", required_argument, "<file> An identity matrix describing similarity among all pairs of input sequences/alignments" );
 	MauveOption opt_max_gapped_aligner_length( mauve_options, "max-gapped-aligner-length", required_argument, "<number> Maximum number of base pairs to attempt aligning with the gapped aligner" );
@@ -289,10 +288,7 @@ int doAlignment( int argc, char* argv[] ){
 		string bb_fname = opt_output.arg_value + ".backbone";
 		ofstream bb_out( bb_fname.c_str() );
 		backbone_list_t bb_list;
-		if( opt_island_score.set )
-			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), pgh, pgu, atoi( opt_island_score.arg_value.c_str() ) );
-		else
-			detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), pgh, pgu);
+		detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), pgh, pgu);
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		ofstream bbcols_out( bbcols_fname.c_str() );
@@ -653,11 +649,8 @@ int doAlignment( int argc, char* argv[] ){
 		ofstream bbcols_out( bb_fname.c_str() );
 		if( bbcols_out.is_open() )
 		{
-			int island_score = DEFAULT_ISLAND_SCORE_THRESHOLD;
-			if( opt_island_score.set )
-				island_score = atoi( opt_island_score.arg_value.c_str() );
 			backbone_list_t bb_list;
-			detectAndApplyBackbone(interval_list, bb_list, getDefaultScoringScheme(), pgh, pgu, island_score);
+			detectAndApplyBackbone(interval_list, bb_list, getDefaultScoringScheme(), pgh, pgu);
 			writeBackboneColumns( bbcols_out, bb_list );
 			if( opt_backbone_output.set )
 			{
