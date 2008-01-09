@@ -33,6 +33,9 @@
 #include "libMems/PairwiseMatchFinder.h"
 #include "UniqueMatchFinder.h"
 
+#include <boost/filesystem.hpp>
+
+#include "libMems/Memory.h"
 
 using namespace std;
 using namespace genome;
@@ -354,7 +357,8 @@ int doAlignment( int argc, char* argv[] ){
 	}else{
 		pairwise_match_list.seq_filename = seq_files;
 		pairwise_match_list.sml_filename = sml_files;
-		LoadSequences( pairwise_match_list, &cout );
+		// testing: rewrite seq files in RAW format
+		LoadAndCreateRawSequences( pairwise_match_list, &cout );
 		pairwise_match_list.LoadSMLs( mer_size, &cout );
 	}
 
@@ -369,7 +373,9 @@ int doAlignment( int argc, char* argv[] ){
 	}else
 		match_out = &cout;
 	
-	
+	if(opt_mem_clean.set)
+		debugging_memory = true;
+
 	// read matches if the user requested it
 	if( opt_match_input.set ){
 		ifstream match_in( opt_match_input.arg_value.c_str() );
