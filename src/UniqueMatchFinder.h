@@ -13,12 +13,12 @@
 #include "config.h"
 #endif
 
-#include "libMems/MemHash.h"
+#include "libMems/ParallelMemHash.h"
 
 /**
  * Finds all pairwise matches with unique seeds among a group of sequences
  */
-class UniqueMatchFinder : public mems::MemHash
+class UniqueMatchFinder : public mems::ParallelMemHash
 {
 public:
 	UniqueMatchFinder();

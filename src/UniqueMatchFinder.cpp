@@ -23,7 +23,7 @@ UniqueMatchFinder::UniqueMatchFinder(){
 UniqueMatchFinder::~UniqueMatchFinder(){
 }
 
-UniqueMatchFinder::UniqueMatchFinder(const UniqueMatchFinder& mh) : MemHash(mh){
+UniqueMatchFinder::UniqueMatchFinder(const UniqueMatchFinder& mh) : ParallelMemHash(mh){
 
 }
 
