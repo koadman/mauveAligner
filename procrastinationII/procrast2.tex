@@ -60,7 +60,7 @@ described methods have been implemented in the free, open-source
 The importance of accurate homology identification to comparative
 genomics can not be overestimated\cite{Kumar07}. To date, pairwise
 local sequence alignment
-methods such as BLAST\cite{ref-blastz,ref-ssearch,ref-pattern} have been the
+methods such as BLAST \cite{ref-blastz,ref-ssearch,ref-pattern} have been the
 prevailing technique to identify homologous nucleotides.  When more
 than two copies of a homologous sequence element are present in the
 data, pairwise homology detection methods generate a listing of all
@@ -90,7 +90,7 @@ repetitive regions in the input sequences can cause serious efficiency
 problems for pairwise methods, as they create $O(r^{2})$ pairwise
 alignments in the presence of a repeat with $r$ copies.  Mammalian Alu
 repeats and IS elements in microbes are two common examples of the
-overwhelming abundance of repetitive sequence in whole genomes.
+overwhelming abundance of repetitive sequence in whole genomes. 
 
 Local multiple alignment has the inherent potential to avoid pitfalls
 associated with pairwise alignment. Although optimal multiple
@@ -98,7 +98,7 @@ alignment under the SP objective function remains
 intractable\cite{ref-wangjiang}, progressive alignment heuristics
 offer excellent speed and accuracy\cite{ref-clustalw,ref-tcoffee}
 especially when combined with tree-independent iterative
-refinement\cite{ref-muscle}, or probabilistic consistency
+refinement \cite{ref-muscle}, or probabilistic consistency
 measures\cite{ref-probcons}. Rather than merging pairwise alignments,
 why not exploit years of research into multiple alignment heuristics
 by directly constructing a multiple alignment? We thus present a novel
@@ -123,15 +123,17 @@ To resolve the problem, we employ a hidden Markov model which detects
 unrelated regions embedded in the global multiple alignment.
 Unrelated regions are then removed from the alignment and the
 local-multiple alignment is trimmed to reflect the updated boundaries
-of homology. Our method, depicted for an example sequence in
+of homology. 
+
+Our method, depicted for an example sequence in
 Figure~\ref{fig-main}, has seven primary steps: (1) identify
 multi-match seeds in the input sequence, (2) chain individual
 seeds, (3) multiply align of regions between chained seeds, (4)
 gapped extension of seed chains (5) detect unrelated regions
 using a hidden Markov model, (6) apply transitive homology
 relationships, and (7) removal of any unrelated sequence from
-the final local multiple alignment.  Steps 1-2 have been previously
-described\cite{ref-procrast}, while steps 3-7 represent a new contribution
+the final local multiple alignment.  We have previously published Steps 1-2 of our method\cite{ref-procrast}, 
+while steps 3-7 represent a new contribution
 and are the subject of the present manuscript. Steps 2-7 are applied
 repeatedly to seeds identified in step 1 to produce local multiple
 alignments of all homologous nucleotides in the input sequence.
@@ -182,14 +184,14 @@ algorithm has an important limitation on the matches in $\mathbf{M}$:
 no two matches $M_i$ and $M_j$ may have the same left-end coordinate,
 except for the identity case when $i=j$.  This constraint has been
 referred to by others as \textit{consistency} and
-\textit{transitivity}\cite{ref-transitivity} of matches.
+\textit{transitivity}\cite{ref-transitivity} of matches. 
 
 Once a list of multi-matches has been generated, we employ an
 efficient chaining and filtration algorithm to identify overlapping
 and nested chains of multi-matches\cite{ref-procrast}. In order to
 process each region of sequence $\mathcal{O}(1)$ times, matches
 are prioritized for chaining in order of decreasing multiplicity.  The
-method chains multi-match seeds of the same multiplicity $M_{i}$
+method chains multi-match seeds of the same multiplicity $|M_i|$
 occurring within $w$ characters of each other, thus gaps of up to size
 $w$ are tolerated.  When a multi-match can
 no longer be chained without including a gap larger than $w$
@@ -214,8 +216,8 @@ will be worthwhile. We can optionally require that two or more seeds be present
 in the chain and use lower seed weights ($k$), a technique which has
 previously been proven
 successful\cite{ref-blastz,ref-gappedblast,ref-blat}.  To perform a
-gapped extension in each direction, we use MUSCLE to align a fixed
-number of nucleotides ($l$) to the left and right of the current local
+gapped extension in each direction, we use MUSCLE to align dynamically-calculated window
+of nucleotides ($l$) to the left and right of the current local
 multiple alignment.  Small values of $l$ restrict the alignment search
 space, while larger values require more computation but are
 potentially more sensitive.  We have empirically determined that
@@ -238,7 +240,7 @@ indicates gap-open and gE gap extend. Alignment columns are treated as
 strand-symmetric, so that AC also indicates CA and the reverse
 complements TG and GT.  The emission probabilities are adjusted to the G+C content of the input genome
 as described in the test.  The values shown here correspond to a 47.5\% G+C genome.}
-\label{fig-hmm}\vspace{-0.2cm}
+\label{fig-hmm}
 \end{figure}
 The MUSCLE alignment software dutifully reports the highest scoring
 global multiple alignment of input sequences, regardless of whether
@@ -266,16 +268,15 @@ respectively. Chiaramonte \textit{et al.} scaled the resulting
 $s(x,y)$ values by $\psi=32.5421$ so the largest was 100,
 with the rest rounded to the nearest integer.  The resulting emission
 probabilities for the Homologous and Unrelated states are given
-in Figure~\ref{fig-hmm}.
-
-HMM probabilities can be derived using any strand/species-symmetric nucleotide substitution matrix,
+in Figure~\ref{fig-hmm}. HMM probabilities can be derived using any strand/species-symmetric nucleotide substitution matrix,
 but any particular matrix makes specific assumptions about divergence time, mutation pressures,
 and sequence composition of the aligned sequences.
 Genomes can range in G+C content from 30-75\%, and at the extremes,
 a substitution matrix derived on 47.5\% G+C sequence (such as HOXD) does not
-perform well.  We have thus developed a method to adapt HMM emission
+perform well. Previously it has been shown that adapting substitution matrices to the composition
+of the organisms under comparison can improve sequence alignment accuracy\cite{ref-rev3b}.  We have thus developed a method to adapt HMM emission
 frequencies derived from an arbitrary substitution matrix
-to organisms with different G+C content (see Appendix).  
+to organisms with different G+C content (see \url{http://alggen.lsi.upc.es/recerca/align/procrastination/} for details). 
 
 While emission frequencies for nucleotide substitutions can be derived from
 any strand/species-symmetric nucleotide substitution matrix, the gap-open
@@ -295,7 +296,7 @@ genes \textit{fruR} and \textit{secA} from \textit{E. coli} K12
 AL590842.1). We add the empirically derived gap-open and extend
 frequencies for each state and normalize the emission frequencies to a
 probability distribution.  The resulting emission probabilities are
-reported in Figure~\ref{fig-hmm}.
+reported in Figure~\ref{fig-hmm}. 
 
 Using the empirically derived transition and emission probabilities,
 we apply the posterior HMM decoder implemented in Gerton Lunter's
@@ -312,7 +313,6 @@ another round of extension) in the same direction.
 When gapped extension fails to improve boundaries
 in one direction, extension in the other direction is attempted until
 no further extension is possible.
-
 
 \section{Results}
 \begin{figure}[t]
@@ -331,7 +331,7 @@ of 0.09, and indel rate of 0.01.  For example, at branch length 20
 there are 1.8 substitutions per site and 0.2 indels per site.  From
 the figure, it is apparent that \texttt{procrastAligner} performs better
 at higher mutation rates and multiplicities than \texttt{eulerAlign}.}
-\label{fig-results}\vspace{-0.2cm}
+\label{fig-results}
 \end{figure}
 
 We have previously demonstrated the sensitivity of our chaining method
@@ -391,11 +391,8 @@ positive predictive value (PPV) as $\frac{\mathrm{TP}}{\mathrm{TP} +
 $\mathrm{FP}$ is the total number of nucleotide pairs from the
 program's output where one of the nucleotides are part of the
 simulated repeat family and the other nucleotide was incorrectly
-aligned.
-
-We also quantify the ability of each aligner to accurately predict the
-boundaries of the interspersed repeats.  For a given pair of repeat components, we calculate accuracy by
-by recording the number of nucleotides between the true boundary and the predicted boundary
+aligned. We also quantify the ability of each aligner to accurately predict the
+boundaries of the interspersed repeats.  For a given pair of repeat components, we calculate accuracy by recording the number of nucleotides between the true boundary and the predicted boundary
 on both the right and left sides of the repeat.  Thus, over-extension gets a positive score, while underextension
 yields a negative score and perfect boundaries receive a 0 score. See Figure~\ref{fig-overunder} for
 further details on boundary under/overpredictions.
@@ -403,12 +400,24 @@ further details on boundary under/overpredictions.
 \begin{figure}[t]
 \centering
 \epsfig{file=./figures/boundary_scores.eps,width=4.6in}
-\caption{\textbf{Pairwise boundary accuracy metric}. We define our boundary accuracy metric to be an all-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R} to the boundaries predicted by the alignment program. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundary of any local multiple alignments output by the program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}.  Boundary predictions can be classified as (1) correct, (2) overprediction, and (3) underprediction, with each discussed in turn: (1) \emph{Correct prediction}. Consider scoring components \emph{r1} and \emph{r3}.  Local multiple alignment \emph{A} overlaps both \emph{r1} and \emph{r3} and no other alignment overlaps both \emph{r1} and \emph{r3}.  The left and right boundaries of alignment \emph{A} match the boundaries of \emph{r1\&r3} exactly, thus we assign scores of 0 for \emph{r1\&r3}.  (2) \emph{Overprediction}. Consider scoring components \emph{r1} and \emph{r2}.  These components are overlapped by alignments \emph{A} and \emph{C}.  Alignment \emph{A} has perfect boundary predictions for \emph{r1\&r2}, while alignment \emph{C} extends beyond the true boundaries of components \emph{r1} and \emph{r2} by 4 nucleotides on the left and 5 nucleotides on the right.  Our scoring metric always uses the maximum predicted boundaries for a pair of components, thus the boundary predictions from \emph{C} are reported for \emph{r1\&r2}. (3) \emph{Underprediction.}  Consider scoring components \emph{r3} and \emph{r5}.  Alignment \emph{B} hits both \emph{r3} and \emph{r5}, but stops short of the right-side boundary by 8nt in \emph{r3} and 4nt in \emph{r5}.  We average the error and record -6 for the right-side of \emph{r3\&r5}.
+\caption{\scriptsize \textbf{Pairwise boundary accuracy metric}. We define our boundary accuracy metric to be an all-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R} to the boundaries predicted by the alignment program. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundary of any local multiple alignments output by the program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}.  Boundary predictions can be classified as (1) correct, (2) overprediction, and (3) underprediction, with each discussed in turn: (1) \emph{Correct prediction}. Consider scoring components \emph{r1} and \emph{r3}.  Local multiple alignment \emph{A} overlaps both \emph{r1} and \emph{r3} and no other alignment overlaps both \emph{r1} and \emph{r3}.  The left and right boundaries of alignment \emph{A} match the boundaries of \emph{r1\&r3} exactly, thus we assign scores of 0 for \emph{r1\&r3}.  (2) \emph{Overprediction}. Consider scoring components \emph{r1} and \emph{r2}.  These components are overlapped by alignments \emph{A} and \emph{C}.  Alignment \emph{A} has perfect boundary predictions for \emph{r1\&r2}, while alignment \emph{C} extends beyond the true boundaries of components \emph{r1} and \emph{r2} by 4 nucleotides on the left and 5 nucleotides on the right.  Our scoring metric always uses the maximum predicted boundaries for a pair of components, thus the boundary predictions from \emph{C} are reported for \emph{r1\&r2}. (3) \emph{Underprediction.}  Consider scoring components \emph{r3} and \emph{r5}.  Alignment \emph{B} hits both \emph{r3} and \emph{r5}, but stops short of the right-side boundary by 8nt in \emph{r3} and 4nt in \emph{r5}.  We average the error and record -6 for the right-side of \emph{r3\&r5}.
 Finally, component pairs that are not contained by any computed alignments are not scored, as indicated by \emph{n/a}.}
-\label{fig-overunder}
+\label{fig-overunder}\vspace{-0.2cm}
 \end{figure}
 
 \subsection{Accuracy when aligning interspersed repeats}
+\begin{figure}[t]
+\centering
+\subfigure[]{
+\epsfig{file=./figures/procrast_boundary_fig.eps,width=2.325in}
+\label{fig:subfig1}}
+\subfigure[]{
+\epsfig{file=./figures/euler_boundary_fig.eps,width=2.325in}
+\label{fig:subfig2}}
+\caption{\textbf{Boundary prediction performance}. All-pairs boundary prediction accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity.  Accuracy on each combination is presented as a box-and-whiskers plot using the scoring metric detailed in Section~\ref{sec:metrics}.  Branch lengths range from 0 to 0.24 and increase by intervals of 0.01.  The $x$-axis label represents the multiplicity of the interspersed repeat in log$_2$-scale. i.e. axis label 8 indicates $2^{8}$ = multiplicity 256. The $y$-axis label is the prediction error in log$_2$-scale nucleotides. Values at 0 represent correctly identified repeat boundaries, values greater than 0 represent overpredictions, and values less than 0 represent underpredictions (see Figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} identifies the true interspersed repeat boundaries more accurately than \texttt{eulerAlign}.}
+\label{fig-boundary}
+\end{figure}
+
 We applied \texttt{procrastAligner} and \texttt{eulerAlign} to the
 hybrid simulated/real dataset.  We ran \texttt{procrastAligner}
 with command-line parameters \texttt{--z=15 --w=20}, and
@@ -430,9 +439,7 @@ often fails to align low multiplicity repeats, even when mutation rates are low.
 Manual experimentation with \texttt{eulerAligner} parameters, such as: -v (tolerance for mismatches), -k (seed $k$-mer size) from 11 to 15, and -i (number of iterations) from 1000 up to 10,000, failed to improve its performance on low-multiplicity repeats.
 We conjecture that \texttt{procrastAligner}'s overall improved accuracy largely derives
 from its use of spaced seed patterns\cite{ref-procrast} and tolerance
-of gaps. With the \texttt{-v} option enabled, the Eulerian path method allows up to 10\% mismatches for matching $k$-mers to seed gapped alignment extensions. While this certainly improves the sensitivity at lower mutation rates, the experimental results presented Figure~\ref{fig-results} show that it is inadequate for higher mutation rates.
-
-In addition to sensitivity and PPV benchmarks, we also assess how well
+of gaps. With the \texttt{-v} option enabled, the Eulerian path method allows up to 10\% mismatches for matching $k$-mers to seed gapped alignment extensions. While this certainly improves the sensitivity at lower mutation rates, the experimental results presented Figure~\ref{fig-results} show that it is inadequate for higher mutation rates.In addition to sensitivity and PPV benchmarks, we also assess how well
 each aligner recovers the true boundaries of interspersed
 repeats.  Figure~\ref{fig-boundary} illustrates the ability of each
 program to accurately localize the known boundaries of the simulated interspersed
@@ -444,20 +451,9 @@ exhibits more erratic behavior.  For low multiplicity repeats it has a strong te
 underpredict the repeat boundary.  At high multiplicities ($\geq32$) \texttt{eulerAlign} tends to
 slightly overpredict the boundaries, by including flanking unrelated sequence in the alignment of
 the interspersed repeat.
+%\subsection{Runtime comparison}
 
 Finally, a direct comparison of run time is difficult, due to the differing natures of the local multiple alignment programs.  \texttt{eulerAlign} runtime depends on the iterations parameter, which controls the total number of local multiple alignments reported, whereas \texttt{procrastAligner} reports \textit{all} local multiple alignments in a single run.  Despite this, we report the average per-experiment CPU time for each program on the test dataset. \texttt{procrastAligner} required on average 55 seconds per experiment, with the longest taking just over two minutes. \texttt{eulerAlign} required 1 hour total compute time per experiment on average, which equates to about 4 seconds per iteration.  Both programs exhibited similar memory usage, \texttt{procrastAligner} requiring on average 50 MB per experiment and \texttt{eulerAlign} requiring on average 70 MB per experiment.
-
-\begin{figure}[t!]
-\centering
-\subfigure[]{
-\epsfig{file=./figures/procrast_boundary_fig.eps,width=2.325in}
-\label{fig:subfig1}}
-\subfigure[]{
-\epsfig{file=./figures/euler_boundary_fig.eps,width=2.325in}
-\label{fig:subfig2}}
-\caption{\textbf{Boundary prediction performance}. All-pairs boundary prediction accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity.  Accuracy on each combination is presented as a box-and-whiskers plot using the scoring metric detailed in Section~\ref{sec:metrics}.  Branch lengths range from 0 to 0.24 and increase by intervals of 0.01.  The $x$-axis label represents the multiplicity of the interspersed repeat in log$_2$-scale. i.e. axis label 8 indicates $2^{8}$ = multiplicity 256. The $y$-axis label is the prediction error in log$_2$-scale nucleotides. Values at 0 represent correctly identified repeat boundaries, values greater than 0 represent overpredictions, and values less than 0 represent underpredictions (see Figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} identifies the true interspersed repeat boundaries more accurately than \texttt{eulerAlign}.}
-\label{fig-boundary}
-\end{figure}
 
 \section{Discussion}
 We have presented a sensitive and efficient gapped-extension heuristic for local
@@ -483,9 +479,9 @@ computation of $p$-values for local multiple alignments remains a
 daunting challenge, although fast approximation methods for pairwise
 alignments have shown promise\cite{repseek} and potentially can be
 extended to multiple alignments\cite{ref-related1,Prakash2005}.
-\begin{figure}[t!]
+\begin{figure}[t]
 \centering \epsfig{file=./figures/alu_align.eps,width=4.8in}
-\vspace{-1.0cm}
+\vspace{-1.4cm}
 \caption{\textbf{Alu repeat alignment}. Partial view of an Alu repeat alignment output by procrastAligner in the \emph{H. sapiens} BAC
 clone RP11-355H10 (Accession AC010145.10). Each row represents an
 aligned Alu. Highlighted columns indicate conserved sequence among all
@@ -494,8 +490,7 @@ values indicate complement strand.  Local multiple alignment was
 generated with \texttt{procrastAligner} with parameters: \texttt{--z=9
 --w=50}.  }
 \label{fig-align}
-\vspace{-0.3cm}
-\end{figure}
+\end{figure}\vspace{-0.2cm}
 \subsection{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner},
 available for Linux, Windows, and Mac OS X. Our open-source
@@ -514,5 +509,5 @@ TIN2004-03382 and AGAUR Training Grant FI-IQUC-2005.
 
 \bibliographystyle{splncs}
 \bibliography{procrastination}
-
+%\include{appendix}
 \end{document}

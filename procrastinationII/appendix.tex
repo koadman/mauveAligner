@@ -1,11 +1,11 @@
 %\documentclass[draft]{ws-procs9x6}
-\documentclass{llncs}
-\usepackage{color}
-\usepackage{epsfig}
-\usepackage{times}
-\usepackage{url}
-\begin{document}
-\chapter*{Supplementary Material}
+%\documentclass{llncs}
+%\usepackage{color}
+%\usepackage{epsfig}
+%\usepackage{times}
+%\usepackage{url}
+%\begin{document}
+\chapter*{Appendix}
 \section*{Calculating the Chiaromonte \textit{et al.} scaling factor}
 The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD
@@ -42,7 +42,7 @@ the Homologous state as, for example:
 \begin{equation}
 \log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
 \end{equation}
-where $\frac{1}{\psi}$ is the unknown scaling factor used normalize $H_{CC}$ to 100. The full list of equations follows:
+where $\frac{1}{\psi}$ is the unknown scaling factor used to normalize $H_{CC}$ to 100. The full list of equations follows:
 \begin{center}
 $\log_{2}\bigg(\frac{H_{AC}}{U_{AC}}\bigg) = \frac{-114}{\psi},$
 $\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = \frac{-31}{\psi}$ \\
@@ -62,16 +62,6 @@ We can solve the above six equations for $H_{xy}$ and substitute the
 resulting expressions in to the normalizing equation to solve for
 $\psi$. For the HOXD matrix the scaling factor is $\psi=32.5421$. Given
 $\psi$, we can calculate values for all $H_{xy}$.
-
-Emission probabilities in the Unrelated state can be directly adapted to the
-background nucleotide distribution as follows:
-\begin{center}
-$U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})$
-$U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2})$
-$U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2})$
-$U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2})$
-\end{center}
-where the notation $U_{XY}$ indicates the probability of observing nucleotide X aligned to nucleotide Y in Unrelated sequence.  $f_{AT}$ is the fraction of nucleotides which are A/T and $f_{GC}$ is the fraction of G/C in the input genome.  Note that $f_{AT}=1-f_{GC}$.
 
 \section*{Adapting HMM emission frequencies from an arbitrary substitution matrix to organisms with different G+C content}
 HMM probabilities can be derived using any strand/species symmetric nucleotide substitution matrix,
@@ -119,7 +109,7 @@ $H_{XY}$ values are the original emission probabilities derived from the
 substitution matrix, and $H'_{XY}$ are emission probabilities adapted to
 the input genome's G+C content.
 
-\bibliographystyle{splncs}
-\bibliography{procrastination}
-\end{document}
+%\bibliographystyle{splncs}
+%\bibliography{procrastination}
+%\end{document}
 
