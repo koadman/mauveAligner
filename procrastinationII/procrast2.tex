@@ -90,7 +90,7 @@ repetitive regions in the input sequences can cause serious efficiency
 problems for pairwise methods, as they create $O(r^{2})$ pairwise
 alignments in the presence of a repeat with $r$ copies.  Mammalian Alu
 repeats and IS elements in microbes are two common examples of the
-overwhelming abundance of repetitive sequence in whole genomes. 
+overwhelming abundance of repetitive sequence in whole genomes.
 
 Local multiple alignment has the inherent potential to avoid pitfalls
 associated with pairwise alignment. Although optimal multiple
@@ -122,8 +122,8 @@ assume that input sequences are homologous over their entire length.
 To resolve the problem, we employ a hidden Markov model which detects
 unrelated regions embedded in the global multiple alignment.
 Unrelated regions are then removed from the alignment and the
-local-multiple alignment is trimmed to reflect the updated boundaries
-of homology. 
+local multiple alignment is trimmed to reflect the updated boundaries
+of homology.
 
 Our method, depicted for an example sequence in
 Figure~\ref{fig-main}, has seven primary steps: (1) identify
@@ -132,7 +132,7 @@ seeds, (3) multiply align of regions between chained seeds, (4)
 gapped extension of seed chains (5) detect unrelated regions
 using a hidden Markov model, (6) apply transitive homology
 relationships, and (7) removal of any unrelated sequence from
-the final local multiple alignment.  We have previously published Steps 1-2 of our method\cite{ref-procrast}, 
+the final local multiple alignment.  We have previously published Steps 1-2 of our method\cite{ref-procrast},
 while steps 3-7 represent a new contribution
 and are the subject of the present manuscript. Steps 2-7 are applied
 repeatedly to seeds identified in step 1 to produce local multiple
@@ -184,7 +184,7 @@ algorithm has an important limitation on the matches in $\mathbf{M}$:
 no two matches $M_i$ and $M_j$ may have the same left-end coordinate,
 except for the identity case when $i=j$.  This constraint has been
 referred to by others as \textit{consistency} and
-\textit{transitivity}\cite{ref-transitivity} of matches. 
+\textit{transitivity}\cite{ref-transitivity} of matches.
 
 Once a list of multi-matches has been generated, we employ an
 efficient chaining and filtration algorithm to identify overlapping
@@ -276,7 +276,7 @@ a substitution matrix derived on 47.5\% G+C sequence (such as HOXD) does not
 perform well. Previously it has been shown that adapting substitution matrices to the composition
 of the organisms under comparison can improve sequence alignment accuracy\cite{ref-rev3b}.  We have thus developed a method to adapt HMM emission
 frequencies derived from an arbitrary substitution matrix
-to organisms with different G+C content (see \url{http://alggen.lsi.upc.es/recerca/align/procrastination/} for details). 
+to organisms with different G+C content (see \url{http://alggen.lsi.upc.es/recerca/align/procrastination/} for details).
 
 While emission frequencies for nucleotide substitutions can be derived from
 any strand/species-symmetric nucleotide substitution matrix, the gap-open
@@ -296,11 +296,10 @@ genes \textit{fruR} and \textit{secA} from \textit{E. coli} K12
 AL590842.1). We add the empirically derived gap-open and extend
 frequencies for each state and normalize the emission frequencies to a
 probability distribution.  The resulting emission probabilities are
-reported in Figure~\ref{fig-hmm}. 
+reported in Figure~\ref{fig-hmm}.
 
 Using the empirically derived transition and emission probabilities,
-we apply the posterior HMM decoder implemented in Gerton Lunter's
-HMMoC software\cite{Lunter2007} to compute the posterior probability (p.p.) that
+we apply the posterior HMM decoder implemented in the HMMoC software\cite{Lunter2007} to compute the posterior probability (p.p.) that
 each alignment column represents homologous sequence.  Columns with a
 p.p. below 0.5 are considered to be unrelated; use of 0.5 as a p.p. threshold
 yields a maximum \textit{a posteriori} estimate of homology.  We then apply the
@@ -318,7 +317,7 @@ no further extension is possible.
 \begin{figure}[t]
 \centering \epsfig{file=./figures/repeat_accuracy_new.eps,width=4.6in}
 \caption{\textbf{Accuracy recovering simulated repeat families planted in the
-\textit{Mycoplasma genitalium} genome}.  Sum-of-pairs nucleotide
+\textit{Mycoplasma genitalium} genome}.  Sum-of-pairs (SP) nucleotide
 sensitivity and positive predictive value (PPV) of \texttt{procrastAligner}
 and \texttt{eulerAlign} were measured for 200
 combinations of branch length and multiplicity.  Three replicates of
@@ -352,9 +351,9 @@ construct local multiple alignments directly from genomic DNA.
 We evaluate accuracy of each method when aligning simulated repeat
 families that have been inserted into the complete genome of
 \emph{Mycoplasma genitalium}. The \emph{M. genitalium} genome has been recognized
-as complex and repeat-rich, presenting a biologically
+as complex and repeat-rich\cite{ref-mycoplasma}, presenting a biologically
 relevant and challenging example to evaluate alignment
-methods\cite{ref-mycoplasma}. We simulated repeat families of 8
+methods. We simulated repeat families of 8
 different multiplicities ranging between 2 and 256 ($x$-axis in
 Figure~\ref{fig-results}).  Each repeat copy has an average length
 based on its family's multiplicity
@@ -378,13 +377,13 @@ allowing tandem repeats but prohibiting mosaic repeats.
 \label{sec:metrics}
 We used each program to find local multiple alignments in each of the
 200 modified \emph{M. genitalium} genomes and recorded alignment
-accuracy as follows. We calculated sum-of-pairs nucleotide sensitivity
+accuracy as follows. We calculated Sum-of-Pairs (SP) nucleotide sensitivity
 as $\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}}$, where
 $\mathrm{TP}$ is the number of aligned nucleotide pairs in the
 program's output which are also aligned in the simulated repeat
 family.  $\mathrm{FN}$ is the number of aligned nucleotide pairs in
 the simulated repeat family which are missing from the program's
-output.  This sensitivity measure is identical to the sum-of-pairs
+output.  This sensitivity measure is identical to the Sum-of-Pairs (SP)
 accuracy defined by BaliBASE\cite{ref-balibase}.  We calculate the
 positive predictive value (PPV) as $\frac{\mathrm{TP}}{\mathrm{TP} +
 \mathrm{FP}}$, where $\mathrm{TP}$ is defined as above, and
