@@ -10,7 +10,6 @@
 #include "config.h"
 #endif
 
-#include "libMems/MemSubsets.h"
 #include "libMems/MatchList.h"
 #include <string>
 #include <fstream>

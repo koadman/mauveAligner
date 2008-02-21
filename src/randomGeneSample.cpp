@@ -10,7 +10,6 @@
 #include <sstream>
 #include "libGenome/gnFilter.h"
 #include "libMems/IntervalList.h"
-#include "libMems/MemSubsets.h"
 #include "libMems/MatchList.h"
 #include "libMems/GappedAlignment.h"
 #include "libMems/Matrix.h"
