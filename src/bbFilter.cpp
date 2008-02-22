@@ -25,13 +25,19 @@ int main( int argc, char* argv[] )
 
 	if( argc < 4 )
 	{
-		cerr << "bbFilter <backbone file> <independent dist> <output file> <seq1> <seq2>...<seqN>\n";
+		cerr << "bbFilter <backbone file> <independent dist> <output file> <beast|gp> [<seq1> <seq2>...<seqN>]\n";
 		cerr << "seq index starts at 0.\n";
+		cerr << "\nExample:\n";
+		cerr << "bbFilter my_alignment.backbone 50 my_feats.bin gp\n";
+		cerr << "the above command extracts binary features from \"my_alignment.backbone\" which are separated by a minimum of 50nt sequence conserved among all taxa in the alignment.  The output is written to my_feats.bin in genoplast format\n";
+		cerr << "\n\nExample 2:\nbbFilter aln.backbone 100 feats.xml beast 0 1 2 5 6\n";
+		cerr << "the above command extracts binary features from \"aln.backbone\" which are separated by a minimum of 100nt sequence conserved among genomes 0,1,2,5, and 6 from the alignment.  The output is written to feats.xml in beast format\n";
 		return -1;
 	}
 	string bbseq_fname( argv[1] );
 	int indie_dist = atoi( argv[2] );
 	string output_fname( argv[3] );
+	string target_format( argv[4] );
 
 	ifstream bbseq_input( bbseq_fname.c_str() );
 	if( !bbseq_input.is_open() ){
@@ -50,9 +56,15 @@ int main( int argc, char* argv[] )
 
 	// read the list of seqs of interest
 	vector< int > seqs;
-	for( int i = 4; i < argc; i++ )
+	for( int i = 5; i < argc; i++ )
 		seqs.push_back(atoi(argv[i]));
 
+	// assume all seqs are of interest
+	if( seqs.size() == 0 && bb_seq_list.size() > 0 )
+	{
+		for( int i = 0; i < bb_seq_list[0].size(); i++ )
+			seqs.push_back(i);
+	}
 	// now assign tracking IDs to the backbone segments
 	vector< labeled_bb_t > bb_segs;
 	for( size_t i = 0; i < bb_seq_list.size(); i++ )
@@ -126,25 +138,42 @@ int main( int argc, char* argv[] )
 			}
 	}
 	// write out the seqs!!
-	anal_output << "\t<taxa id=\"taxa\">\n";
-	for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
+	if( target_format == "beast" )
 	{
-		anal_output << "\t\t<taxon id=\"seq" << seqI << "\"/>\n";
-
+		anal_output << "\t<taxa id=\"taxa\">\n";
+		for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
+		{
+			anal_output << "\t\t<taxon id=\"seq" << seqI << "\"/>\n";
+	
+		}
+		anal_output << "\t</taxa>\n";
+		anal_output << "\t<alignment id=\"alignment\" dataType=\"binary\">\n";
+	
+		for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
+		{
+			anal_output << "\t\t<sequence>\n";
+			anal_output << "\t\t\t<taxon idref=\"seq" << seqI << "\"/>\n";
+			anal_output << "\t\t\t" << binseqs[seqI] << endl;
+			anal_output << "\t\t</sequence>\n";
+//			anal_output << "> seq" << seqI << endl;
+//			for( size_t i = 0; i < binseqs[seqI].size(); i+=80 )
+//				anal_output << binseqs[seqI].substr(i, 80) << endl;
+		}
+		anal_output << "\t</alignment>\n";
+	}else{
+		// write genoplast format
+		for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
+		{
+			for( size_t cI = 0; cI < binseqs[seqI].size(); cI++ )
+			{
+				if( cI > 0 )
+					anal_output << ' ';
+				anal_output << binseqs[seqI][cI];
+			}
+			anal_output << endl;
+		}
 	}
-	anal_output << "\t</taxa>\n";
-	anal_output << "\t<alignment id=\"alignment\" dataType=\"binary\">\n";
 
-	for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
-	{
-		anal_output << "\t\t<sequence>\n";
-		anal_output << "\t\t\t<taxon idref=\"seq" << seqI << "\"/>\n";
-		anal_output << "\t\t\t" << binseqs[seqI] << endl;
-		anal_output << "\t\t</sequence>\n";
-//		anal_output << "> seq" << seqI << endl;
-//		for( size_t i = 0; i < binseqs[seqI].size(); i+=80 )
-//			anal_output << binseqs[seqI].substr(i, 80) << endl;
-	}
-	anal_output << "\t</alignment>\n";
 	anal_output.close();
 }
+
