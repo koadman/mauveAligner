@@ -165,10 +165,10 @@ gappiness_LDFLAGS = @STATIC_FLAG@
 gappiness_LDADD = $(LIBRARY_CL)
 
 
-progressiveMauve_SOURCES = progressiveMauve.cpp UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h  TreeUtilities.h
+progressiveMauve_SOURCES = progressiveMauve.cpp UniqueMatchFinder.h UniqueMatchFinder.cpp 
 progressiveMauve_LDADD = $(LIBRARY_CL)
 
-progressiveMauveStatic_SOURCES = progressiveMauve.cpp UniqueMatchFinder.h UniqueMatchFinder.cpp AlignmentTree.h PairwiseMatchAdapter.h  TreeUtilities.h
+progressiveMauveStatic_SOURCES = progressiveMauve.cpp UniqueMatchFinder.h UniqueMatchFinder.cpp 
 progressiveMauveStatic_LDFLAGS = @STATIC_FLAG@
 progressiveMauveStatic_LDADD = $(LIBRARY_CL)
 
@@ -192,7 +192,7 @@ pairCompare_SOURCES = pairCompare.cpp
 pairCompare_LDFLAGS = @STATIC_FLAG@
 pairCompare_LDADD = $(LIBRARY_CL)
 
-procrastAligner_SOURCES = procrastAligner.cpp MatchRecord.h procrastUtilities.h SeedMatchEnumerator.h
+procrastAligner_SOURCES = procrastAligner.cpp MatchRecord.h SeedMatchEnumerator.h
 procrastAligner_LDFLAGS = @STATIC_FLAG@
 procrastAligner_LDADD = $(LIBRARY_CL) 
 
