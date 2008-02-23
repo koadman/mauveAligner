@@ -1,7 +1,6 @@
 EXTRA_DIST = \
 projects/everything.sln \
 projects/mauveAligner.sln \
-projects/cadena.vcproj \
 projects/calculateBackboneCoverage2.vcproj \
 projects/calculateBackboneCoverage.vcproj \
 projects/checkForLGT.vcproj \
@@ -9,9 +8,6 @@ projects/extractBackbone.vcproj \
 projects/extractBCITrees.vcproj \
 projects/extractSubalignments.vcproj \
 projects/mauveAligner.vcproj \
-projects/mpiMauveAligner.vcproj \
-projects/mrhAnalysis.vcproj \
-projects/mumAnalysis.vcproj \
 projects/procrastAligner.vcproj \
 projects/progressiveMauve.vcproj \
 projects/rootTrees.vcproj \
