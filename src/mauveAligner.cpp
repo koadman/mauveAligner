@@ -22,7 +22,6 @@
 #include "libMems/MaskedMemHash.h"
 #include "libMems/Aligner.h"
 #include "libMems/MatchList.h"
-#include "libMems/MemSubsets.h"
 #include "libMems/RepeatHash.h"
 #include "libMems/Interval.h"
 #include "libMems/IntervalList.h"
@@ -104,7 +103,6 @@ try{
 	boolean read_lcbs = false;
 	boolean find_repeats = false;
 	boolean print_stats = false;
-	boolean eliminate_inclusions = false;
 	boolean eliminate_overlaps = false;
 	boolean nway_filter = false;
 	boolean collinear_genomes = false;
@@ -166,7 +164,6 @@ try{
 		opt_seed_type,
 		opt_weight,
 		opt_output,
-		opt_eliminate_inclusions,
 		opt_eliminate_overlaps,
 		opt_n_way_filter,
 		opt_match_input,
@@ -211,7 +208,6 @@ try{
 		{"seed-type", required_argument, &config_opt, opt_seed_type},
 		{"weight", required_argument, &config_opt, opt_weight},
 		{"output", required_argument, &config_opt, opt_output},
-		{"eliminate-inclusions", no_argument, &config_opt, opt_eliminate_inclusions },
 		{"eliminate-overlaps", no_argument, &config_opt, opt_eliminate_overlaps},
 		{"n-way-filter", no_argument, &config_opt, opt_n_way_filter},
 		{"match-input", required_argument, &config_opt, opt_match_input},
@@ -290,9 +286,6 @@ try{
 						break;
 					case opt_output:
 						output_file = optarg;
-						break;
-					case opt_eliminate_inclusions:
-						eliminate_inclusions = true;
 						break;
 					case opt_eliminate_overlaps:
 						eliminate_overlaps = true;
@@ -604,11 +597,6 @@ try{
 
 	// write out a match list if the user doesn't want LCBs
 	if( !create_LCBs && !read_lcbs){
-		if( eliminate_inclusions ){
-			// Remove linked inclusions
-			SubsetInclusionRemover sir;
-			sir.EliminateLinkedInclusions( match_list );
-		}
 		if( eliminate_overlaps ){
 			EliminateOverlaps( match_list );
 		}
@@ -625,11 +613,6 @@ try{
 		// and coverage lists to be incorrect
 		vector< pair< uint64, uint64 > > coverage_list;
 		if( tree_filename != "" || calculate_coverage ){
-			if( !eliminate_inclusions ){
-				// Remove linked inclusions if it hasn't already been done
-				SubsetInclusionRemover sir;
-				sir.EliminateLinkedInclusions( match_list );
-			}
 			// only count each base pair once!
 			if( !eliminate_overlaps )
 				EliminateOverlaps( match_list );
