@@ -147,6 +147,9 @@ int main( int argc, char* argv[] )
 // to run responsively in parallel. (thanks Bob Edgar!)
 	SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
 #endif
+	// delete temp files at program exit!
+	atexit( &deleteRegisteredFiles );
+
 	return doAlignment(argc, argv);
 }
 
