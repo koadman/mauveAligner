@@ -114,6 +114,18 @@ int main( int argc, char* argv[] )
 		bb_segs.push_back( make_pair( bb_seq_list[i], i ) );
 	}
 
+	// create a sorted list for each genome and a map to the segment ID
+	vector< vector< labeled_bb_t > > sorted_segs( seqs.size(), bb_segs );
+	vector< vector< size_t > > seg_id_maps( seqs.size(), vector< size_t >( bb_segs.size() ) );
+	for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
+	{
+		BbSorter bbs(seqs[seqI]);
+		std::sort( sorted_segs[seqI].begin(), sorted_segs[seqI].end(), bbs );
+		for( size_t bbI = 0; bbI < sorted_segs[seqI].size(); bbI++ )
+			seg_id_maps[ seqI ][ sorted_segs[seqI][bbI].second ] = bbI;
+	}
+
+
 	bitset_t good_bb( bb_seq_list.size() );
 	bitset_t nway( bb_seq_list.size() );
 	bitset_t nunya( bb_seq_list.size() );
@@ -155,6 +167,20 @@ int main( int argc, char* argv[] )
 				absolut(bb_segs[bbI-1].first[seqs[sI]].second - bb_segs[bbI-1].first[seqs[sI]].first) >= indie_dist &&
 				absolut(bb_segs[bbI+1].first[seqs[sI]].second - bb_segs[bbI+1].first[seqs[sI]].first) >= indie_dist )
 			{
+				// ensure that there is no other feature in the other genomes
+				for( size_t k = 0; k < seqs.size(); k++ )
+				{
+					if( k == sI )
+						continue;
+					size_t oid = seg_id_maps[k][ bb_segs[bbI-1].second ];
+					int parity = ((bb_segs[bbI-1].first[seqs[sI]].first > 0 && bb_segs[bbI-1].first[seqs[k]].first > 0) ||
+						(bb_segs[bbI-1].first[seqs[sI]].first < 0 && bb_segs[bbI-1].first[seqs[k]].first < 0)) ? 1 : -1;
+					if( ( sorted_segs[k][oid+parity].second == bb_segs[bbI].second && sorted_segs[k][oid+parity*2].second == bb_segs[bbI+1].second ) ||
+						( sorted_segs[k][oid+parity].second == bb_segs[bbI+1].second ) )
+						; // it's good because no other segs intervene
+					else
+						good_bb.set( bb_segs[bbI].second, false );
+				}
 			}else
 				good_bb.set(bb_segs[bbI].second, false);
 		}
