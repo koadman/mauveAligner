@@ -59,6 +59,24 @@ void addUniqueSegments( std::vector< bb_seqentry_t >& bb_seq_list, size_t min_le
 	bb_seq_list.insert( bb_seq_list.end(), new_segs.begin(), new_segs.end() );
 }
 
+class ShorterThan {
+public:
+	bool operator()( const bb_seqentry_t& a )
+	{
+		size_t sc = 0;
+		size_t tot = 0;
+		for( size_t i = 0; i < a.size(); i++ )
+			if( a[i].first != 0 )
+			{
+				tot = a[i].second - a[i].first + 1;
+				sc++;
+			}
+		if( tot == 0 )
+			return true;
+		return (sc / tot) < 20;
+	}
+};
+
 int main( int argc, char* argv[] )
 {
 #if	WIN32
