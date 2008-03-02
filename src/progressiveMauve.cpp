@@ -31,6 +31,7 @@
 
 #include "libMems/ProgressiveAligner.h"
 #include "libMems/PairwiseMatchFinder.h"
+#include "libMems/HomologyHMM/parameters.h"
 #include "UniqueMatchFinder.h"
 
 #include <boost/filesystem.hpp>
@@ -294,7 +295,14 @@ int doAlignment( int argc, char* argv[] ){
 		string bb_fname = opt_output.arg_value + ".backbone";
 		ofstream bb_out( bb_fname.c_str() );
 		backbone_list_t bb_list;
-		detectAndApplyBackbone(iv_list, bb_list, getDefaultScoringScheme(), pgh, pgu);
+		// adapt to the GC of the sequences
+		double gc_content = computeGC( iv_list.seq_table );
+		std::cout << "Organisms have " << std::setprecision(3) << gc_content*100 << "% GC\n";
+
+		Params hmm_params = getAdaptedHoxdMatrixParameters( gc_content );
+		hmm_params.iGoHomologous = pgh;
+		hmm_params.iGoUnrelated = pgu;
+		detectAndApplyBackbone(iv_list, bb_list, hmm_params);
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		ofstream bbcols_out( bbcols_fname.c_str() );
@@ -659,7 +667,10 @@ int doAlignment( int argc, char* argv[] ){
 		if( bbcols_out.is_open() )
 		{
 			backbone_list_t bb_list;
-			detectAndApplyBackbone(interval_list, bb_list, getDefaultScoringScheme(), pgh, pgu);
+			Params hmm_params = getHoxdParams();
+			hmm_params.iGoHomologous = pgh;
+			hmm_params.iGoUnrelated = pgu;
+			detectAndApplyBackbone(interval_list, bb_list, hmm_params);
 			writeBackboneColumns( bbcols_out, bb_list );
 			if( opt_backbone_output.set )
 			{

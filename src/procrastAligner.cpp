@@ -7,6 +7,7 @@
 #include "libGenome/gnFASSource.h"
 #include "libMems/Backbone.h"
 #include "libMems/ProgressiveAligner.h"
+#include "libMems/HomologyHMM/parameters.h"
 
 #include <iomanip>
 #include <iostream>
@@ -1006,18 +1007,19 @@ void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup 
 	}
 }
 
+
 /**
  * Performs a gapped extension on a match.  The region either left or right of the match is processed by
  * progressive alignment.
  * @param	M_i		The match to extend
  * @param	seq_table	gnSequences which correspond to each match component
- * @param	pss		A scoring scheme to use during alignment, consisting of substitution matrix and gap open/extend
+ * @param	params		The Homology HMM parameters to use
  * @param	w		The max gap for chaining.  Used to compute extension lengths.
  * @param	direction	The direction of extension
  * @param	M_e		(output) A MatchRecord containing just the extension, or NULL if extension failed
  * @return	FAILED, OK, or FIXME
  */
-int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, PairwiseScoringScheme& pss, unsigned w, int direction, vector<GappedMatchRecord*>& novel_matches, const float pGoHomo, const float pGoUnrelated, std::vector<double>* pEmitHomo,std::vector<double>* pEmitUnrelated )
+int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Params& hmm_params, unsigned w, int direction, vector<GappedMatchRecord*>& novel_matches )
 {
 	ccount +=1;
 	static bool debug_extension = false;
@@ -1195,7 +1197,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Pairw
 //  detectAndApplyBackbone
 	backbone_list_t bb_list;
 
-	detectAndApplyBackbone( cga, seq_table,result,bb_list,pss, DEFAULT_ISLAND_SCORE_THRESHOLD, pGoHomo, pGoUnrelated, pEmitHomo, pEmitUnrelated, direction != 1, direction == 1  );
+	detectAndApplyBackbone( cga, seq_table,result,bb_list, hmm_params, direction != 1, direction == 1  );
 	cga->Free();
 
 	bool boundaries_improved = false;
@@ -1530,8 +1532,8 @@ int main( int argc, char* argv[] )
 	bool chain = true;
 	bool two_hits = false;
 	bool unalign = true;
-    float pGoHomo = 0.004;
-    float pGoUnrelated = 0.004;
+    float pGoHomo = 0.004f;
+    float pGoUnrelated = 0.004f;
     bool only_extended = false;
 
 	po::variables_map vm;
@@ -1543,8 +1545,8 @@ int main( int argc, char* argv[] )
             ("sequence", po::value<string>(&sequence_file), "FastA sequence file")
 			("w", po::value<unsigned>(&w)->default_value(0), "max gap width ")
 			("z", po::value <unsigned>(&seed_weight)->default_value(0), "seed weight")
-            ("h", po::value<float>(&pGoHomo)->default_value(0.008), "Transition to Homologous")
-            ("u", po::value<float>(&pGoUnrelated)->default_value(0.001), "Transition to Unrelated")
+            ("h", po::value<float>(&pGoHomo)->default_value(0.008f), "Transition to Homologous")
+            ("u", po::value<float>(&pGoUnrelated)->default_value(0.001f), "Transition to Unrelated")
 			("solid", po::value<bool>(&solid_seed)->default_value(0), "use solid seed")
 			("two-hits", po::value<bool>(&two_hits)->default_value(false), "require two hits within w to trigger gapped extension")
 			("unalign", po::value<bool>(&unalign)->default_value(true), "unalign non-homologous sequence")
@@ -1670,77 +1672,11 @@ int main( int argc, char* argv[] )
 	   //it = find( const string& mer );
        //it->second+=1;	   
 	}
-
-	vector<float> nucFrequency;
-	nucFrequency.push_back(float(monofreq["A"])/float(sequence.size()));
-	nucFrequency.push_back(float(monofreq["T"])/float(sequence.size()));
-	nucFrequency.push_back(float(monofreq["G"])/float(sequence.size()));
-	nucFrequency.push_back(float(monofreq["C"])/float(sequence.size()));
     
-    std::vector<double>* pEmitHomo = new std::vector<double>(8,0.0);
-    std::vector<double>* pEmitUnrelated = new std::vector<double>(8,0.0); 
-    double s = 0.03028173853;
-    double gc_content = nucFrequency[2]+nucFrequency[3];
-    double at_content = nucFrequency[0]+nucFrequency[1];
-    double norm_factor = 0.0;
+	Params hmm_params = getAdaptedHoxdMatrixParameters( double(monofreq["G"]+monofreq["C"])/double(sequence.size()) );
 
-    cerr <<"G+C: " << fixed << setprecision(1) << gc_content*100.0 << "%" << endl;
-    cerr <<"A+T: " << fixed << setprecision(1) << at_content*100.0 << "%" << endl;
-
-    // Unrelated state emission probabilities
-    // use AT/GC background frequency instead of mononucleotide frequency since that is how it is described in the manuscript
-    (*pEmitUnrelated)[0] = (at_content/2)*(at_content/2)+(at_content/2)*(at_content/2); // a:a, t:t
-    (*pEmitUnrelated)[1] = (gc_content/2)*(gc_content/2)+(gc_content/2)*(gc_content/2); // c:c, g:g
-    (*pEmitUnrelated)[2] = (at_content/2)*(gc_content/2)+(gc_content/2)*(at_content/2); //a:c, c:a, g:t, t:g
-    (*pEmitUnrelated)[3] = (*pEmitUnrelated)[2]; //a:g, g:a, c:t, t:c
-    (*pEmitUnrelated)[4] = (*pEmitUnrelated)[0]; //a:t, t:a 
-    (*pEmitUnrelated)[5] = (*pEmitUnrelated)[1]; //g:c, c:g 
-    
-    
-    norm_factor = (1-(0.0483+0.2535))/((*pEmitUnrelated)[0] + (*pEmitUnrelated)[1] +(*pEmitUnrelated)[2] + (*pEmitUnrelated)[3] 
-                        + (*pEmitUnrelated)[4] + (*pEmitUnrelated)[5] + (*pEmitUnrelated)[6]);
-
-    //NORMALIZE the values
-    (*pEmitUnrelated)[0] = (*pEmitUnrelated)[0]*norm_factor;
-    (*pEmitUnrelated)[1] = (*pEmitUnrelated)[1]*norm_factor;
-    (*pEmitUnrelated)[2] = (*pEmitUnrelated)[2]*norm_factor;
-    (*pEmitUnrelated)[3] = (*pEmitUnrelated)[3]*norm_factor;
-    (*pEmitUnrelated)[4] = (*pEmitUnrelated)[4]*norm_factor;
-    (*pEmitUnrelated)[5] = (*pEmitUnrelated)[5]*norm_factor;
-    (*pEmitUnrelated)[6] = 0.0483;// gap open 
-    (*pEmitUnrelated)[7] = 1 - ((*pEmitUnrelated)[0] + (*pEmitUnrelated)[1] + (*pEmitUnrelated)[2] + (*pEmitUnrelated)[3] 
-                        + (*pEmitUnrelated)[4] + (*pEmitUnrelated)[5] + (*pEmitUnrelated)[6]);
-
-    //USE PRE-NORMALIZED VALUES!!
-    double H_AA = 0.4786859804;		//a:a, t:t
-    double H_CC = 0.4746499983;		//c:c, g:g
-    double H_AC = 0.005498448862;	//a:c, c:a, g:t, t:g
-    double H_AG = 0.03221280788;	//a:g, g:a, c:t, t:c
-    double H_AT = 0.004539270118;	//a:t, t:a
-    double H_CG = 0.004349958385;	//g:c, c:g
-
-    // Homologous state emission probabilities 
-    (*pEmitHomo)[0] = (at_content/0.525)*H_AA; // a:a, t:t
-    (*pEmitHomo)[1] = (gc_content/0.525)*H_CC; // c:c, g:g
-    (*pEmitHomo)[2] = H_AC; //a:c, c:a, g:t, t:g
-    (*pEmitHomo)[3] = H_AG; //a:g, g:a, c:t, t:c
-    (*pEmitHomo)[4] = (at_content/0.475)*H_AT; //a:t, t:a 
-    (*pEmitHomo)[5] = (gc_content/0.475)*H_CG; //g:c, c:g 
-
-    
-    norm_factor = (1-(0.004461+0.050733))/((*pEmitHomo)[0] + (*pEmitHomo)[1] + (*pEmitHomo)[2] + (*pEmitHomo)[3] 
-                    + (*pEmitHomo)[4] + (*pEmitHomo)[5] + (*pEmitHomo)[6]);
-    
-    //NORMALIZE the values
-    (*pEmitHomo)[0] = (*pEmitHomo)[0]*norm_factor;
-    (*pEmitHomo)[1] = (*pEmitHomo)[1]*norm_factor;
-    (*pEmitHomo)[2] = (*pEmitHomo)[2]*norm_factor;
-    (*pEmitHomo)[3] = (*pEmitHomo)[3]*norm_factor;
-    (*pEmitHomo)[4] = (*pEmitHomo)[4]*norm_factor;
-    (*pEmitHomo)[5] = (*pEmitHomo)[5]*norm_factor;
-    (*pEmitHomo)[6] = 0.004461;// gap open
-    (*pEmitHomo)[7] = 1 - ((*pEmitHomo)[0] + (*pEmitHomo)[1] + (*pEmitHomo)[2] + (*pEmitHomo)[3] 
-                        + (*pEmitHomo)[4] + (*pEmitHomo)[5] + (*pEmitHomo)[6]);
+	hmm_params.iGoHomologous = pGoHomo;
+	hmm_params.iGoUnrelated = pGoUnrelated;
 
 	//
 	// part 2, convert to match records
@@ -1980,7 +1916,7 @@ int main( int argc, char* argv[] )
 				// only extend if two matches are chained if two-hits == true
                 // its fast enough now that printing to screen actually slows things down...
 				if( extend_chains && (!two_hits || (two_hits && M_i->chained_matches.size() > 1 )))
-					rcode = ExtendMatch(M_i, seqtable, pss, w, direction, novel_matches, pGoHomo, pGoUnrelated, pEmitHomo, pEmitUnrelated);
+					rcode = ExtendMatch(M_i, seqtable, hmm_params, w, direction, novel_matches);
                 
 				if (rcode == FAILED || rcode == FIXME || novel_matches.size() == 0)
 				{
