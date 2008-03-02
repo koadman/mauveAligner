@@ -17,6 +17,48 @@ public:
 };
 
 
+class BbSeqEntrySorter
+{
+public:
+	BbSeqEntrySorter( size_t seqI ){ m_seq = seqI; }
+	bool operator()( const bb_seqentry_t& a, const bb_seqentry_t& b )
+	{
+		return abs(a[m_seq].first) < abs(b[m_seq].first);
+	}
+	size_t m_seq;
+};
+
+// add unique segments of some minimum length
+// FIXME: does not add begin and end segments!
+void addUniqueSegments( std::vector< bb_seqentry_t >& bb_seq_list, size_t min_length = 20 )
+{
+	if( bb_seq_list.size() == 0 )
+		return;
+	vector< bb_seqentry_t > new_segs;
+	uint seq_count = bb_seq_list[0].size();
+	// now mark segs that are too close to each other to be considered independent
+	for( size_t sI = 0; sI < seq_count; sI++ )
+	{
+		BbSeqEntrySorter bbs(sI);
+		std::sort( bb_seq_list.begin(), bb_seq_list.end(), bbs );
+		for( size_t bbI = 1; bbI < bb_seq_list.size(); bbI++ )
+		{
+			if( bb_seq_list[bbI][sI].first == 0 )
+				continue;
+			int64 diff = abs(bb_seq_list[bbI][sI].first) - abs(bb_seq_list[bbI-1][sI].second); 
+			if( abs(diff) > min_length )
+			{
+				bb_seqentry_t newb( seq_count, make_pair( 0,0 ) );
+				newb[sI].first = abs(bb_seq_list[bbI-1][sI].second) + 1;
+				newb[sI].second = abs(bb_seq_list[bbI][sI].first) - 1;
+				new_segs.push_back( newb );
+			}
+		}
+	}
+	cout << "Adding " << new_segs.size() << " genome-specific features\n";
+	bb_seq_list.insert( bb_seq_list.end(), new_segs.begin(), new_segs.end() );
+}
+
 int main( int argc, char* argv[] )
 {
 #if	WIN32
