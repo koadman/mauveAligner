@@ -68,12 +68,12 @@ public:
 		for( size_t i = 0; i < a.size(); i++ )
 			if( a[i].first != 0 )
 			{
-				tot = a[i].second - a[i].first + 1;
+				tot += abs(a[i].second - a[i].first) + 1;
 				sc++;
 			}
 		if( tot == 0 )
 			return true;
-		return (sc / tot) < 20;
+		return (tot / sc) < 20;
 	}
 };
 
@@ -125,6 +125,15 @@ int main( int argc, char* argv[] )
 		for( int i = 0; i < bb_seq_list[0].size(); i++ )
 			seqs.push_back(i);
 	}
+	// add any genome-specific segments
+	addUniqueSegments( bb_seq_list );
+
+	// remove short segments
+	ShorterThan st;
+	vector< bb_seqentry_t >::iterator new_end = std::remove_if( bb_seq_list.begin(), bb_seq_list.end(), st );
+	cout << "Removing " << bb_seq_list.end() - new_end << " features shorter than 20 nt\n";
+	bb_seq_list.erase( new_end, bb_seq_list.end() );
+
 	// now assign tracking IDs to the backbone segments
 	vector< labeled_bb_t > bb_segs;
 	for( size_t i = 0; i < bb_seq_list.size(); i++ )
@@ -186,7 +195,7 @@ int main( int argc, char* argv[] )
 				absolut(bb_segs[bbI+1].first[seqs[sI]].second - bb_segs[bbI+1].first[seqs[sI]].first) >= indie_dist )
 			{
 				// ensure that there is no other feature in the other genomes
-				for( size_t k = 0; k < seqs.size(); k++ )
+/*				for( size_t k = 0; k < seqs.size(); k++ )
 				{
 					if( k == sI )
 						continue;
@@ -199,7 +208,7 @@ int main( int argc, char* argv[] )
 					else
 						good_bb.set( bb_segs[bbI].second, false );
 				}
-			}else
+*/			}else
 				good_bb.set(bb_segs[bbI].second, false);
 		}
 	}
@@ -261,5 +270,21 @@ int main( int argc, char* argv[] )
 	}
 
 	anal_output.close();
+
+	string loc_fname = output_fname + ".locs";
+	ofstream location_output( loc_fname.c_str() );
+	for( size_t bbI = 0; bbI < good_bb.size(); bbI++ )
+	{
+		if( good_bb.test(bbI) )
+		{
+			for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
+			{
+				if( seqI > 0 )
+					location_output << '\t';
+				location_output << bb_seq_list[bbI][seqI].first << '\t' << bb_seq_list[bbI][seqI].second;
+			}
+			location_output << std::endl;
+		}
+	}
 }
 
