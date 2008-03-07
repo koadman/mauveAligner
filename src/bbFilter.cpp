@@ -98,6 +98,7 @@ int main( int argc, char* argv[] )
 	int indie_dist = atoi( argv[2] );
 	string output_fname( argv[3] );
 	string target_format( argv[4] );
+	bool allow_alternalogs = false;
 
 	ifstream bbseq_input( bbseq_fname.c_str() );
 	if( !bbseq_input.is_open() ){
@@ -194,21 +195,32 @@ int main( int argc, char* argv[] )
 				absolut(bb_segs[bbI-1].first[seqs[sI]].second - bb_segs[bbI-1].first[seqs[sI]].first) >= indie_dist &&
 				absolut(bb_segs[bbI+1].first[seqs[sI]].second - bb_segs[bbI+1].first[seqs[sI]].first) >= indie_dist )
 			{
-				// ensure that there is no other feature in the other genomes
-/*				for( size_t k = 0; k < seqs.size(); k++ )
-				{
-					if( k == sI )
-						continue;
-					size_t oid = seg_id_maps[k][ bb_segs[bbI-1].second ];
-					int parity = ((bb_segs[bbI-1].first[seqs[sI]].first > 0 && bb_segs[bbI-1].first[seqs[k]].first > 0) ||
-						(bb_segs[bbI-1].first[seqs[sI]].first < 0 && bb_segs[bbI-1].first[seqs[k]].first < 0)) ? 1 : -1;
-					if( ( sorted_segs[k][oid+parity].second == bb_segs[bbI].second && sorted_segs[k][oid+parity*2].second == bb_segs[bbI+1].second ) ||
-						( sorted_segs[k][oid+parity].second == bb_segs[bbI+1].second ) )
-						; // it's good because no other segs intervene
-					else
-						good_bb.set( bb_segs[bbI].second, false );
+				if( !allow_alternalogs ){
+					// ensure that there is no other feature in the other genomes
+					for( size_t k = 0; k < seqs.size(); k++ )
+					{
+						if( k == sI )
+							continue;
+						size_t oid = seg_id_maps[k][ bb_segs[bbI-1].second ];
+						int parity = ((bb_segs[bbI-1].first[seqs[sI]].first > 0 && bb_segs[bbI-1].first[seqs[k]].first > 0) ||
+							(bb_segs[bbI-1].first[seqs[sI]].first < 0 && bb_segs[bbI-1].first[seqs[k]].first < 0)) ? 1 : -1;
+						size_t prev_in_sI = bb_segs[bbI-1].second;
+						size_t cur_in_sI = bb_segs[bbI].second;
+						size_t next_in_sI = bb_segs[bbI+1].second;
+						size_t prev_in_k = sorted_segs[k][oid].second;
+						size_t cur_in_k = sorted_segs[k][oid+parity].second;
+						size_t next_in_k = sorted_segs[k][oid+parity*2].second;
+						if( (cur_in_sI == cur_in_k && next_in_sI == next_in_k) ||
+							(next_in_sI == cur_in_k))					
+							; // it's good because no other segs intervene
+						else
+						{
+							good_bb.set( bb_segs[bbI].second, false );
+							break;	// it's an alternalog or overlapping, no sense in checking other seqs
+						}
+					}
 				}
-*/			}else
+			}else
 				good_bb.set(bb_segs[bbI].second, false);
 		}
 	}
