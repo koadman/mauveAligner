@@ -28,7 +28,6 @@
 #include "libMems/gnAlignedSequences.h"
 #include "libMems/Islands.h"
 #include "libMems/MuscleInterface.h"
-#include "libMems/ClustalInterface.h"
 #include "libMems/DistanceMatrix.h"
 
 #include "boost/filesystem/operations.hpp"
@@ -190,7 +189,6 @@ try{
 		opt_version,
 		opt_scratch_path,
 		opt_realign_lcb,
-		opt_guide_tree_input,
 		opt_id_matrix_input,
 		opt_collinear,
 		opt_muscle_args,
@@ -222,7 +220,6 @@ try{
 		{"backbone-output", optional_argument, &config_opt, opt_backbone_output},
 		{"coverage-output", optional_argument, &config_opt, opt_coverage_output},
 		{"repeats", no_argument, &config_opt, opt_repeats},
-		{"gapped-aligner", required_argument, &config_opt, opt_gapped_aligner},
 		{"max-gapped-aligner-length", required_argument, &config_opt, opt_max_gapped_aligner_length},
 		{"min-recursive-gap-length", required_argument, &config_opt, opt_min_recursive_gap_length},
 		{"output-guide-tree", required_argument, &config_opt, opt_output_guide_tree},
@@ -234,7 +231,6 @@ try{
 		{"version", no_argument, &config_opt, opt_version},
 		{"scratch-path", required_argument, &config_opt, opt_scratch_path},
 		{"realign-lcb", required_argument, &config_opt, opt_realign_lcb},
-		{"guide-tree-input", required_argument, &config_opt, opt_guide_tree_input},
 		{"id-matrix-input", required_argument, &config_opt, opt_id_matrix_input},
 		{"collinear", no_argument, &config_opt, opt_collinear},
 		{"muscle-args", required_argument, &config_opt, opt_muscle_args},
@@ -371,7 +367,6 @@ try{
 					case opt_realign_lcb:
 						realign_lcbs.push_back( atoi( optarg ) );
 						break;
-					case opt_guide_tree_input:
 					case opt_id_matrix_input:
 					case opt_collinear:
 						collinear_genomes = true;
@@ -621,10 +616,10 @@ try{
 		if( tree_filename != "" ){
 			NumericMatrix< double > distance;
 			DistanceMatrix( match_list.seq_table.size(), coverage_list, distance );
-			ClustalInterface& ci = ClustalInterface::getClustalInterface();
+			MuscleInterface& mi = MuscleInterface::getMuscleInterface();
 			if( tree_filename == "" )
 				tree_filename = CreateTempFileName("guide_tree");
-			ci.SetDistanceMatrix( distance, tree_filename );
+			mi.CreateTree( distance, tree_filename );
 		}
 
 		return 0;
@@ -676,11 +671,7 @@ try{
 		aligner.SetMinRecursionGapLength( min_r_gap_length );
 	}
 
-	if( gapped_aligner == "clustal" ){
-		aligner.SetGappedAligner( ClustalInterface::getClustalInterface() );
-	}
-	if( gapped_aligner == "muscle" )
-		aligner.SetGappedAligner( MuscleInterface::getMuscleInterface() );
+	aligner.SetGappedAligner( MuscleInterface::getMuscleInterface() );
 	if( max_gapped_alignment_length != -1 )
 		aligner.SetMaxGappedAlignmentLength( max_gapped_alignment_length );
 	
@@ -900,11 +891,10 @@ void print_usage( const char* pname ){
 	cerr << "\t    --backbone-output=<file> Output islands the given file (requires --island-size)\n";
 	cerr << "\t    --coverage-output=<file> Output a coverage list to the specified file (- for stdout)\n";
 	cerr << "\t    --repeats Generates a repeat map.  Only one sequence can be specified\n";
-	cerr << "\t    --output-guide-tree=<file> Write out the guide tree used for CLUSTALW alignment to the designated file\n";
+	cerr << "\t    --output-guide-tree=<file> Write out a guide tree to the designated file\n";
 	cerr << "\t    --collinear Assume that input sequences are collinear--they have no rearrangements\n";
 	cerr << "\nGapped alignment controls:\n";
 	cerr << "\t    --no-gapped-alignment Don't perform a gapped alignment\n";
-	cerr << "\t    --gapped-aligner=<muscle|clustal> Set the gapped alignment algorithm (Default is muscle)\n";
 	cerr << "\t    --max-gapped-aligner-length=<number> Maximum number of base pairs to attempt aligning with the gapped aligner\n";
 	cerr << "\t    --min-recursive-gap-length=<number> Minimum size of gaps that Mauve will perform recursive MUM anchoring on (Default is 200)\n";
 	cerr << "\nSigned permutation matrix options:\n";
