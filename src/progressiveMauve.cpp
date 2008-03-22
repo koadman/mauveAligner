@@ -257,6 +257,7 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_bp_dist_estimate_min_score( mauve_options, "bp-dist-estimate-min-score", required_argument, "<number> Minimum LCB score for estimating pairwise breakpoint distance" );
 	MauveOption opt_mem_clean( mauve_options, "mem-clean", no_argument, "Set this to true when debugging memory allocations" );
 	MauveOption opt_gap_open( mauve_options, "gap-open", required_argument, "<number> Gap open penalty" );
+	MauveOption opt_penalize_repeats( mauve_options, "repeat-penalty", required_argument, "<negative|zero> Sets whether the repeat scores go negative or go to zero for highly repetitive sequences.  Default is negative." );
 	MauveOption opt_gap_extend( mauve_options, "gap-extend", required_argument, "<number> Gap extend penalty" );
 	MauveOption opt_substitution_matrix( mauve_options, "substitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
 	MauveOption opt_weight( mauve_options, "weight", required_argument, "<number> Minimum pairwise LCB score" );
@@ -266,7 +267,6 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
 	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
 	MauveOption opt_recursive( mauve_options, "no-recursion", no_argument, "Disable recursive anchor search" );
-	MauveOption opt_penalize_repeats( mauve_options, "penalize-repeats", no_argument, "Penalize anchoring of repeat sequences" );
 
 	if( argc <= 0 ){
 		print_usage( "mauveAligner", mauve_options );
@@ -564,8 +564,9 @@ int doAlignment( int argc, char* argv[] ){
 	if( opt_seed_family.set )
 		aligner.setUseSeedFamilies(true);
 
-	if(opt_penalize_repeats.set)
-		penalize_repeats = true;
+	penalize_repeats = true;
+	if(opt_penalize_repeats.set && opt_penalize_repeats.arg_value == "zero")
+		penalize_repeats = false;
 
 	if( opt_scoring_scheme.set )
 	{
