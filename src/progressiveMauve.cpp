@@ -139,6 +139,40 @@ void printMatchSizes()
 	cerr << "sizeof(MatchHashEntry) " << sizeof(mhe) << endl;
 }
 
+#ifndef WIN32
+#include <signal.h>
+#endif
+
+/**
+ * Aborts the running progressiveMauve program
+ */
+void terminateProgram( int sig )
+{
+	std::cerr << "Caught signal " << sig << std::endl;
+	std::cerr << "Cleaning up and exiting!\n";
+	deleteRegisteredFiles();
+	std::cerr << "Temporary files deleted.\n";
+	exit(sig);	
+}
+
+#ifdef WIN32
+BOOL WINAPI handler(DWORD dwCtrlType)
+{
+	switch(dwCtrlType)
+	{
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_LOGOFF_EVENT:
+	case CTRL_SHUTDOWN_EVENT:
+		terminateProgram(dwCtrlType);
+	default:
+		break;
+	}
+	return true;
+}
+#endif
+
 int main( int argc, char* argv[] )
 {
 #if	WIN32
@@ -147,6 +181,13 @@ int main( int argc, char* argv[] )
 // Reducing the process priority allows GUI apps
 // to run responsively in parallel. (thanks Bob Edgar!)
 	SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
+// also register a handler to clean up during abnormal shutdown
+	BOOL status = SetConsoleCtrlHandler(handler, TRUE);
+#else
+// register a signal handler to catch errors and control-c and clean up...
+	signal( SIGINT, terminateProgram );
+	signal( SIGTERM, terminateProgram );
+	signal( SIGSEGV, terminateProgram );
 #endif
 	// delete temp files at program exit!
 	atexit( &deleteRegisteredFiles );
@@ -221,7 +262,7 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_weight( mauve_options, "weight", required_argument, "<number> Minimum pairwise LCB score" );
 	MauveOption opt_min_scaled_penalty( mauve_options, "min-scaled-penalty", required_argument, "<number> Minimum breakpoint penalty after scaling the penalty by expected divergence" );
 	MauveOption opt_go_homologous( mauve_options, "hmm-p-go-homologous", required_argument, "<number> Probability of transitioning from the unrelated to the homologous state [0.00001]" );
-	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.0000001]" );
+	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.000000001]" );
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
 	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
 	MauveOption opt_recursive( mauve_options, "no-recursion", no_argument, "Disable recursive anchor search" );
@@ -237,8 +278,8 @@ int doAlignment( int argc, char* argv[] ){
 	}
 
 	// default values for homology HMM transitions
-	double pgh = 0.0001;
-	double pgu = 0.000001;
+	double pgh = 0.00001;
+	double pgu = 0.000000001;
 
 	// set the Muscle path
 	MuscleInterface& mi = MuscleInterface::getMuscleInterface();
@@ -370,6 +411,7 @@ int doAlignment( int argc, char* argv[] ){
 		pairwise_match_list.sml_filename = sml_files;
 		// testing: rewrite seq files in RAW format
 		LoadAndCreateRawSequences( pairwise_match_list, &cout );
+//		LoadSequences( pairwise_match_list, &cout );
 		pairwise_match_list.LoadSMLs( mer_size, &cout );
 	}
 
