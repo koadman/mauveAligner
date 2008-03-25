@@ -15,6 +15,7 @@
 #include <cctype>
 
 #include "MatchRecord.h"
+#include "xmlwriter.h"
 #include "SeedMatchEnumerator.h"
 //#include "procrastUtilities.h"
 
@@ -25,6 +26,7 @@ namespace po = boost::program_options;
 using namespace std;
 using namespace genome;
 using namespace mems;
+using namespace	xmlw;
 bool print_warnings = false;
 
 enum rvalue { OK=0, FAILED=1, DONE=2, NOVEL=3, FIXME=110}; 
@@ -63,9 +65,15 @@ public:
 };
 
 
-bool scorecmp( pair< double, GappedMatchRecord* > a, pair< double, GappedMatchRecord* > b ) 
+bool scorecmp( GappedMatchRecord* a, GappedMatchRecord* b ) 
 {
-   return a.first > b.first;
+   // sort first by multipicity, then by spscore
+   if( a->Multiplicity() > b->Multiplicity())
+       return true;
+   else if ( a->Multiplicity() < b->Multiplicity())
+       return false;
+   else
+       return a->spscore > b->spscore;
  }
 /** The NeighborhoodGroup contains the MatchRecord pointer, the component map to the match being extended (M_i), and a vector of distances to M_i*/
 typedef boost::tuple< MatchRecord*, std::vector< size_t >, std::vector< size_t > > NeighborhoodGroup;
@@ -1506,6 +1514,34 @@ void writeXmfa( MatchList& seedml, std::vector< GappedMatchRecord* >& extended_m
 	}
 }
 
+/**
+ * Writes a set of MatchRecords in XML format
+ * @param	seedml	A matchlist containing the seq_table of interest
+ * @param	extended_matches	A set of matches to write out
+ * @param	xml_file	The filename to use for output
+ */
+void writeXML( MatchList& seedml, std::vector< GappedMatchRecord* >& extended_matches, const std::string& xml_file )
+{
+	 
+	GenericIntervalList<GappedMatchRecord> gmr_list;
+	for( size_t gmrI = 0; gmrI < extended_matches.size(); ++gmrI )
+		gmr_list.push_back(*extended_matches[gmrI]);
+
+	if( xml_file.length() > 0  && xml_file != "-")
+	{
+		gmr_list.seq_filename.push_back( seedml.seq_filename[0] );
+		gmr_list.seq_table.push_back( seedml.seq_table[0] );
+		if( xml_file == "-" )
+			gmr_list.WriteXMLAlignment(cout);
+		else
+		{
+			ofstream xml_out(xml_file.c_str());
+			gmr_list.WriteXMLAlignment(xml_out);
+			xml_out.close();
+		}
+	}
+}
+
 class ToUPPER
 {
 public:
@@ -1522,10 +1558,14 @@ int main( int argc, char* argv[] )
 	unsigned w = 0;
 	int kmersize =0;
 	uint seed_weight = 0;
+    uint min_repeat_length = 0;
+    uint min_spscore = 0;
 	string outputfile = "";
 	string output2file = "";
 	string xmfa_file = "";
+    string xml_file = "";
 	string stat_file = "";
+    bool allow_tandem = false;
 	bool find_novel_subsets = false;
 	bool solid_seed = false;
 	bool extend_chains = true;
@@ -1545,6 +1585,9 @@ int main( int argc, char* argv[] )
             ("sequence", po::value<string>(&sequence_file), "FastA sequence file")
 			("w", po::value<unsigned>(&w)->default_value(0), "max gap width ")
 			("z", po::value <unsigned>(&seed_weight)->default_value(0), "seed weight")
+            ("l", po::value <unsigned>(&min_repeat_length)->default_value(20), "minimum repeat length")
+            ("sp", po::value <unsigned>(&min_spscore)->default_value(2000), "minimum Sum-of-Pairs alignment score")
+            ("tandem", po::value <bool>(&allow_tandem)->default_value(false), "allow tandem repeats")
             ("h", po::value<float>(&pGoHomo)->default_value(0.008f), "Transition to Homologous")
             ("u", po::value<float>(&pGoUnrelated)->default_value(0.001f), "Transition to Unrelated")
 			("solid", po::value<bool>(&solid_seed)->default_value(0), "use solid seed")
@@ -1557,6 +1600,7 @@ int main( int argc, char* argv[] )
 			("score-out", po::value<string>(&output2file)->default_value(""), "output with corresponding score and alignment info ")
 			("highest", po::value<string>(&stat_file)->default_value("procrast.highest"), "file containing highest scoring alignment for each multiplicity ")
 			("xmfa", po::value<string>(&xmfa_file)->default_value(""), "XMFA format output")
+            ("xml", po::value<string>(&xml_file)->default_value(""), "XML format output")
             ("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches!")
         ;
 
@@ -2126,6 +2170,14 @@ int main( int argc, char* argv[] )
 					subset_list.erase(subset_list.begin() + sI, subset_list.begin() + sI + 1);
 					sI--;
 					size_t dI = 0;
+                    if (subset_list[sI].get<2>().size() < cur_group.get<2>().size())
+                    {
+                        //why would this happen? debugme..
+                        cerr << "subset_list[" << sI << "].get<2>().size() < cur_group.get<2>().size()" << endl;
+                        cerr << subset_list[sI].get<2>().size() << " < " <<  cur_group.get<2>().size() << endl;
+                        genome::breakHere();
+                        //continue;
+                    }
 					for( ; dI < cur_group.get<2>().size(); ++dI )
                     {
                         // if cur_group.get<2)()[dI] <= subset_list[sI].get<2>()[dI],
@@ -2210,73 +2262,157 @@ int main( int argc, char* argv[] )
 		score_out_file.open( output2file.c_str() );
 		output2 = &score_out_file;
 	}
-	vector< pair< double, GappedMatchRecord* > > scored;
+	vector< GappedMatchRecord* > scored;
 	vector<score_t> scores_final;
 	score_t score_final = 0;
     double e = 2.71828182845904523536;
     vector< GappedMatchRecord* >  filtered_final;
-    vector< GappedMatchRecord* > & filtered_final_ref = filtered_final;
     int finalsize = final.size();
+    uint alignment_count = 0;
 	for( size_t fI = 0; fI < finalsize; fI++ )
 	{
 	    vector<string> alignment;
 		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
 		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
-		//send temporary output format to file if requested 
-        computeSPScore( alignment, pss, scores_final, score_final);
-        int multi = final[fI]->Multiplicity();
-        //band-aid: if SPscore is above threshold for giving multiplicity, keep
-        //for multiplicity 2, length 50 is deemed significant
-        //for multiplicity 200, length 27 is deemed significant
-        //for multiplicity 500, length 11 is deemed signficant
-        int min_score = ((multi*(multi-1))/2)*(40*pow(e,-0.003*multi))*91;
-        //min_score = 0;
-        //int min_score = ((multi*(multi-1))/2)*(50*pow(e,-0.0016*multi))*91;
-        if (score_final >= min_score)
+		//send temporary output format to file if requested
+        if (final.at(fI)->AlignmentLength() >= min_repeat_length )
         {
-		    *output << "#procrastAlignment " << fI+1 << endl << *final.at(fI) << endl;
-            filtered_final_ref.push_back(final.at(fI));
-            scored.push_back(make_pair( score_final, final[fI] ));
+            computeSPScore( alignment, pss, scores_final, score_final);
+		    //*output << "#procrastAlignment " << ++alignment_count << endl << *final.at(fI) << endl;
+            final[fI]->spscore = score_final;
+            scored.push_back(final[fI]);
         }
         else
             continue;
 
 	}
-    writeXmfa( seedml, filtered_final_ref, xmfa_file );
 
-	std::sort( scored.begin(), scored.end() );
-	std::reverse( scored.begin(), scored.end() );
-
-	// 
-	// part 11, report matches in scored order
+    
+    //
+	// remove overlapping regions
 	//
-	output2->setf(ios::fixed);
-	output2->precision(0);
-	for( size_t sI = 0; sI < scored.size(); ++sI )
+    // 1) create a vector of MatchRecord* with one entry for each nucleotide in the input sequence.
+	vector< MatchRecord* > match_record_nt(sequence.size());
+    for( size_t mI = 0; mI < match_record_nt.size(); ++mI )
 	{
-	    *output2 << "#procrastAlignment " << sI+1 << endl << *scored[sI].second << endl;
-	    *output2 << "Alignment length: " << scored[sI].second->AlignmentLength() << endl;
-	    *output2 << "Score: " << scored[sI].first << endl;
+		UngappedMatchRecord tmp( 1, 1 );
+		match_record_nt[mI] = tmp.Copy();
+		match_record_nt[mI]->SetStart( 0, mI );
+		match_record_nt[mI]->SetLength( 1, 0 );
+        match_record_nt[mI]->subsuming_match = NULL;
+    }
+
+    // 2) sort the result GappedMatchRecords by multiplicity (high to low) and break ties by SP score.
+	std::sort( scored.begin(), scored.end(), scorecmp );
+    for( size_t fI = 0; fI < scored.size(); fI++ )
+    {
+	    
+        for ( size_t seqI = 0; seqI < scored.at(fI)->Multiplicity(); seqI++)
+        {
+            if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u)
+            {
+                gnSeqI endI = scored.at(fI)->RightEnd(seqI);
+                gnSeqI startI = scored.at(fI)->LeftEnd(seqI);
+                for( ; startI <= scored.at(fI)->RightEnd(seqI); startI++)
+                {
+                    //3) Mark each entry in the MatchRecord* vector which corresponds to nucleotides contained within the current GMR.  
+                    //A pointer to the current GMR can be >stored in each entry
+                    if ( match_record_nt.at(startI)->subsuming_match == NULL)
+                        match_record_nt.at(startI)->subsuming_match = scored.at(fI);
+                }
+            }
+    
+            size_t left_crop_amt = 0;
+            size_t right_crop_amt = 0;
+            gnSeqI startI = scored.at(fI)->LeftEnd(seqI);
+            //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
+            while(match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) && startI <= scored.at(fI)->RightEnd(seqI))
+            {
+                startI++;
+                left_crop_amt++;
+            }
+            if (left_crop_amt > 0)
+            {
+                if (left_crop_amt == scored.at(fI)->Length(seqI))
+                    scored.at(fI)->CropLeft( left_crop_amt-1, seqI);
+                else
+                    scored.at(fI)->CropLeft( left_crop_amt, seqI);
+            }
+            if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u)
+            {
+                startI = scored.at(fI)->RightEnd(seqI);
+                //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
+                while(match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) && startI >= scored.at(fI)->LeftEnd(seqI))
+                {
+                    startI--;
+                    right_crop_amt++;
+                }
+            }
+            if (right_crop_amt > 0)
+            {
+                
+                if (right_crop_amt == scored.at(fI)->Length(seqI))
+                    scored.at(fI)->CropRight( right_crop_amt-1, seqI);
+                else
+                    scored.at(fI)->CropRight( right_crop_amt, seqI);
+            }
+           
+           
+        }
+        // yuck,recalculating sp score to update after removing overlapping regions.. 
+        // couldn't I just subtract from the original score??
+        vector<string> alignment;
+		vector< gnSequence* > seq_table( scored[fI]->SeqCount(), seedml.seq_table[0] );
+		mems::GetAlignment(*scored[fI], seq_table, alignment);	// expects one seq_table entry per matching component
+        // 5) put all LMAs above min_repeat_length and min_spscore into final list of scored LMAs
+	    if (scored.at(fI)->AlignmentLength() >= min_repeat_length )
+        {
+            computeSPScore( alignment, pss, scores_final, score_final);
+            scored.at(fI)->spscore  = score_final;
+            // pass it through a tandem repeat filter, too
+            if (scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem))
+                filtered_final.push_back(scored.at(fI));
+        }
+        
+
+    }
+    std::sort( filtered_final.begin(), filtered_final.end(), scorecmp );
+    // write the output to xmfa
+    writeXmfa( seedml, filtered_final, xmfa_file );
+
+    // write the output to xml
+    writeXML( seedml, filtered_final, xml_file );
+    
+	// 
+	// part 11, report matches in scored order, by multiplicity then by spscore
+	//
+	output->setf(ios::fixed);
+	output->precision(0);
+
+    
+	for( size_t sI = 0; sI < filtered_final.size(); ++sI )
+	{
+	    *output << "#procrastAlignment " << sI+1 << endl << *filtered_final[sI] << endl;
+	    *output << "Alignment length: " << filtered_final[sI]->AlignmentLength() << endl;
+        *output << "Score: " << filtered_final[sI]->spscore << endl;
 	}
 	
 	///report highest scoring lma for each multiplicity
-	vector<int> multiplicity_list;
-	vector< pair< int,  pair<double, GappedMatchRecord*> > > ordered;
-	for( size_t tI = 0; tI < scored.size(); ++tI )
-	{ 
-		if ( find( multiplicity_list.begin(), multiplicity_list.end(), scored[tI].second->Multiplicity() )  == multiplicity_list.end() )
-		{
-			multiplicity_list.push_back( scored[tI].second->Multiplicity() );
-			ordered.push_back(make_pair( scored[tI].second->Multiplicity(), scored[tI] ) );
-		}
-	}
-
-	std::sort(ordered.begin(), ordered.end());
+    
 	stats_out_file.setf(ios::fixed);
 	stats_out_file.precision(0);
-	for( size_t tI = 0; tI < ordered.size(); ++tI )
-		stats_out_file << "#" << tI+1 << ": r= " << ordered[tI].first << " l= " << ordered[tI].second.second->AlignmentLength() << " s= " << ordered[tI].second.first << endl;
-	
+	int prev_multiplicity = 0;
+    uint record_count = 0;
+    for( size_t tI = 0; tI < filtered_final.size(); ++tI )
+    {   if (filtered_final[tI]->Multiplicity() != prev_multiplicity)
+        {    
+            stats_out_file << "#" << record_count+1 << ": r= " << filtered_final[tI]->Multiplicity() << " l= " << filtered_final[tI]->AlignmentLength() << " s= " << filtered_final[tI]->spscore << endl;
+            prev_multiplicity = filtered_final[tI]->Multiplicity();
+            record_count++;
+        }
+        else
+            continue;
+    }
 	// clean up
 	for( size_t eI = 0; eI < match_record_list.size(); ++eI )
 		match_record_list[eI]->Free();
