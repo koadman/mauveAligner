@@ -25,7 +25,7 @@ namespace po = boost::program_options;
 using namespace std;
 using namespace genome;
 using namespace mems;
-using namespace	xmlw;
+
 bool print_warnings = false;
 
 enum rvalue { OK=0, FAILED=1, DONE=2, NOVEL=3, FIXME=110}; 
