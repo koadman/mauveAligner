@@ -60,6 +60,7 @@ public:
 	bool dont_extend;
 	bool extend_left;
 	bool extend_right;
+    
 	void clear()
 	{
 		subsuming_match = NULL;
@@ -133,6 +134,8 @@ public:
 	 * converted to a gapped alignment
 	 */
 	void finalize(std::vector<genome::gnSequence *> seq_table );
+    //tjt: should this go somewhere else?
+    double spscore;
 // methods inherited from AbstractGappedAlignment
 public:
 	GappedMatchRecord* Clone() const { return new GappedMatchRecord( *this ); }
