@@ -15,7 +15,6 @@
 #include <cctype>
 
 #include "MatchRecord.h"
-#include "xmlwriter.h"
 #include "SeedMatchEnumerator.h"
 //#include "procrastUtilities.h"
 
