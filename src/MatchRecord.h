@@ -13,7 +13,6 @@
 #include <vector>
 //#include <boost/variant.hpp>
 
-
 // forward declaration
 class MatchLink;
 class MatchRecord;
@@ -119,10 +118,15 @@ public:
 	/** always set seq_count, don't worry about align_length */
 	GappedMatchRecord() : 
 	  mems::GenericInterval< mems::AbstractGappedAlignment< MatchRecord > >()
-	{}
+	{
+        //tjt: initialize spscore to 0
+        spscore = 0;  
+    }
 
 	GappedMatchRecord( UngappedMatchRecord& umr )
 	{
+        //tjt: initialize spscore to 0
+        spscore = 0;
 		std::vector<UngappedMatchRecord*> asdf(1, &umr);
 		mems::GenericInterval< mems::AbstractGappedAlignment< MatchRecord > > iv( asdf.begin(), asdf.end() );
 		mems::GenericInterval< mems::AbstractGappedAlignment< MatchRecord > >::operator=( iv );
@@ -135,7 +139,7 @@ public:
 	 */
 	void finalize(std::vector<genome::gnSequence *> seq_table );
     //tjt: should this go somewhere else?
-    double spscore;
+    size_t spscore;
 // methods inherited from AbstractGappedAlignment
 public:
 	GappedMatchRecord* Clone() const { return new GappedMatchRecord( *this ); }
