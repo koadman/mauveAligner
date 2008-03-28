@@ -2318,21 +2318,24 @@ int main( int argc, char* argv[] )
 		    //*output << "#procrastAlignment " << ++alignment_count << endl << *final.at(fI) << endl;
             final[fI]->spscore = score_final;
             scored.push_back(final[fI]);
+
         }
         else
             continue;
 
 	}
-
+    
     
     //
 	// remove overlapping regions
 	//
-    // 1) create a vector of MatchRecord* with one entry for each nucleotide in the input sequence.
-	vector< MatchRecord* > match_record_nt(sequence.size());
+    // 1) create a vector of CompactMatchRecord* with one entry for each nucleotide in the input sequence.
+    //tjt: CompactMatchRecord is an attempt to reduce the space requirements for the method currently used to 
+    //remove overlapping regions
+	vector< CompactMatchRecord* > match_record_nt(sequence.size());
     for( size_t mI = 0; mI < match_record_nt.size(); ++mI )
 	{
-		UngappedMatchRecord tmp( 1, 1 );
+		CompactUngappedMatchRecord tmp( 1, 1 );
 		match_record_nt[mI] = tmp.Copy();
 		match_record_nt[mI]->SetStart( 0, mI );
 		match_record_nt[mI]->SetLength( 1, 0 );

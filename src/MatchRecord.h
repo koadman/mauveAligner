@@ -16,8 +16,10 @@
 // forward declaration
 class MatchLink;
 class MatchRecord;
+class CompactMatchRecord;
 class GappedMatchRecord;
 class UngappedMatchRecord;
+class CompactUngappedMatchRecord;
 
 /** stores a link between a subset and a superset match */
 class MatchLink
@@ -72,6 +74,50 @@ public:
 		extend_left = true;
 	}
 };
+
+class CompactMatchRecord : public mems::DenseAbstractMatch<1>
+{
+public:
+	CompactMatchRecord() : mems::DenseAbstractMatch<1>() { clear(); }
+	CompactMatchRecord( uint seq_count ): mems::DenseAbstractMatch<1>( seq_count ){ clear(); }
+	GappedMatchRecord* subsuming_match;
+
+	void clear()
+	{
+		subsuming_match = NULL;
+	}
+};
+
+/**
+ * An ungapped alignment that also stores a match record
+ */
+class CompactUngappedMatchRecord : public mems::UngappedLocalAlignment< CompactMatchRecord >
+{
+public:
+
+	CompactUngappedMatchRecord(){};
+
+	/** always set seq_count, don't worry about align_length */
+	CompactUngappedMatchRecord( uint seq_count, gnSeqI align_length ) : mems::UngappedLocalAlignment< CompactMatchRecord >( seq_count )
+	{
+		subsuming_match = NULL;
+	}
+
+	CompactUngappedMatchRecord* Clone() const { return new CompactUngappedMatchRecord( *this ); }
+	CompactUngappedMatchRecord* Copy() const;
+	virtual void Free();
+};
+
+inline
+CompactUngappedMatchRecord* CompactUngappedMatchRecord::Copy() const
+{
+	return m_allocateAndCopy( *this );
+}
+inline
+void CompactUngappedMatchRecord::Free()
+{
+	m_free(this);
+}
 
 
 /**
