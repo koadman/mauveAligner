@@ -16,8 +16,11 @@ class SeedMatchEnumerator : public mems::MatchFinder
 public:
 	virtual SeedMatchEnumerator* Clone() const;
 
-	void FindMatches( mems::MatchList& match_list )
+	void FindMatches( mems::MatchList& match_list, size_t min_multi = 2, size_t max_multi = 1000 )
 	{
+        this->max_multiplicity = max_multi;
+        this->min_multiplicity = min_multi;
+        
 		for( size_t seqI = 0; seqI < match_list.seq_table.size(); ++seqI ){
 			if( !AddSequence( match_list.sml_table[ seqI ], match_list.seq_table[ seqI ] ) ){
 				genome::ErrorMsg( "Error adding " + match_list.seq_filename[seqI] + "\n");
@@ -37,6 +40,10 @@ protected:
 	virtual mems::SortedMerList* GetSar(uint32 sarI) const;
 	mems::MatchList mlist;
 	void SetDirection(mems::Match& mhe);
+private:
+    //used to store rmin, rmax values
+    size_t max_multiplicity;
+    size_t min_multiplicity;
 };
 
 SeedMatchEnumerator* SeedMatchEnumerator::Clone() const{
@@ -77,7 +84,13 @@ boolean SeedMatchEnumerator::HashMatch(mems::IdmerList& match_list){
 	SetDirection( mhe );
 	if(mhe.Multiplicity() < 2){
 		std::cerr << "red flag " << mhe << "\n";
-	}else{
+    }
+    //use rmin & rmax to discard irrelevant seed matches
+    else if(mhe.Multiplicity() > this->max_multiplicity || mhe.Multiplicity() < this->min_multiplicity )
+    {
+        ;
+    }
+    else{
 		mlist.push_back(mhe.Copy());
 	}
 	return true;

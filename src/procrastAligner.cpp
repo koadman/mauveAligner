@@ -1559,6 +1559,8 @@ int main( int argc, char* argv[] )
 	uint seed_weight = 0;
     uint min_repeat_length = 0;
     uint min_spscore = 0;
+    uint rmin = 0;
+    uint rmax = 0;
 	string outputfile = "";
 	string output2file = "";
 	string xmfa_file = "";
@@ -1601,6 +1603,9 @@ int main( int argc, char* argv[] )
 			("xmfa", po::value<string>(&xmfa_file)->default_value(""), "XMFA format output")
             ("xml", po::value<string>(&xml_file)->default_value(""), "XML format output")
             ("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches!")
+            ("rmin" , po::value<unsigned>(&rmin)->default_value(2), "minimum repeat multiplicity (copy number)")
+            ("rmax",  po::value<unsigned>(&rmax)->default_value(500), "maximum repeat multiplicity (copy number)")
+
         ;
 
 		if( argc < 2 )
@@ -1617,7 +1622,35 @@ int main( int argc, char* argv[] )
             return 1;
         }
 
-		
+        if (vm.count("rmin")) {
+            cout << "setting minimum multiplicity to " 
+                 << rmin << ".\n";
+        } else {
+            cout << "Using default minimum multiplicity (2).\n";
+        }
+
+        if (vm.count("rmax")) {
+            cout << "setting maximimum multiplicity to " 
+                 << rmax << ".\n";
+        } else {
+            cout << "Using default maximum multiplicity (500).\n";
+        }
+
+	    if (rmin > rmax) 
+        {
+            cout << "rmin > rmax, setting rmax == rmin\n";
+            rmax = rmin;
+        } 
+        if (rmin < 2)
+        {
+            cout << "rmin < 2, setting rmin == 2\n";
+            rmin = 2;
+        }
+        if (rmax < 2)
+        {
+            cout << "rmax < 2, setting rmax == 2\n"; 
+            rmax = 2;
+        }
         if (vm.count("w")) {
             cout << "max gap width (w) was set to " 
                  << w << ".\n";
@@ -1682,7 +1715,7 @@ int main( int argc, char* argv[] )
 		w = 0;	
 	cout << "Using seed weight: " << seed_weight << " and w: " << w << endl;
 	SeedMatchEnumerator sme;
-	sme.FindMatches( seedml );
+	sme.FindMatches( seedml, rmin, rmax );
 	
     // need single nuc & kmer frequency
 	string sequence = seedml.seq_table.at(0)->ToString();
@@ -2171,11 +2204,11 @@ int main( int argc, char* argv[] )
 					size_t dI = 0;
                     if (subset_list[sI].get<2>().size() < cur_group.get<2>().size())
                     {
-                        //why would this happen? debugme..
-                        cerr << "subset_list[" << sI << "].get<2>().size() < cur_group.get<2>().size()" << endl;
-                        cerr << subset_list[sI].get<2>().size() << " < " <<  cur_group.get<2>().size() << endl;
-                        genome::breakHere();
-                        //continue;
+                        //debugme: why would this happen?
+                        //cerr << "subset_list[" << sI << "].get<2>().size() < cur_group.get<2>().size()" << endl;
+                        //cerr << subset_list[sI].get<2>().size() << " < " <<  cur_group.get<2>().size() << endl;
+                        //genome::breakHere();
+                        continue;
                     }
 					for( ; dI < cur_group.get<2>().size(); ++dI )
                     {
@@ -2215,9 +2248,14 @@ int main( int argc, char* argv[] )
 				// it's outside, just link it in
 				// rebuild the superset component list
 				boost::dynamic_bitset<> comp_list(M_i->Multiplicity(), false);
+
 				for( size_t compI = 0; compI < subset_list[sI].get<1>().size(); ++compI )
-					comp_list.set(subset_list[sI].get<1>()[compI]);
-				getSuperset(M_j,-direction*parity) = MatchLink( M_i, M_j, comp_list, subset_list[sI].get<1>() );
+                {
+                    //debugme: why do I need to check this first?
+                    if (  subset_list[sI].get<1>()[compI] != (std::numeric_limits<size_t>::max)())
+                        comp_list.set(subset_list[sI].get<1>()[compI]);
+                }
+                getSuperset(M_j,-direction*parity) = MatchLink( M_i, M_j, comp_list, subset_list[sI].get<1>() );
 				getSubsets(M_i,direction).push_back( getSuperset(M_j,-direction*parity));
                 //getExtraSubsets(M_i,direction).push_back( getSuperset(M_j,-direction*parity));
 				prev_linked = true;
