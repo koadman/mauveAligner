@@ -280,6 +280,7 @@ int doAlignment( int argc, char* argv[] ){
 	// default values for homology HMM transitions
 	double pgh = 0.00001;
 	double pgu = 0.000000001;
+	double hmm_identity = 0.8;	// percent identity modeled by the HMM homologous state
 
 	// set the Muscle path
 	MuscleInterface& mi = MuscleInterface::getMuscleInterface();
@@ -343,6 +344,8 @@ int doAlignment( int argc, char* argv[] ){
 		Params hmm_params = getAdaptedHoxdMatrixParameters( gc_content );
 		hmm_params.iGoHomologous = pgh;
 		hmm_params.iGoUnrelated = pgu;
+		adaptToPercentIdentity( hmm_params, hmm_identity );
+
 		detectAndApplyBackbone(iv_list, bb_list, hmm_params);
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
@@ -675,22 +678,6 @@ int doAlignment( int argc, char* argv[] ){
 	if( opt_profile.set ){
 		cerr << "Profile-profile alignment not yet implemented\n";
 		return -3;
-/*
-		ifstream lcb_input_1( opt_profile_1.arg_value.c_str() );
-		if( !lcb_input_1.is_open() ){
-			cerr << "Error opening " << opt_profile_1.arg_value << endl;
-			return -2;
-		}
-		try{
-			profile_1.ReadStandardAlignment( lcb_input_1 );
-			LoadSequences(profile_1, NULL);
-		}catch( gnException& gne ){
-			cerr << gne << endl;
-			cerr << "Error reading " << opt_profile_1.arg_value << "\nPossibly corrupt file or invalid file format\n";
-			return -2;
-		}
-*/
-
 	}
 
 	IntervalList interval_list;
@@ -713,6 +700,7 @@ int doAlignment( int argc, char* argv[] ){
 			Params hmm_params = getHoxdParams();
 			hmm_params.iGoHomologous = pgh;
 			hmm_params.iGoUnrelated = pgu;
+			adaptToPercentIdentity( hmm_params, hmm_identity );
 			detectAndApplyBackbone(interval_list, bb_list, hmm_params);
 			writeBackboneColumns( bbcols_out, bb_list );
 			if( opt_backbone_output.set )
