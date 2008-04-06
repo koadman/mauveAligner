@@ -265,6 +265,7 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_min_scaled_penalty( mauve_options, "min-scaled-penalty", required_argument, "<number> Minimum breakpoint penalty after scaling the penalty by expected divergence" );
 	MauveOption opt_go_homologous( mauve_options, "hmm-p-go-homologous", required_argument, "<number> Probability of transitioning from the unrelated to the homologous state [0.00001]" );
 	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.000000001]" );
+	MauveOption opt_hmm_identity( mauve_options, "hmm-identity", required_argument, "<number> Expected level of sequence identity among pairs of sequences, ranging between 0 and 1 [0.7]" );
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
 	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
 	MauveOption opt_recursive( mauve_options, "no-recursion", no_argument, "Disable recursive anchor search" );
@@ -281,7 +282,7 @@ int doAlignment( int argc, char* argv[] ){
 	// default values for homology HMM transitions
 	double pgh = 0.00001;
 	double pgu = 0.000000001;
-	double hmm_identity = 0.8;	// percent identity modeled by the HMM homologous state
+	double hmm_identity = 0.7;	// percent identity modeled by the HMM homologous state
 	size_t island_gap_size = 20;
 
 	// set the Muscle path
@@ -321,6 +322,8 @@ int doAlignment( int argc, char* argv[] ){
 		pgh = strtod( opt_go_homologous.arg_value.c_str(), NULL );
 	if( opt_go_unrelated.set )
 		pgu = strtod( opt_go_unrelated.arg_value.c_str(), NULL );
+	if( opt_hmm_identity.set )
+		hmm_identity = strtod( opt_hmm_identity.arg_value.c_str(), NULL );
 	if( opt_island_gap_size.set )
 		island_gap_size = atoi( opt_island_gap_size.arg_value.c_str() );
 
