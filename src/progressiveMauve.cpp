@@ -230,6 +230,7 @@ void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >
 int doAlignment( int argc, char* argv[] ){
 //try{
 	OptionList mauve_options;
+	MauveOption opt_island_gap_size( mauve_options, "island-gap-size", required_argument, "<number> Alignment gaps above this size in nucleotides are considered to be islands [20]" );
 	MauveOption opt_profile( mauve_options, "profile", required_argument, "<file> (Not yet implemented) Read an existing sequence alignment in XMFA format and align it to other sequences or alignments" );
 	MauveOption opt_apply_backbone( mauve_options, "apply-backbone", required_argument, "<file> Read an existing sequence alignment in XMFA format and apply backbone statistics to it" );
 	MauveOption opt_disable_backbone( mauve_options, "disable-backbone", no_argument, "Disable backbone detection" );
@@ -281,6 +282,7 @@ int doAlignment( int argc, char* argv[] ){
 	double pgh = 0.00001;
 	double pgu = 0.000000001;
 	double hmm_identity = 0.8;	// percent identity modeled by the HMM homologous state
+	size_t island_gap_size = 20;
 
 	// set the Muscle path
 	MuscleInterface& mi = MuscleInterface::getMuscleInterface();
@@ -319,6 +321,8 @@ int doAlignment( int argc, char* argv[] ){
 		pgh = strtod( opt_go_homologous.arg_value.c_str(), NULL );
 	if( opt_go_unrelated.set )
 		pgu = strtod( opt_go_unrelated.arg_value.c_str(), NULL );
+	if( opt_island_gap_size.set )
+		island_gap_size = atoi( opt_island_gap_size.arg_value.c_str() );
 
 	// for debugging only:
 	if( opt_apply_backbone.set )
@@ -347,12 +351,28 @@ int doAlignment( int argc, char* argv[] ){
 		adaptToPercentIdentity( hmm_params, hmm_identity );
 
 		detectAndApplyBackbone(iv_list, bb_list, hmm_params);
+
+		BigGapsDetector bgd( island_gap_size );
+		detectBackbone( iv_list, bb_list, &bgd );
+
 		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
+		std::vector< bb_seqentry_t > bb_seq_list;
+		bb_out.close();
+		std::ifstream bbseq_input( bb_fname.c_str() );
+		readBackboneSeqFile( bbseq_input, bb_seq_list );
+
+		mergeAdjacentSegments( bb_seq_list );
+		addUniqueSegments( bb_seq_list );
+		bbseq_input.close();
+		bb_out.open(bb_fname.c_str());
+		writeBackboneSeqFile( bb_out, bb_seq_list );
+
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		ofstream bbcols_out( bbcols_fname.c_str() );
 		writeBackboneColumns( bbcols_out, bb_list );
 		iv_list.backbone_filename = bbcols_fname;
 		iv_list.WriteStandardAlignment(out_file);
+
 		return 0;
 	}
 
@@ -697,7 +717,10 @@ int doAlignment( int argc, char* argv[] ){
 		if( bbcols_out.is_open() )
 		{
 			backbone_list_t bb_list;
-			Params hmm_params = getHoxdParams();
+			double gc_content = computeGC( interval_list.seq_table );
+			std::cout << "Organisms have " << std::setprecision(3) << gc_content*100 << "% GC\n";
+			Params hmm_params = getAdaptedHoxdMatrixParameters( gc_content );
+//			Params hmm_params = getHoxdParams();
 			hmm_params.iGoHomologous = pgh;
 			hmm_params.iGoUnrelated = pgu;
 			adaptToPercentIdentity( hmm_params, hmm_identity );
@@ -711,7 +734,23 @@ int doAlignment( int argc, char* argv[] ){
 				{
 					cerr << "Error writing to \"" << bb_seq_fname << "\"" << endl;
 				}else{
+
+					BigGapsDetector bgd( island_gap_size );
+					detectBackbone( interval_list, bb_list, &bgd );
+
 					writeBackboneSeqCoordinates( bb_list, interval_list, bb_seq_out );
+					std::vector< bb_seqentry_t > bb_seq_list;
+					bb_seq_out.close();
+					std::ifstream bbseq_input( bb_seq_fname.c_str() );
+					readBackboneSeqFile( bbseq_input, bb_seq_list );
+
+					mergeAdjacentSegments( bb_seq_list );
+					addUniqueSegments( bb_seq_list );
+					bbseq_input.close();
+					bb_seq_out.open(bb_seq_fname.c_str());
+					writeBackboneSeqFile( bb_seq_out, bb_seq_list );
+
+//					writeBackboneSeqCoordinates( bb_list, interval_list, bb_seq_out );
 				}
 			}
 			if(opt_mem_clean.set)
