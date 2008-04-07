@@ -58,9 +58,8 @@ public:
 	std::vector< std::vector< size_t > > chained_component_maps;	/**< maps components in this match to those in chained matches */
 	bool tandem;			/**< set to true if components of the match are chainable to each other (tandem repeats)*/
 	bool extended;			/**< set to false prior to extending this match */
-	bool dont_extend;
-	bool extend_left;
-	bool extend_right;
+	bool is_novel_subset;
+    bool dont_extend;
     
 	void clear()
 	{
@@ -70,8 +69,7 @@ public:
 		tandem = false;
 		extended = false;
 		dont_extend = false;
-		extend_right = true;
-		extend_left = true;
+        is_novel_subset = false;
 	}
 };
 

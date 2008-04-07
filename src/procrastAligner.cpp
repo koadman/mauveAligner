@@ -738,7 +738,10 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
 						   uint w,
 						   bitset_t& left_lookups,
 						   bitset_t& right_lookups,
-						   GappedMatchRecord* M_e
+						   GappedMatchRecord* M_e,
+                           int extend_length = 0
+                           // how big was the extension window? needed to classify all novel matches
+                           // discovered during gapped extension
 						   )
 {
 	// make sure storage is empty
@@ -768,14 +771,16 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
 			}
 
 		int d = 1;
-		int w_end = w;
+		int w_end = parity == 1 ? w : w + seed_size;
 		// are we cleaning up a gapped extension?  if so, adjust d and w_end so
 		// we don't search anything twice and also cover all of the extension area
 		if(M_e != NULL)
 		{
-			int64 me_match_end = parity == 1 ? M_e->LeftEnd(x) : M_e->RightEnd(x) - seed_size + 1;
-			d = w + 1;	// already searched within w of match_end
-			w_end = w + me_match_end - match_end;	// search anything new included in M_e
+			int64 me_match_end = parity == 1 ? M_e->LeftEnd(x) : M_e->RightEnd(x)-(M_e->Length(x)-1);
+			d = 1;	// need to start at the beginng of the window to properly 
+                    // classify all matches subsumed by extension and all novel 
+                    // matches which may have been discovered
+			w_end = extend_length+1;	// search anything new included in M_e
 		}
 		for( ; d <= w_end; ++d )
 		{
@@ -879,7 +884,8 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
 		if( group_entries.size() == M_i->Multiplicity() && 
 			M_j->Multiplicity() == M_i->Multiplicity() )
 		{
-			// chainable
+            
+            // chainable
 			chainable_groups.push_back( group_entries );
 		}else
 		if( group_entries.size() < M_i->Multiplicity() && 
@@ -889,7 +895,7 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
 			subset_groups.push_back( group_entries );
 		}else
 		{
-			// novel subset
+            // novel subset
 			novel_subset_groups.push_back( group_entries );
 		}
 
@@ -905,7 +911,7 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
  * Chains matches onto M_i or subsumes them as appropriate
  */
 void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup >& chainable_list,
-				  int direction, int& last_linked )
+				  int direction, int& last_linked, bool find_novel_subsets )
 {
 	// link the closest possible chainable first.
 	for( size_t gI = 0; gI < chainable_list.size(); gI++ )
@@ -919,14 +925,24 @@ void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup
 			// this is an inverted overlapping repeat, skip it.
 			continue;
 		}
-		if( M_j->extended )
+        if( M_j->extended )
 		{
-            continue;
-			// oh no!  M_i should have been swallowed up already!
-            //tjt: what if before gapped extension M_j was not in M_i's neighborhood?
-            //     but after gapped extension, M_i is found in M_j's neighborhood and classified as chainable?
-			cerr << "extensor crap 2\n";
-			//breakHere();
+            if ( !find_novel_subsets && (M_i->is_novel_subset ))
+            {
+                //novel subsets have been disabled!! this is why it wasn't swallowed up!
+                continue;
+            }
+            else
+            {
+                // oh no!  M_i should have been swallowed up already!
+                //tjt: claro, work has been wasted, but bypassing the breakHere() will allow
+                //the assumed-to-be subsumed M_i to be detected and updated accordingly
+                //but the question remains, why wasn't M_i previously subsumed?
+                //1)   what if before gapped extension M_j was not in M_i's neighborhood?
+                //     but after gapped extension, M_i is found in M_j's neighborhood and classified as chainable?
+			    //cerr << "extensor crap 2\n";
+			    //breakHere();
+            }
 		}
 
 		bool subsumed;
@@ -969,7 +985,7 @@ void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup
 }
 //processes supersets
 void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup >& superset_list,
-				  int direction, int& last_linked )
+				  int direction, int& last_linked, bool gapped_extension = false )
 {
 	
 	// link the closest possible superset first.
@@ -986,8 +1002,8 @@ void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup 
 			// this is an inverted overlapping repeat, skip it.
 			continue;
 		}
-        //tjt: shouldn't the superset always be extended when we reach this point??
-		if( M_j->extended && 0)
+        //tjt: shouldn't the superset always be extended when we reach this point during gapped extension?
+		if( M_j->extended && !gapped_extension )
 		{
            	// oh no!  M_i should have been swallowed up already!
 			cerr << "extensor crap 2\n";
@@ -1461,6 +1477,7 @@ void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGro
 		M_n->chained_matches.clear();
 		M_n->chained_component_maps.clear();
 
+        M_n->is_novel_subset = true;//yep, this is a novel subset
 		// create links from M_n to M_i and M_j
 		int ni_parity = M_n->Orientation(0) == M_i->Orientation(new_to_i_map[0]) ? 1 : -1;
 		int nj_parity = M_n->Orientation(0) == M_j->Orientation(new_to_j_map[0]) ? 1 : -1;
@@ -1478,7 +1495,7 @@ void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGro
 		novel_subset_count++;
 	}
 
-	if( created_thisround > w * M_i->Multiplicity() )
+	if( created_thisround > w * M_i->Multiplicity() && 0)
 	{
 		cerr << "made too many!\n";
 		genome::breakHere();
@@ -1568,6 +1585,7 @@ int main( int argc, char* argv[] )
 	string stat_file = "";
     bool allow_tandem = false;
 	bool find_novel_subsets = false;
+    bool use_novel_matches = true; //should procrast use novel matches found during gapped extension ?
 	bool solid_seed = false;
 	bool extend_chains = true;
 	bool chain = true;
@@ -1597,6 +1615,7 @@ int main( int argc, char* argv[] )
 			("chain", po::value<bool>(&chain)->default_value(true), "chain matches")
 			("extend", po::value<bool>(&extend_chains)->default_value(true), "extend chains")
 			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches ")
+            ("novel-matches", po::value<bool>(&use_novel_matches)->default_value(true), "use novel matches found during gapped extension ")
 			("output", po::value<string>(&outputfile)->default_value(""), "output ")
 			("score-out", po::value<string>(&output2file)->default_value(""), "output with corresponding score and alignment info ")
 			("highest", po::value<string>(&stat_file)->default_value("procrast.highest"), "file containing highest scoring alignment for each multiplicity ")
@@ -1891,7 +1910,8 @@ int main( int argc, char* argv[] )
 				getSubsets(umr,dI).clear();	// so that validate works...
 			}
 		}
-
+        if( M_i == (MatchRecord*)0x01e68600)
+			cerr << "subsumeddebugme!!\n";
 		if( M_i == (MatchRecord*)0x01cdb8e4)
 			cerr << "supersetdebugme!!\n";
         if( M_i == (MatchRecord*)0x0209362c)
@@ -1949,7 +1969,7 @@ int main( int argc, char* argv[] )
 				// now process each type of neighborhood group
 				// supersets are already done.  happy chrismakwanzuhkkah
 				// then process chainable
-				processChainableMatches( M_i, chainable_list, direction, last_linked );
+				processChainableMatches( M_i, chainable_list, direction, last_linked, find_novel_subsets );
 
 				// defer subset processing
 				for( size_t gI = 0; gI < subset_list.size(); gI++ )
@@ -1985,9 +2005,10 @@ int main( int argc, char* argv[] )
 			// if we didn't do a chaining or superset extension, try a gapped extension
 			if( last_linked == 0 )
 			{
+                double e = 2.71828182845904523536;
 				int rcode = 0;
                 bool extend_it = false;
-
+                int extend_length = 80*pow(e,-0.01*M_i->Multiplicity());
 				vector<GappedMatchRecord*> novel_matches;	// M_e will contain the extension
 				// only extend if two matches are chained if two-hits == true
                 // its fast enough now that printing to screen actually slows things down...
@@ -2005,6 +2026,7 @@ int main( int argc, char* argv[] )
                     for (size_t mI = 0; mI < novel_matches.size(); mI++ )
                     {
                         GappedMatchRecord* M_e = novel_matches.at(mI);
+                        M_e->extended = false;
                         if (M_e->Multiplicity() > M_i->Multiplicity())//what does this mean??
                             continue;
                         else if (M_e->Multiplicity() == M_i->Multiplicity())
@@ -2030,12 +2052,24 @@ int main( int argc, char* argv[] )
     	                
 	                    // pairs get ordered on the first element by default 
 	                    std::sort( mplt_sort_list.begin(), mplt_sort_list.end() );
-                        //clobber the existing left end in the MPLT
-                        //but what if we are replacing something we shouldn't...
-                        if (1)
+
+                        //don't use novel match if it clobbers the existing left end in the MPLT
+                        if (use_novel_matches)
                         {
-                        for( size_t i = 0; i < mplt_sort_list.size(); ++i)
-                            match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
+                            bool clobbers_existing_match = false;
+                            for( size_t i = 0; i < mplt_sort_list.size(); ++i)
+                            {
+                                if (match_pos_lookup_table[ mplt_sort_list[i].first ].first != NULL )
+                                {
+                                    clobbers_existing_match = true;
+                                    break;
+                                }
+                            }
+                            if (! clobbers_existing_match )
+                            {
+                                for( size_t i = 0; i < mplt_sort_list.size(); ++i)
+                                    match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
+                            }
                         }
                         //now, during the subsequent call to neighborhoodListLookup(), we should
                         //find the novel homologous region and process it accordingly...
@@ -2069,7 +2103,7 @@ int main( int argc, char* argv[] )
                     
                     neighborhoodListLookup( M_i, match_pos_lookup_table,
 					            superset_list, chainable_list, subset_list, novel_subset_list,
-					            direction, seed_size, w, left_lookups, right_lookups, M_t);
+					            direction, seed_size, w, left_lookups, right_lookups, M_t, extend_length);
                     
 	                M_i->chained_matches.push_back( M_t );
 	                M_i->chained_component_maps.push_back( component_map );
@@ -2083,7 +2117,7 @@ int main( int argc, char* argv[] )
                     //homologous regions with respect to M_i
 			        neighborhoodListLookup( M_i, match_pos_lookup_table,
 							    superset_list, chainable_list, subset_list, novel_subset_list,
-							    direction, seed_size, w, left_lookups, right_lookups,NULL);
+							    direction, seed_size, w, left_lookups, right_lookups,NULL,extend_length);
                     
                 }
                 extended = true;
@@ -2093,11 +2127,11 @@ int main( int argc, char* argv[] )
 				// if the superset continues beyond the end of at least one component, then 
 				// we want to create a superset link for it, and process it during a link extension
 				if ( superset_list.size() > 0 )
-					processSupersetMatches( M_i, superset_list, direction, last_linked );
+					processSupersetMatches( M_i, superset_list, direction, last_linked, true );
 			
 				// then process chainable
 				if ( chainable_list.size() > 0 )
-					processChainableMatches( M_i, chainable_list, direction, last_linked );
+					processChainableMatches( M_i, chainable_list, direction, last_linked, find_novel_subsets );
 				// defer subset processing
 				for( size_t gI = 0; gI < subset_list.size(); gI++ )
 				{
