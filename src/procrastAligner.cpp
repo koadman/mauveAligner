@@ -2055,9 +2055,21 @@ int main( int argc, char* argv[] )
                         //don't use novel match if it clobbers the existing left end in the MPLT
                         if (use_novel_matches)
                         {
-                           
+                     
+                            bool clobbers_existing_match = false;
                             for( size_t i = 0; i < mplt_sort_list.size(); ++i)
-                                match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
+                            {
+                                if (match_pos_lookup_table[ mplt_sort_list[i].first ].first != NULL )
+                                {
+                                    clobbers_existing_match = true;
+                                    break;
+                                }
+                            }
+                            if (! clobbers_existing_match )
+                            {
+                                for( size_t i = 0; i < mplt_sort_list.size(); ++i)
+                                    match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
+                            }
                             
                         }
                         //now, during the subsequent call to neighborhoodListLookup(), we should
@@ -2086,19 +2098,14 @@ int main( int argc, char* argv[] )
                     GappedMatchRecord* M_t = NULL;
                     //leftward extension
                     if (direction > 0 )
-                        M_t = novel_matches.front();
-                    else
                         M_t = novel_matches.back();
+                    else
+                        M_t = novel_matches.front();
                     
                     neighborhoodListLookup( M_i, match_pos_lookup_table,
 					            superset_list, chainable_list, subset_list, novel_subset_list,
 					            direction, seed_size, w, left_lookups, right_lookups, M_t);
                     
-                    if (direction > 0 )
-                        M_t = novel_matches.back();
-                    else
-                        M_t = novel_matches.front();
-
 	                M_i->chained_matches.push_back( M_t );
 	                M_i->chained_component_maps.push_back( component_map );
 	                bool changed = extendRange(M_i, M_t, component_map);
