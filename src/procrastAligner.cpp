@@ -595,12 +595,12 @@ void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_li
 	{
 //#4018
 		cerr << "something is wrong, we should never have supersets during link extension!\n";
-		breakHere();
+		genome::breakHere();
 	}
 
 	for( size_t cI = 0; cI < chainable.size(); ++cI )
 	{
-		if( chainable.size() > 1 && 0)
+		if( chainable.size() > 1)
 		{
 			cerr << "bad news bruthah\n";
 			genome::breakHere();
@@ -738,10 +738,7 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
 						   uint w,
 						   bitset_t& left_lookups,
 						   bitset_t& right_lookups,
-						   GappedMatchRecord* M_e,
-                           int extend_length = 0
-                           // how big was the extension window? needed to classify all novel matches
-                           // discovered during gapped extension
+						   GappedMatchRecord* M_e
 						   )
 {
 	// make sure storage is empty
@@ -777,10 +774,9 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
 		if(M_e != NULL)
 		{
 			int64 me_match_end = parity == 1 ? M_e->LeftEnd(x) : M_e->RightEnd(x)-(M_e->Length(x)-1);
-			d = w+1;	// need to start at the beginng of the window to properly 
+			d = w+1;	// need to start at the begining of the window to properly 
                     // classify all matches subsumed by extension and all novel 
                     // matches which may have been discovered
-			w_end = extend_length+1;	// search anything new included in M_e
    			w_end = w + me_match_end - match_end;	// search anything new included in M_e
 		}
 		for( ; d <= w_end; ++d )
@@ -1496,11 +1492,7 @@ void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGro
 		novel_subset_count++;
 	}
 
-	if( created_thisround > w * M_i->Multiplicity())
-	{
-		cerr << "made too many!\n";
-		genome::breakHere();
-	}
+
 }
 
 
@@ -2011,8 +2003,7 @@ int main( int argc, char* argv[] )
                 double e = 2.71828182845904523536;
 				int rcode = 0;
                 bool extend_it = false;
-                int extend_length = 80*pow(e,-0.01*M_i->Multiplicity());
-                extend_length = 0;
+                 //extend_length = 0;
 				vector<GappedMatchRecord*> novel_matches;	// M_e will contain the extension
 				// only extend if two matches are chained if two-hits == true
                 // its fast enough now that printing to screen actually slows things down...
@@ -2029,6 +2020,8 @@ int main( int argc, char* argv[] )
                 {
                     for (size_t mI = 0; mI < novel_matches.size(); mI++ )
                     {
+                        //if (novel_matches.at(mI)->Multiplicity() != M_i->Multiplicity() )
+                        //    continue;
                         GappedMatchRecord* M_e = novel_matches.at(mI);
                         M_e->extended = false;
                         
@@ -2062,20 +2055,10 @@ int main( int argc, char* argv[] )
                         //don't use novel match if it clobbers the existing left end in the MPLT
                         if (use_novel_matches)
                         {
-                            bool clobbers_existing_match = false;
+                           
                             for( size_t i = 0; i < mplt_sort_list.size(); ++i)
-                            {
-                                if (match_pos_lookup_table[ mplt_sort_list[i].first ].first != NULL )
-                                {
-                                    clobbers_existing_match = true;
-                                    break;
-                                }
-                            }
-                            if (! clobbers_existing_match )
-                            {
-                                for( size_t i = 0; i < mplt_sort_list.size(); ++i)
-                                    match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
-                            }
+                                match_pos_lookup_table[ mplt_sort_list[i].first ] =  mplt_sort_list[i].second;
+                            
                         }
                         //now, during the subsequent call to neighborhoodListLookup(), we should
                         //find the novel homologous region and process it accordingly...
@@ -2109,7 +2092,7 @@ int main( int argc, char* argv[] )
                     
                     neighborhoodListLookup( M_i, match_pos_lookup_table,
 					            superset_list, chainable_list, subset_list, novel_subset_list,
-					            direction, seed_size, w, left_lookups, right_lookups, M_t, extend_length);
+					            direction, seed_size, w, left_lookups, right_lookups, M_t);
                     
                     if (direction > 0 )
                         M_t = novel_matches.back();
@@ -2124,11 +2107,18 @@ int main( int argc, char* argv[] )
                 }
                 else
                 {
+                    
+                    GappedMatchRecord* M_t = NULL;
+                    if (direction > 0 )
+                        M_t = novel_matches.front();
+                    else
+                        M_t = novel_matches.back();
+
 			        //we can't extend M_i, but we can classify all of the novel
                     //homologous regions with respect to M_i
 			        neighborhoodListLookup( M_i, match_pos_lookup_table,
 							    superset_list, chainable_list, subset_list, novel_subset_list,
-							    direction, seed_size, w, left_lookups, right_lookups,NULL,extend_length);
+							    direction, seed_size, w, left_lookups, right_lookups,M_t);
                     
                 }
                 extended = true;
@@ -2154,13 +2144,14 @@ int main( int argc, char* argv[] )
 				cur_novel_subset_list.clear();	// only process novel subsets from the very last extension
 				for( size_t gI = 0; gI < novel_subset_list.size(); gI++ )
 					cur_novel_subset_list.push_back( novel_subset_list[gI] );
-                
+
                 //just as before, if we didn't extend M_i, change directions and continue on
-                if (!extend_it)
+                if (!extend_it  )
                 {
                     direction -=2;
                     continue;
                 }
+
                 //otherwise, enable another round of gapped extension in this direction.
             }
 		}	// end loop over leftward and rightward extension
