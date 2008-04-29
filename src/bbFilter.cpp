@@ -99,6 +99,7 @@ int main( int argc, char* argv[] )
 	string output_fname( argv[3] );
 	string target_format( argv[4] );
 	bool allow_alternalogs = false;
+	bool check_independence = false;
 
 	ifstream bbseq_input( bbseq_fname.c_str() );
 	if( !bbseq_input.is_open() ){
@@ -179,7 +180,7 @@ int main( int argc, char* argv[] )
 	good_bb.flip();
 	
 	// now mark segs that are too close to each other to be considered independent
-	for( size_t sI = 0; sI < seqs.size(); sI++ )
+	for( size_t sI = 0; check_independence && sI < seqs.size(); sI++ )
 	{
 		BbSorter bbs(seqs[sI]);
 		std::sort( bb_segs.begin(), bb_segs.end(), bbs );
