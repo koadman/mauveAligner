@@ -181,7 +181,7 @@ public:
 	 * Call to indicate that all matches have been placed in the chained_matches list and can be 
 	 * converted to a gapped alignment
 	 */
-	void finalize(std::vector<genome::gnSequence *> seq_table );
+	void finalize(std::vector<genome::gnSequence *> seq_table);
     //tjt: should this go somewhere else?
     size_t spscore;
 // methods inherited from AbstractGappedAlignment
@@ -272,18 +272,8 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 					chain[mI] = NULL;
 					continue;
 				}
-				// why??  why would we want to delete m if it lies completely outside mpaa?
-/*				if ( m->LeftEnd(seqI) >  mpaa.RightEnd(seqI) )
-				{
-					m->Free();
-					chain[mI] = NULL;
-					continue;
-				}
-*/
-				//m->Free();
-				//chain[mI] = NULL;
-				//continue;
-				m->CropLeft( mpaa.RightEnd(seqI) - m->LeftEnd(seqI) + 1, seqI );		
+
+    			m->CropLeft( mpaa.RightEnd(seqI) - m->LeftEnd(seqI) + 1, seqI );		
 			}
 		}
 		// get rid of any null entries in the chain
@@ -305,6 +295,7 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 	//      will need to feed AbstractMatch instead of Match to MuscleInterface::Align though
 	std::vector< mems::AbstractMatch* >::iterator chain_begin = chain.begin();
 	uint chainsize = chain.size()-1;
+
 	try{
 	for( uint i = 0; i < chainsize; i++ )
 	{
@@ -321,32 +312,16 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
    
 		if( align_success )
 		{
+            //cerr << "muscle alignment success!!" << endl;
 			iv_matches.push_back( cr );
 			// aed: just insert the resulting GappedAlignment objects into chain
 			chain.insert(chain.begin()+(i+1), cr);
 			chainsize++;
-			std::vector<std::string> alignment;
-
-			std::vector< mems::bitset_t > aln_mat;
-			cr->GetAlignment(aln_mat);
-			alignment = std::vector<std::string>( aln_mat.size() );
-			const genome::gnFilter* comp_filter = genome::gnFilter::DNAComplementFilter();
-			for( std::size_t seqI = 0; seqI < alignment.size(); seqI++ )
-			{
-				alignment[seqI] = std::string( aln_mat[0].size(), '-' );
-				if( cr->LeftEnd(seqI) == mems::NO_MATCH )
-					continue;
-				std::string cur_seq = seq_table[0]->ToString( cr->Length(seqI), cr->LeftEnd(seqI) );
-				if( cr->Orientation(seqI) == AbstractMatch::reverse )
-					comp_filter->ReverseFilter(cur_seq);
-				std::size_t cI = 0; 
-				for( std::size_t gI = 0; gI < alignment[seqI].size(); gI++ )
-					if( aln_mat[seqI][gI] )
-						alignment[seqI][gI] = cur_seq[cI++];
-			}	
 			// tjt: skip over newly inserted item
 			i++;		
 		}
+        else
+            continue;
 		
 	}
 	
@@ -358,6 +333,7 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 	}catch(...){
 		std::cerr << "matrix exception?\n";
 	}
+
 	MatchRecord* mr = this->Copy();
 	SetMatches( chain );
 	//tjt: now chain should be empty
