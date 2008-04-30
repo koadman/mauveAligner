@@ -1366,7 +1366,8 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 				    getSubsets(umr,dI).clear();	// so that validate works...
                 }
                 //          tjt: clobber M_e's GappedMatchRecord data and set boundaries
-                M_e->SetMatches(matches);//,cga_list.back()->Multiplicity() );
+                //tjt: we call the Temp version since we don't actually want to do anything with the regions between the matches
+                M_e->SetMatchesTemp(matches);//,cga_list.back()->Multiplicity() );
             }
             novel_matches.push_back(M_e->Copy());  
         }
