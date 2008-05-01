@@ -1644,7 +1644,7 @@ int main( int argc, char* argv[] )
 	int kmersize =0;
 	uint seed_weight = 0;
     uint min_repeat_length = 0;
-    uint min_spscore = 0;
+    score_t min_spscore = 0;
     uint rmin = 0;
     uint rmax = 0;
 	string outputfile = "";
@@ -1676,7 +1676,7 @@ int main( int argc, char* argv[] )
 			("z", po::value <unsigned>(&seed_weight)->default_value(0), "seed weight")
             ("l", po::value <unsigned>(&min_repeat_length)->default_value(20), "minimum repeat length")
             ("allow-redundant", po::value <bool>(&allow_redundant)->default_value(false), "allow redundant alignments?")
-            ("sp", po::value <unsigned>(&min_spscore)->default_value(2000), "minimum Sum-of-Pairs alignment score")
+            ("sp", po::value <score_t>(&min_spscore)->default_value(2000), "minimum Sum-of-Pairs alignment score")
             ("tandem", po::value <bool>(&allow_tandem)->default_value(false), "allow tandem repeats")
             ("h", po::value<float>(&pGoHomo)->default_value(0.008f), "Transition to Homologous")
             ("u", po::value<float>(&pGoUnrelated)->default_value(0.001f), "Transition to Unrelated")
@@ -1741,12 +1741,6 @@ int main( int argc, char* argv[] )
             cout << "rmax < 2, setting rmax == 2\n"; 
             rmax = 2;
         }
-        if (vm.count("w")) {
-            cout << "max gap width (w) was set to " 
-                 << w << ".\n";
-        } else {
-            cout << "Max gap width (w) not specified\n, using default value of 10\n";
-        }
 
 		if (vm.count("z")) {
             cout << "seed weight set to " 
@@ -1799,6 +1793,10 @@ int main( int argc, char* argv[] )
 	seedml.LoadSMLs( seed_weight, &cout, seed_rank );
 	int64 seed = getSeed( seed_weight, seed_rank);
 	uint seed_size = getSeedLength( seed );
+
+    if (min_spscore < 0 )
+        min_spscore = 0;
+
 	if( w == 0 )
 		w = seed_weight * 3;	// default value
 	else if( w == -1 )//if w == -1, disable chaining
@@ -2424,7 +2422,7 @@ int main( int argc, char* argv[] )
     vector< GappedMatchRecord* >  filtered_final;
     int finalsize = final.size();
     uint alignment_count = 0;
-
+    
     cout << "->Computing Sum-of-Pairs score of all lmas..." << endl;
 	for( size_t fI = 0; fI < finalsize; fI++ )
 	{
@@ -2434,6 +2432,7 @@ int main( int argc, char* argv[] )
 		//send temporary output format to file if requested
         if (final.at(fI)->AlignmentLength() >= min_repeat_length )
         {
+            score_final = 0;
             computeSPScore( alignment, pss, scores_final, score_final);
 		    //*output << "#procrastAlignment " << ++alignment_count << endl << *final.at(fI) << endl;
             final[fI]->spscore = score_final;
@@ -2542,7 +2541,7 @@ int main( int argc, char* argv[] )
 	        vector< gnSequence* > seq_table( scored[fI]->SeqCount(), seedml.seq_table[0] );
 	        mems::GetAlignment(*scored[fI], seq_table, alignment);	// expects one seq_table entry per matching component
             // 5) put all LMAs above min_repeat_length and min_spscore into final list of scored LMAs
-        
+            score_final = 0;
             computeSPScore( alignment, pss, scores_final, score_final);
             scored.at(fI)->spscore  = score_final;
             // pass it through a tandem repeat filter, too

@@ -183,7 +183,7 @@ public:
 	 */
 	void finalize(std::vector<genome::gnSequence *> seq_table);
     //tjt: should this go somewhere else?
-    size_t spscore;
+    mems::score_t spscore;
 // methods inherited from AbstractGappedAlignment
 public:
 	GappedMatchRecord* Clone() const { return new GappedMatchRecord( *this ); }
