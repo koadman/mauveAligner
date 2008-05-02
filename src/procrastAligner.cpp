@@ -2499,29 +2499,37 @@ int main( int argc, char* argv[] )
                 size_t right_crop_amt = 0;
                 gnSeqI startI = scored.at(fI)->LeftEnd(seqI);
                 //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
-                while(match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) && startI < scored.at(fI)->RightEnd(seqI) && scored.at(fI)->Length(seqI) < 4000000000u) 
+                while( startI < scored.at(fI)->RightEnd(seqI) && scored.at(fI)->Length(seqI) < 4000000000u) 
                 {
                     startI++;
-                    left_crop_amt++;
+                    if (match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) )
+                        left_crop_amt = startI-scored.at(fI)->LeftEnd(seqI);
                 }
-                if (left_crop_amt > 0)
+                
+                if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u && scored.at(fI)->Length(seqI) < 4000000000u)
+                {
+                    startI = scored.at(fI)->RightEnd(seqI);
+                    //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
+                    while(startI > scored.at(fI)->LeftEnd(seqI))
+                    {
+                        startI--;
+                        if ( match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) )
+                            right_crop_amt = scored.at(fI)->RightEnd(seqI)-startI;
+                    }
+                }
+
+                //this is perhaps not the best way to do this...
+                //I see how much can be cropped to the left & right
+                //then crop either to the left or right, leaving the largest non-overlapping region
+                //however, could technique could potentially clobber large internal non-overlapping regions of matches with lesser multiplicity??
+                if (left_crop_amt > 0 && left_crop_amt <= right_crop_amt)
                 {
                     if (left_crop_amt >= scored.at(fI)->Length(seqI))
                         scored.at(fI)->CropLeft( scored.at(fI)->Length(seqI)-1, seqI);
                     else
                         scored.at(fI)->CropLeft( left_crop_amt, seqI);
                 }
-                if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u && scored.at(fI)->Length(seqI) < 4000000000u)
-                {
-                    startI = scored.at(fI)->RightEnd(seqI);
-                    //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
-                    while(match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) && startI > scored.at(fI)->LeftEnd(seqI))
-                    {
-                        startI--;
-                        right_crop_amt++;
-                    }
-                }
-                if (right_crop_amt > 0)
+                else if (right_crop_amt > 0)
                 {
                     
                     if (right_crop_amt >= scored.at(fI)->Length(seqI))
