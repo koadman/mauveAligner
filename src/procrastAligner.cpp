@@ -74,6 +74,17 @@ bool scorecmp( GappedMatchRecord* a, GappedMatchRecord* b )
    else
        return a->spscore > b->spscore;
  }
+
+bool scorecmp2( GappedMatchRecord* a, GappedMatchRecord* b ) 
+{
+   // sort first by multipicity, then by spscore
+   if( a->spscore > b->spscore)
+       return true;
+   else if ( a->spscore < b->spscore)
+       return false;
+   else
+       return a->Multiplicity() > b->Multiplicity();
+ }
 /** The NeighborhoodGroup contains the MatchRecord pointer, the component map to the match being extended (M_i), and a vector of distances to M_i*/
 typedef boost::tuple< MatchRecord*, std::vector< size_t >, std::vector< size_t > > NeighborhoodGroup;
 
@@ -2462,7 +2473,7 @@ int main( int argc, char* argv[] )
     }
 
     // 2) sort the result GappedMatchRecords by multiplicity (high to low) and break ties by SP score.
-	std::sort( scored.begin(), scored.end(), scorecmp );
+	std::sort( scored.begin(), scored.end(), scorecmp2 );
 
     
     for( size_t fI = 0; fI < scored.size(); fI++ )
