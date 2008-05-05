@@ -25,7 +25,6 @@
 #include "libMems/gnAlignedSequences.h"
 #include "libMems/Islands.h"
 #include "libMems/MuscleInterface.h"
-#include "libMems/ClustalInterface.h"
 #include "libMems/Backbone.h"
 //#include "libMems/twister.h"
 
