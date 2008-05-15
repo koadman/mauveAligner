@@ -1675,6 +1675,7 @@ int main( int argc, char* argv[] )
     string xml_file = "";
 	string stat_file = "";
 	string seed_file = "";
+	bool load_sml = false;
 	bool small_repeats = false;
 	bool large_repeats = false;
     bool allow_tandem = false;
@@ -1703,6 +1704,7 @@ int main( int argc, char* argv[] )
 			("highest", po::value<string>(&stat_file)->default_value("procrast.highest"), "file containing highest scoring alignment for each multiplicity ")
             ("l", po::value <unsigned>(&min_repeat_length)->default_value(1), "minimum repeat length")
 			("large-repeats", po::value <bool>(&large_repeats)->default_value(false), "optimize for large repeats")
+			("load-sml", po::value <bool>(&load_sml)->default_value(false), "try to load existing SML file?")
 			("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches?")
 			("output", po::value<string>(&outputfile)->default_value(""), "procrastAligner output ")
 			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches?")
@@ -1827,7 +1829,7 @@ int main( int argc, char* argv[] )
 		seed_rank = INT_MAX;
 		std::cout << "Using solid seed" << std::endl;
 	}
-	seedml.LoadSMLs( seed_weight, &cout, seed_rank, solid_seed );
+	seedml.LoadSMLs( seed_weight, &cout, seed_rank, solid_seed, load_sml );
 	int64 seed = getSeed( seed_weight, seed_rank);
 	uint seed_size = getSeedLength( seed );
 
