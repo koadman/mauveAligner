@@ -75,7 +75,7 @@ bool scorecmp( GappedMatchRecord* a, GappedMatchRecord* b )
        return a->spscore > b->spscore;
  }
 
-bool scorecmp2( GappedMatchRecord* a, GappedMatchRecord* b ) 
+bool score_by_sp( GappedMatchRecord* a, GappedMatchRecord* b ) 
 {
    // sort first by multipicity, then by spscore
    if( a->spscore > b->spscore)
@@ -84,6 +84,17 @@ bool scorecmp2( GappedMatchRecord* a, GappedMatchRecord* b )
        return false;
    else
        return a->Multiplicity() > b->Multiplicity();
+ }
+
+bool score_by_length( GappedMatchRecord* a, GappedMatchRecord* b ) 
+{
+   // sort first by multipicity, then by spscore
+   if( a->AlignmentLength() > b->AlignmentLength())
+       return true;
+   else if ( a->AlignmentLength() < b->AlignmentLength())
+       return false;
+   else
+       return a->spscore > b->spscore;
  }
 /** The NeighborhoodGroup contains the MatchRecord pointer, the component map to the match being extended (M_i), and a vector of distances to M_i*/
 typedef boost::tuple< MatchRecord*, std::vector< size_t >, std::vector< size_t > > NeighborhoodGroup;
@@ -453,7 +464,7 @@ void validate( vector< MatchRecordPtrType >& records )
 	for( size_t recI = 0; recI < records.size(); ++recI )
 	{
 		MatchRecord* mr = records[recI];
-		for( int direction = 1; direction > -2; direction -= 2 )
+		for( int direction = 1; direction >-2; direction -= 2 )
 		{
 			for( size_t subI = 0; subI < getSubsets(mr, direction).size(); subI++ )
 			{
@@ -1663,6 +1674,9 @@ int main( int argc, char* argv[] )
 	string xmfa_file = "";
     string xml_file = "";
 	string stat_file = "";
+	string seed_file = "";
+	bool small_repeats = false;
+	bool large_repeats = false;
     bool allow_tandem = false;
     bool allow_redundant = false;
 	bool find_novel_subsets = false;
@@ -1681,31 +1695,34 @@ int main( int argc, char* argv[] )
 
         po::options_description desc("Allowed options");
         desc.add_options()
-            ("help", "get help message")
-            ("sequence", po::value<string>(&sequence_file), "FastA sequence file")
-			("w", po::value<unsigned>(&w)->default_value(0), "max gap width ")
-			("z", po::value <unsigned>(&seed_weight)->default_value(0), "seed weight")
-            ("l", po::value <unsigned>(&min_repeat_length)->default_value(20), "minimum repeat length")
-            ("allow-redundant", po::value <bool>(&allow_redundant)->default_value(false), "allow redundant alignments?")
-            ("sp", po::value <score_t>(&min_spscore)->default_value(2000), "minimum Sum-of-Pairs alignment score")
-            ("tandem", po::value <bool>(&allow_tandem)->default_value(false), "allow tandem repeats")
-            ("h", po::value<float>(&pGoHomo)->default_value(0.008f), "Transition to Homologous")
-            ("u", po::value<float>(&pGoUnrelated)->default_value(0.001f), "Transition to Unrelated")
-			("solid", po::value<bool>(&solid_seed)->default_value(0), "use solid seed")
-			("two-hits", po::value<bool>(&two_hits)->default_value(false), "require two hits within w to trigger gapped extension")
-			("unalign", po::value<bool>(&unalign)->default_value(true), "unalign non-homologous sequence")
-			("chain", po::value<bool>(&chain)->default_value(true), "chain matches")
-			("extend", po::value<bool>(&extend_chains)->default_value(true), "extend chains")
-			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches ")
-            ("novel-matches", po::value<bool>(&use_novel_matches)->default_value(true), "use novel matches found during gapped extension ")
-			("output", po::value<string>(&outputfile)->default_value(""), "output ")
-			("score-out", po::value<string>(&output2file)->default_value(""), "output with corresponding score and alignment info ")
+			("allow-redundant", po::value <bool>(&allow_redundant)->default_value(true), "allow redundant alignments?")
+			("chain", po::value<bool>(&chain)->default_value(true), "chain seeds?")
+			("extend", po::value<bool>(&extend_chains)->default_value(true), "extend chains?")
+			("h", po::value<float>(&pGoHomo)->default_value(0.008f), "Transition to Homologous")
+			("help", "get help message")
 			("highest", po::value<string>(&stat_file)->default_value("procrast.highest"), "file containing highest scoring alignment for each multiplicity ")
+            ("l", po::value <unsigned>(&min_repeat_length)->default_value(1), "minimum repeat length")
+			("large-repeats", po::value <bool>(&large_repeats)->default_value(false), "optimize for large repeats")
+			("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches?")
+			("output", po::value<string>(&outputfile)->default_value(""), "procrastAligner output ")
+			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches?")
+            ("novel-matches", po::value<bool>(&use_novel_matches)->default_value(true), "use novel matches found during gapped extension?")
+			("rmax",  po::value<unsigned>(&rmax)->default_value(500), "maximum repeat multiplicity (max copy number)")
+			("rmin" , po::value<unsigned>(&rmin)->default_value(2), "minimum repeat multiplicity (min copy number)")
+			("seeds", po::value<string>(&seed_file), "seed output file")
+            ("sequence", po::value<string>(&sequence_file), "FastA sequence file")
+			("small-repeats", po::value <bool>(&small_repeats)->default_value(false), "optimize for small repeats")
+			("score-out", po::value<string>(&output2file)->default_value(""), "output with corresponding score and alignment info ")
+			("solid", po::value<bool>(&solid_seed)->default_value(0), "use solid/exact seeds?")
+			("sp", po::value <score_t>(&min_spscore)->default_value(0), "minimum Sum-of-Pairs alignment score")
+			("tandem", po::value <bool>(&allow_tandem)->default_value(true), "allow tandem repeats?")
+			("two-hits", po::value<bool>(&two_hits)->default_value(false), "require two hits within w to trigger gapped extension?")
+			("u", po::value<float>(&pGoUnrelated)->default_value(0.001f), "Transition to Unrelated")			
+			("unalign", po::value<bool>(&unalign)->default_value(true), "unalign non-homologous sequence?")
+			("w", po::value<unsigned>(&w)->default_value(0), "max gap width ")
 			("xmfa", po::value<string>(&xmfa_file)->default_value(""), "XMFA format output")
             ("xml", po::value<string>(&xml_file)->default_value(""), "XML format output")
-            ("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches!")
-            ("rmin" , po::value<unsigned>(&rmin)->default_value(2), "minimum repeat multiplicity (copy number)")
-            ("rmax",  po::value<unsigned>(&rmax)->default_value(500), "maximum repeat multiplicity (copy number)")
+			("z", po::value <unsigned>(&seed_weight)->default_value(0), "seed weight")
 
         ;
 
@@ -1723,6 +1740,15 @@ int main( int argc, char* argv[] )
             return 1;
         }
 
+		if (large_repeats && small_repeats)
+		{
+			cout << "which is it? small or large? can't optimize for both!\n";
+			return 1;
+		}
+		if (seed_weight < 3) {
+            cout << "Invalid seed weight, minimum size is 3!\n";
+            return 1;
+        }
         if (vm.count("rmin")) {
             cout << "setting minimum multiplicity to " 
                  << rmin << ".\n";
@@ -1789,7 +1815,7 @@ int main( int argc, char* argv[] )
 	//
 	MatchList seedml;
 	seedml.seq_filename = vector< string >( 1, sequence_file );
-	seedml.sml_filename = vector< string >( 1, seedml.seq_filename[0] + ".sml" );
+	seedml.sml_filename = vector< string >( 1, seedml.seq_filename[0] + ".sml");
 	//seedml.LoadSequences( &cout );
 	LoadSequences( seedml, &cout );
 	if( seed_weight == 0 )
@@ -1801,7 +1827,7 @@ int main( int argc, char* argv[] )
 		seed_rank = INT_MAX;
 		std::cout << "Using solid seed" << std::endl;
 	}
-	seedml.LoadSMLs( seed_weight, &cout, seed_rank );
+	seedml.LoadSMLs( seed_weight, &cout, seed_rank, solid_seed );
 	int64 seed = getSeed( seed_weight, seed_rank);
 	uint seed_size = getSeedLength( seed );
 
@@ -1867,6 +1893,7 @@ int main( int argc, char* argv[] )
     int overlap_size = 1;
     int hit_match =0;
    
+	vector< pair< int64, UngappedMatchRecord* > > seed_sort_list;
     for( size_t mI = 0; mI < seedml.size(); ++mI )
 	{
 		UngappedMatchRecord tmp( seedml[mI]->SeqCount(), seedml[mI]->AlignmentLength() );
@@ -1877,22 +1904,27 @@ int main( int argc, char* argv[] )
 			match_record_list[mI]->SetStart( seqI, seedml[mI]->Start( seqI ) );
 			match_record_list[mI]->SetLength( seedml[mI]->Length( seqI ), seqI );
 		}
-        
+        seed_sort_list.push_back(make_pair(match_record_list[mI]->LeftEnd(0), match_record_list[mI]));
         component_count += seedml[mI]->SeqCount();
         seedml[mI]->Free();
     }
-    
+    std::sort( seed_sort_list.begin(), seed_sort_list.end() );
+	// write seeds to file if requested
 	
-   
+	ofstream seed_out;
+	if ( seed_file.size() > 0)
+		seed_out.open(seed_file.c_str());
     //
 	// part 3, create a match position lookup table
 	//
 	vector< pair< gnSeqI, MatchPositionEntry > > mplt_sort_list( component_count );
 	size_t compI = 0;
-	for( size_t mI = 0; mI < match_record_list.size(); ++mI )
+	for( size_t mI = 0; mI < seed_sort_list.size(); ++mI )
 	{
-		UngappedMatchRecord* mr = match_record_list[mI];
-		for( size_t seqI = 0; seqI < mr->SeqCount(); ++seqI )
+		UngappedMatchRecord* mr = seed_sort_list[mI].second;
+		if ( seed_file.size() > 0)
+			seed_out << *mr << endl;
+		for( size_t seqI = 0; seqI < mr->Multiplicity(); ++seqI )
 			mplt_sort_list[compI++] = make_pair( mr->LeftEnd( seqI ), make_pair( mr, seqI ) );
 	}
 	// pairs get ordered on the first element by default 
@@ -1901,6 +1933,8 @@ int main( int argc, char* argv[] )
 	MatchPositionLookupTable match_pos_lookup_table( seq_length+1, make_pair( (UngappedMatchRecord*)NULL, 0 ) );
 	for( size_t i = 0; i < mplt_sort_list.size(); ++i )
     {
+		//if ( seed_file.size() > 0)
+		//	seed_out << (*(UngappedMatchRecord*)mplt_sort_list[i].second.first) << endl;
         //cerr << mplt_sort_list[i].first << endl;
 		match_pos_lookup_table[ mplt_sort_list[i].first ] = mplt_sort_list[i].second;
 
@@ -2000,6 +2034,7 @@ int main( int argc, char* argv[] )
 		// if a superset exists use that first
 		// otherwise create a neighborhood list
 		int direction = 1;	// leftward == 1, rightward == -1, done == -3
+		//int direction = -1;	// leftward == 1, rightward == -1, done == 3
 		int last_linked = 0;	// stores the group type that was chained.  1 == superset, 2 == chainable, 0 == none
 		vector< NeighborhoodGroup > left_deferred_subsets;
 		vector< NeighborhoodGroup > right_deferred_subsets;
@@ -2011,7 +2046,7 @@ int main( int argc, char* argv[] )
 		vector< string > alignment;
 		vector<score_t> scores;
 		bool extended = false;
-		while( direction > -2 )
+		while( direction > -2 && chain )
 		{
 			last_linked = 0;
 			
@@ -2096,6 +2131,7 @@ int main( int argc, char* argv[] )
 				{
 					//end gapped extension  whenever extension fails.
 					direction -=2;
+					//direction +=2;
 					continue;
 				}
                 else
@@ -2255,7 +2291,7 @@ int main( int argc, char* argv[] )
 			cerr << "debugmult\n";
         
 		// finally process novel subset
-		for( int direction = 1; direction > -2; direction -= 2 )
+		for( int direction = 1; direction >-2; direction -= 2 )
 		{
 			vector< NeighborhoodGroup >& cur_novel_subset_list = selectList( left_deferred_novel_subsets, right_deferred_novel_subsets, direction );
 			processNovelSubsetMatches(M_i, cur_novel_subset_list, find_novel_subsets, procrastination_queue, 
@@ -2270,7 +2306,7 @@ int main( int argc, char* argv[] )
 		//
 		// process deferred subsets
 		//
-		for( int direction = 1; direction > -2; direction -= 2 )
+		for( int direction = 1; direction >-2; direction -= 2 )
 		{
 			vector< NeighborhoodGroup >& subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
 			NeighborhoodGroupCompare ngc;
@@ -2311,7 +2347,7 @@ int main( int argc, char* argv[] )
 				{
 					// create a novel subset record, mark this one as subsumed
 					// just destroy it for now...
-					M_j->dont_extend = true;
+					//M_j->dont_extend = true;
 					unlinkSupersets(M_j);
 					for( size_t mjI = 0; mjI < M_j->Multiplicity(); ++mjI )
                     {
@@ -2355,13 +2391,18 @@ int main( int argc, char* argv[] )
 					// else we've got a subset tie.
 					if(print_warnings)
 						cerr << "Subset tie, erasing M_j\n";
+
+					//tjt: why do we need to erase the subset? later this will mean that we can't chain the two tied subsets..
+					/*
 					M_j->dont_extend = true;
 					unlinkSupersets(M_j);
+					
 					for( size_t mjI = 0; mjI < M_j->Multiplicity(); ++mjI )
                     {
 						if( match_pos_lookup_table[M_j->LeftEnd(mjI)].first == M_j )
 							match_pos_lookup_table[M_j->LeftEnd(mjI)] = make_pair((MatchRecord*)NULL,0);
                     }
+					*/
                     continue;
 				}
 
@@ -2455,8 +2496,11 @@ int main( int argc, char* argv[] )
 
 	}
     
-    cout << "->Removing redudant lmas..." << endl;
-    //
+	if (!allow_redundant)
+    {
+		cout << "->Removing redudant lmas..." << endl;
+	}
+	//
 	// remove overlapping regions
 	//
     // 1) create a vector of CompactMatchRecord* with one entry for each nucleotide in the input sequence.
@@ -2472,22 +2516,31 @@ int main( int argc, char* argv[] )
         match_record_nt[mI]->subsuming_match = NULL;
     }
 
-    // 2) sort the result GappedMatchRecords by multiplicity (high to low) and break ties by SP score.
-	std::sort( scored.begin(), scored.end(), scorecmp2 );
-
-    
+    // 2) sort the result GappedMatchRecords 
+	if (large_repeats)
+		std::sort( scored.begin(), scored.end(), score_by_length );
+	else if (small_repeats)
+		std::sort( scored.begin(), scored.end(), scorecmp );
+	else
+		std::sort( scored.begin(), scored.end(), score_by_sp );
     for( size_t fI = 0; fI < scored.size(); fI++ )
     {
         //this shouldn't be the case, but let's be safe
 	    if (scored.at(fI)->AlignmentLength() < 1)
             continue;
 
+		size_t left_crop_amt = 0;
+		size_t right_crop_amt = 0;
         //if user wants to remove all overlapping regions among lmas, let's do it!
         if (!allow_redundant)
         {
+			
             //for each match compontent in M_i
             for ( size_t seqI = 0; seqI < scored.at(fI)->Multiplicity(); seqI++)
             {
+				
+				left_crop_amt = 0;
+				right_crop_amt = 0;
                 //if there is no match, we can't do a thing
                 if( scored.at(fI)->LeftEnd(seqI) == NO_MATCH )
                     continue;
@@ -2506,15 +2559,15 @@ int main( int argc, char* argv[] )
                     }
                 }
         
-                size_t left_crop_amt = 0;
-                size_t right_crop_amt = 0;
+                
                 gnSeqI startI = scored.at(fI)->LeftEnd(seqI);
                 //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
-                while( startI < scored.at(fI)->RightEnd(seqI) && scored.at(fI)->Length(seqI) < 4000000000u) 
+                while( startI < scored.at(fI)->RightEnd(seqI) && startI < match_record_nt.size() && scored.at(fI)->Length(seqI) < 4000000000u) 
                 {
-                    startI++;
+                    
                     if (match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) )
                         left_crop_amt = startI-scored.at(fI)->LeftEnd(seqI);
+					startI++;
                 }
                 
                 if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u && scored.at(fI)->Length(seqI) < 4000000000u)
@@ -2532,8 +2585,9 @@ int main( int argc, char* argv[] )
                 //this is perhaps not the best way to do this...
                 //I see how much can be cropped to the left & right
                 //then crop either to the left or right, leaving the largest non-overlapping region
-                //however, could technique could potentially clobber large internal non-overlapping regions of matches with lesser multiplicity??
-                if (left_crop_amt > 0 && left_crop_amt <= right_crop_amt)
+                //however, could potentially clobber large internal non-overlapping regions of matches with lesser multiplicity??
+                
+				if (left_crop_amt > 0 && left_crop_amt <= right_crop_amt)
                 {
                     if (left_crop_amt >= scored.at(fI)->Length(seqI))
                         scored.at(fI)->CropLeft( scored.at(fI)->Length(seqI)-1, seqI);
@@ -2548,10 +2602,15 @@ int main( int argc, char* argv[] )
                     else
                         scored.at(fI)->CropRight( right_crop_amt, seqI);
                 }
+				
+				
                
                
             }
         }
+		//if ( left_crop_amt == 0 && right_crop_amt == 0)
+		//	filtered_final.push_back(scored.at(fI));
+		
         if (scored.at(fI)->AlignmentLength() >= min_repeat_length )
         {
             // yuck,recalculating sp score to update after removing overlapping regions.. 
@@ -2564,7 +2623,7 @@ int main( int argc, char* argv[] )
             computeSPScore( alignment, pss, scores_final, score_final);
             scored.at(fI)->spscore  = score_final;
             // pass it through a tandem repeat filter, too
-            if (scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem))
+            if ((scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem)))
                 filtered_final.push_back(scored.at(fI));
         }
         
