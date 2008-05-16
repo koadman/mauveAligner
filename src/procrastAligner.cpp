@@ -688,7 +688,7 @@ void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_li
 
 	for( size_t cI = 0; cI < chainable.size(); ++cI )
 	{
-		if( chainable.size() > 1)
+		if( chainable.size() > 1 )
 		{
 			cerr << "bad news bruthah\n";
 			genome::breakHere();
@@ -1829,7 +1829,7 @@ int main( int argc, char* argv[] )
 		seed_rank = INT_MAX;
 		std::cout << "Using solid seed" << std::endl;
 	}
-	seedml.LoadSMLs( seed_weight, &cout, seed_rank, solid_seed, load_sml );
+	seedml.LoadSMLs( seed_weight, &cout, seed_rank, solid_seed, !load_sml );
 	int64 seed = getSeed( seed_weight, seed_rank);
 	uint seed_size = getSeedLength( seed );
 
@@ -2349,13 +2349,15 @@ int main( int argc, char* argv[] )
 				{
 					// create a novel subset record, mark this one as subsumed
 					// just destroy it for now...
-					//M_j->dont_extend = true;
+					M_j->dont_extend = true;
+					
 					unlinkSupersets(M_j);
 					for( size_t mjI = 0; mjI < M_j->Multiplicity(); ++mjI )
                     {
 						if( match_pos_lookup_table[M_j->LeftEnd(mjI)].first == M_j )
 							match_pos_lookup_table[M_j->LeftEnd(mjI)] = make_pair((MatchRecord*)NULL,0);
-                    }
+					}
+					
                     continue;
 				}
 
@@ -2395,7 +2397,6 @@ int main( int argc, char* argv[] )
 						cerr << "Subset tie, erasing M_j\n";
 
 					//tjt: why do we need to erase the subset? later this will mean that we can't chain the two tied subsets..
-					/*
 					M_j->dont_extend = true;
 					unlinkSupersets(M_j);
 					
@@ -2404,7 +2405,7 @@ int main( int argc, char* argv[] )
 						if( match_pos_lookup_table[M_j->LeftEnd(mjI)].first == M_j )
 							match_pos_lookup_table[M_j->LeftEnd(mjI)] = make_pair((MatchRecord*)NULL,0);
                     }
-					*/
+					
                     continue;
 				}
 
@@ -2531,8 +2532,6 @@ int main( int argc, char* argv[] )
 	    if (scored.at(fI)->AlignmentLength() < 1)
             continue;
 
-		size_t left_crop_amt = 0;
-		size_t right_crop_amt = 0;
         //if user wants to remove all overlapping regions among lmas, let's do it!
         if (!allow_redundant)
         {
@@ -2540,9 +2539,6 @@ int main( int argc, char* argv[] )
             //for each match compontent in M_i
             for ( size_t seqI = 0; seqI < scored.at(fI)->Multiplicity(); seqI++)
             {
-				
-				left_crop_amt = 0;
-				right_crop_amt = 0;
                 //if there is no match, we can't do a thing
                 if( scored.at(fI)->LeftEnd(seqI) == NO_MATCH )
                     continue;
@@ -2561,42 +2557,33 @@ int main( int argc, char* argv[] )
                     }
                 }
         
-                
+                size_t left_crop_amt = 0;
+                size_t right_crop_amt = 0;
                 gnSeqI startI = scored.at(fI)->LeftEnd(seqI);
                 //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
-                while( startI < scored.at(fI)->RightEnd(seqI) && startI < match_record_nt.size() && scored.at(fI)->Length(seqI) < 4000000000u) 
+                while(match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) && startI < scored.at(fI)->RightEnd(seqI) && scored.at(fI)->Length(seqI) < 4000000000u) 
                 {
-                    
-                    if (match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) )
-                        left_crop_amt = startI-scored.at(fI)->LeftEnd(seqI);
-					startI++;
+                    startI++;
+                    left_crop_amt++;
                 }
-                
-                if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u && scored.at(fI)->Length(seqI) < 4000000000u)
-                {
-                    startI = scored.at(fI)->RightEnd(seqI);
-                    //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
-                    while(startI > scored.at(fI)->LeftEnd(seqI))
-                    {
-                        startI--;
-                        if ( match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) )
-                            right_crop_amt = scored.at(fI)->RightEnd(seqI)-startI;
-                    }
-                }
-
-                //this is perhaps not the best way to do this...
-                //I see how much can be cropped to the left & right
-                //then crop either to the left or right, leaving the largest non-overlapping region
-                //however, could potentially clobber large internal non-overlapping regions of matches with lesser multiplicity??
-                
-				if (left_crop_amt > 0 && left_crop_amt <= right_crop_amt)
+                if (left_crop_amt > 0)
                 {
                     if (left_crop_amt >= scored.at(fI)->Length(seqI))
                         scored.at(fI)->CropLeft( scored.at(fI)->Length(seqI)-1, seqI);
                     else
                         scored.at(fI)->CropLeft( left_crop_amt, seqI);
                 }
-                else if (right_crop_amt > 0)
+                if (scored.at(fI)->LeftEnd(seqI) < 4000000000u && scored.at(fI)->RightEnd(seqI) < 4000000000u && scored.at(fI)->Length(seqI) < 4000000000u)
+                {
+                    startI = scored.at(fI)->RightEnd(seqI)-1;
+                    //4) When a non-null entry is encountered in the vector, crop out that portion of the current GMR
+                    while(match_record_nt.at(startI)->subsuming_match != NULL && match_record_nt.at(startI)->subsuming_match != scored.at(fI) && startI >= scored.at(fI)->LeftEnd(seqI))
+                    {
+                        startI--;
+                        right_crop_amt++;
+                    }
+                }
+                if (right_crop_amt > 0)
                 {
                     
                     if (right_crop_amt >= scored.at(fI)->Length(seqI))
@@ -2604,10 +2591,6 @@ int main( int argc, char* argv[] )
                     else
                         scored.at(fI)->CropRight( right_crop_amt, seqI);
                 }
-				
-				
-               
-               
             }
         }
 		//if ( left_crop_amt == 0 && right_crop_amt == 0)
