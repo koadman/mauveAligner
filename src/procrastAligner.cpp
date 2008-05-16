@@ -679,7 +679,7 @@ void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_li
 	}
 
 
-	if( supersets.size() > 0 )
+	if( supersets.size() > 0 && 1)
 	{
 //#4018
 		cerr << "something is wrong, we should never have supersets during link extension!\n";
@@ -688,7 +688,7 @@ void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_li
 
 	for( size_t cI = 0; cI < chainable.size(); ++cI )
 	{
-		if( chainable.size() > 1 )
+		if( chainable.size() > 1 && 1)
 		{
 			cerr << "bad news bruthah\n";
 			genome::breakHere();
@@ -1343,7 +1343,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
         int resultlen = result->AlignmentLength();
 
         //why set this to > 5? what about seed weight? or to > 0? seems strange to allow novel matches of length 1...
-	    if( cga_list.back()->Multiplicity() > 1 && cga_list.back()->Length() > 5 && cga_list.back()->AlignmentLength() > 5 )
+	    if( cga_list.back()->Multiplicity() > 1 && cga_list.back()->Length() > 1 && cga_list.back()->AlignmentLength() > 1 )
 	    {
 //          successful extension!!
 //          boundaries were improved, current match extended original match
@@ -2210,6 +2210,7 @@ int main( int argc, char* argv[] )
                 //M_i with the corresponding result from ExtendMatch()
                 if (extend_it)
                 {
+					M_i->extended = true;
                     //build a component map for the new record
 				    vector< size_t > component_map( M_i->Multiplicity() );
 				    for( size_t i = 0; i < component_map.size(); ++i )
@@ -2237,6 +2238,8 @@ int main( int argc, char* argv[] )
                 else
                 {
                     
+					if (!M_i->extended)
+						M_i->extended = false;
                     GappedMatchRecord* M_t = NULL;
                     if (direction > 0 )
                         M_t = novel_matches.front();
@@ -2608,7 +2611,7 @@ int main( int argc, char* argv[] )
             computeSPScore( alignment, pss, scores_final, score_final);
             scored.at(fI)->spscore  = score_final;
             // pass it through a tandem repeat filter, too
-            if ((scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem)))
+            if ((scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem)) && ( only_extended <= scored.at(fI)->extended))
                 filtered_final.push_back(scored.at(fI));
         }
         
