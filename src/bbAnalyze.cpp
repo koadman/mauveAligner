@@ -5,6 +5,7 @@
 #include "libGenome/gnFeature.h"
 #include "libGenome/gnBaseQualifier.h"
 #include "libMems/IntervalList.h"
+#include "libMems/AbstractMatch.h"
 #include "libMems/MatchList.h"
 #include "libMems/PhyloTree.h"
 #include "libMems/ProgressiveAligner.h"
@@ -16,7 +17,8 @@ using namespace genome;
 using namespace mems;
 
 // important constants that affect inference
-const uint SHORT_SEGMENT = 5;
+const uint SHORT_SEGMENT = 5;	// when considering overlaps to genes, ignore overlaps less than this amount
+const uint DISCARD_SEGMENT = 20;	// do not consider segments shorter than this amount
 const double ALTERNALOG_MIN_SIZE = 15.0;
 
 
@@ -352,7 +354,8 @@ void printFilteredBbSeqList( ostream& os, const vector< bb_seqentry_t >& bb_seq_
 
 void classifyIntergenic( ostream& os, const vector< bb_seqentry_t >& bbseq_list, const bitset_t& intergenic, 
 						uint anno_seqI, gnSequence* anno_seq, bitset_t& trna_neighbor, bitset_t& miscrna_neighbor, 
-						bitset_t& converging_cds, bitset_t& diverging_cds, bitset_t& inline_cds )
+						bitset_t& converging_cds, bitset_t& diverging_cds, bitset_t& inline_cds, 
+						bitset_t& variable_miscrna, bitset_t& variable_trna )
 {
 	vector< pair< size_t, size_t > > all_neighbors;
 	vector< string > all_types;
@@ -362,6 +365,8 @@ void classifyIntergenic( ostream& os, const vector< bb_seqentry_t >& bbseq_list,
 	all_types.push_back( "misc_RNA" );
 	trna_neighbor.resize( bbseq_list.size() );
 	miscrna_neighbor.resize( bbseq_list.size() );
+	variable_miscrna.resize(anno_seq->getFeatureListLength());
+	variable_trna.resize(anno_seq->getFeatureListLength());
 	featureNearestNeighbors( bbseq_list, intergenic, anno_seqI, all_neighbors, anno_seq, all_types );
 	for( size_t bbI = 0; bbI < bbseq_list.size(); ++bbI )
 	{
@@ -374,8 +379,16 @@ void classifyIntergenic( ostream& os, const vector< bb_seqentry_t >& bbseq_list,
 		gnBaseFeature* rfeat = anno_seq->getFeature(all_neighbors[bbI].second);
 		if( lfeat->GetName() == "tRNA" || rfeat->GetName() == "tRNA" )
 			trna_neighbor.set(bbI);
+		if( lfeat->GetName() == "tRNA" )
+			variable_trna.set(all_neighbors[bbI].first);
+		if( rfeat->GetName() == "tRNA" )
+			variable_trna.set(all_neighbors[bbI].second);
 		if( lfeat->GetName() == "misc_RNA" || rfeat->GetName() == "misc_RNA" )
 			miscrna_neighbor.set(bbI);
+		if( lfeat->GetName() == "misc_RNA" )
+			variable_miscrna.set(all_neighbors[bbI].first);
+		if( rfeat->GetName() == "misc_RNA" )
+			variable_miscrna.set(all_neighbors[bbI].second);
 		delete lfeat;
 		delete rfeat;
 	}
@@ -507,6 +520,58 @@ void makeVariableSegmentsCoordinateList( const vector< bb_entry_t >& bb_list, co
 	}
 }
 
+class LocComp {
+public:
+	bool operator()( const gnLocation& a, const gnLocation& b ) const
+	{
+		return a.GetFirst() < b.GetFirst();
+	}
+};
+
+void identifyIntergenicRanges( 	vector< gnSequence* >& seq_table, vector< vector< pair< size_t, size_t > > >& ranges )
+{
+	ranges.resize(seq_table.size());
+	for( size_t seqI = 0; seqI < seq_table.size(); seqI++ )
+	{
+		vector< gnLocation > loc_list;
+		for( size_t featI = 0; featI < seq_table[seqI]->getFeatureListLength(); featI++ )
+		{
+			gnBaseFeature* feat = seq_table[seqI]->getFeature(featI);
+			string feat_name = feat->GetName();
+			if( feat_name != "CDS" )
+				continue;	// don't deal with other feature types (source, etc)
+			loc_list.push_back( feat->GetLocation(0) );
+			delete feat;
+		}
+
+		size_t sum = 0;
+		LocComp lc;
+		std::sort( loc_list.begin(), loc_list.end(), lc );
+		size_t fI = 0; 
+		size_t lI = 1; 
+		while( fI < loc_list.size() && lI < loc_list.size() )
+		{
+			if( loc_list[fI].GetLast() < loc_list[lI].GetFirst() )
+			{
+				ranges[seqI].push_back( make_pair( loc_list[fI].GetLast(), loc_list[lI].GetFirst() ) );
+				sum += loc_list[lI].GetFirst() - loc_list[fI].GetLast() - 1;
+			}
+			fI++; lI++;
+			while( fI < loc_list.size() && lI < loc_list.size() &&
+				loc_list[fI].GetLast() >= loc_list[lI].GetFirst() )
+			{
+				if( loc_list[fI].GetLast() >= loc_list[lI].GetLast() )
+				{
+					fI++; lI++;
+					cerr << "danger, complete containment in seq " << seqI << endl;
+				}
+				fI++; lI++;
+			}
+		}
+	}
+}
+
+//big_coli_sam_fixed_goh0001_gou000001.xmfa guide.tre big_coli_sam_fixed_goh0001_gou000001.xmfa.backbone big_coli_sam_fixed_goh0001_gou000001.xmfa.bbcols 5 bb.out
 
 void classifyCoordinateRanges( 
 			const vector< bb_seqentry_t >& alternabb_list,			
@@ -523,7 +588,10 @@ void classifyCoordinateRanges(
 			vector< bitset_t >& trna, 
 			vector< bitset_t >& rrna,
 			vector< bitset_t >& miscrna,
-			vector< bitset_t >& pseudogenized
+			vector< bitset_t >& pseudogenized,
+			vector< bitset_t >& variable_miscrna,
+			vector< bitset_t >& variable_trna,
+			vector< bitset_t >& intergenic_segs
 			)
 {
 	if( alternabb_list.size() == 0 )
@@ -549,8 +617,14 @@ void classifyCoordinateRanges(
 	trna.resize( seq_count, bbclass_tmp );
 	rrna.resize( seq_count, bbclass_tmp );
 	miscrna.resize( seq_count, bbclass_tmp );
+	variable_miscrna.resize( seq_count );
+	variable_trna.resize( seq_count );
 	// an alternalog is pseudogenizing if it's genic in other sequences but not in the subject
 	pseudogenized.resize( seq_count, bbclass_tmp );
+
+	vector< vector< pair< size_t, size_t > > > ranges;
+	identifyIntergenicRanges( seq_table, ranges );
+	intergenic_segs.resize(seq_table.size());
 
 	vector< const bb_seqentry_t* > alterna_ptrs( alternabb_list.size() );
 	for( size_t i = 0; i < alternabb_list.size(); ++i )
@@ -564,6 +638,8 @@ void classifyCoordinateRanges(
 		createMap( alterna_ptrs, orig_ptrs, ptr_map );
 
 		vector< vector< unsigned > > bb_features( alternabb_list.size() );	// stores feature IDs of overlapping features
+		variable_miscrna[seqI].resize(seq_table[seqI]->getFeatureListLength());
+		variable_trna[seqI].resize(seq_table[seqI]->getFeatureListLength());
 		for( size_t featureI = 0; featureI < seq_table[seqI]->getFeatureListLength(); ++featureI )
 		{
 			gnBaseFeature* feat = seq_table[seqI]->getFeature( featureI );
@@ -605,6 +681,22 @@ void classifyCoordinateRanges(
 				bb_features[ liter - alterna_ptrs.begin() ].push_back( featureI );
 			}
 			delete feat;
+		}
+
+		intergenic_segs[seqI].resize(ranges[seqI].size());
+		for( size_t bbI = 0; bbI < alterna_ptrs.size(); ++bbI )
+		{
+			size_t l = (*alterna_ptrs[bbI])[seqI].first;
+			size_t r = (*alterna_ptrs[bbI])[seqI].second;
+			for( size_t rI = 0; rI < ranges[seqI].size(); ++rI )
+			{
+				if( (l < ranges[seqI][rI].first + 1 && ranges[seqI][rI].first + 1 <= r) ||		// left overlap and complete contains
+					(l <= ranges[seqI][rI].second - 1 && ranges[seqI][rI].first + 1 <= r) )		// right overlap and inside
+				{
+					intergenic_segs[seqI].set(rI);
+					break;
+				}
+			}
 		}
 
 		for( size_t bbI = 0; bbI < alterna_ptrs.size(); ++bbI )
@@ -678,12 +770,14 @@ void classifyCoordinateRanges(
 				{
 					// overlaps a tRNA by at least ALTERNALOG_MIN_SIZE nucleotides
 					trna[seqI].set( ptr_map[bbI] );
+					variable_trna[seqI].set(bb_features[bbI][featI]);
 				}
 				if( intersect.GetLast() - intersect.GetFirst() > ALTERNALOG_MIN_SIZE &&
 					name == "misc_RNA" )
 				{
 					// overlaps a misc_RNA by at least ALTERNALOG_MIN_SIZE nucleotides
 					miscrna[seqI].set( ptr_map[bbI] );
+					variable_miscrna[seqI].set(bb_features[bbI][featI]);
 				}
 				delete feat;
 			}
@@ -694,6 +788,7 @@ void classifyCoordinateRanges(
 
 	// identify pseudogenizing segments as intergenic segments in one genome that
 	// are genic in other genomes
+	size_t seqI = 0;
 	for( seqI = 0; seqI < seq_count; ++seqI )
 	{
 		bitset_t pseudo = bbclass_tmp;
@@ -725,12 +820,14 @@ void analyzeVariableSegments( ostream& os, const vector< bb_entry_t >& bb_list, 
 	vector< bitset_t > alt_genic, alt_overlaps_cds_upstream, alt_overlaps_cds_downstream;
 	vector< bitset_t > alt_intergenic, alt_spanner, alt_trna, alt_rrna, alt_pseudogenized;
 	vector< bitset_t > alt_genic_fudge, alt_overlaps_cds_upstream_fudge, alt_overlaps_cds_downstream_fudge;
-	vector< bitset_t > alt_miscrna;
+	vector< bitset_t > alt_miscrna, v_miscrna, v_trna;
+	vector< bitset_t > intergenic_segs;
 
 	classifyCoordinateRanges( 
 		alternabb_list, annotated_seq, seq_table, alt_genic, alt_genic_fudge, alt_overlaps_cds_upstream,
 		alt_overlaps_cds_upstream_fudge, alt_overlaps_cds_downstream, alt_overlaps_cds_downstream_fudge,
-		alt_intergenic, alt_spanner, alt_trna, alt_rrna, alt_miscrna, alt_pseudogenized 
+		alt_intergenic, alt_spanner, alt_trna, alt_rrna, alt_miscrna, alt_pseudogenized, v_miscrna, v_trna, 
+		intergenic_segs 
 		);
 
 	// find alternalogs that are always inside annotated genes
@@ -763,8 +860,10 @@ void analyzeVariableSegments( ostream& os, const vector< bb_entry_t >& bb_list, 
 	bitset_t converging_cds;
 	bitset_t diverging_cds;
 	bitset_t inline_cds;
+	bitset_t vv_miscrna;
+	bitset_t vv_trna;
 	classifyIntergenic( os, alternabb_list, alt_multi_allelic_intergenic, anno_seqI, 
-		annotated_seq, trna_neighbor, miscrna_neighbor, converging_cds, diverging_cds, inline_cds );
+		annotated_seq, trna_neighbor, miscrna_neighbor, converging_cds, diverging_cds, inline_cds, vv_miscrna, vv_trna );
 
 
 	os << "There are " << trna_neighbor.count() << " intergenic segments with a tRNA nearest neighbor\n";
@@ -772,6 +871,12 @@ void analyzeVariableSegments( ostream& os, const vector< bb_entry_t >& bb_list, 
 	os << "There are " << converging_cds.count() << " intergenic segments surrounded by converging CDS\n";
 	os << "There are " << diverging_cds.count() << " intergenic segments surrounded by diverging CDS\n";
 	os << "There are " << inline_cds.count() << " intergenic segments surrounded by inline CDS\n";
+	bitset_t miscrna_inter = v_miscrna[anno_seqI] | vv_miscrna;
+	os << "There are " << miscrna_inter.count() << " annotated misc_RNA associated with variable segments\n";
+	os << "There are " << intergenic_segs[anno_seqI].size() << " intergenic sites in the ref genome, of which " << intergenic_segs[anno_seqI].count() << " exhibit variability\n";
+	bitset_t trna_inter = v_trna[anno_seqI] | vv_trna;
+	os << "There are " << trna_inter.count() << " annotated tRNA associated with variable segments\n";
+
 	if( miscrna_neighbor.count() > 0 )
 	{
 		os << "coordinates of variable segs with misc_RNA neighboring:\n";
@@ -791,7 +896,7 @@ void analyzeVariableSegments( ostream& os, const vector< bb_entry_t >& bb_list, 
 	os << "coordinates of multi-allelic intergenic regions without CDS:\n";
 	printFilteredBbSeqList( os, alternabb_list, alt_multi_allelic_entirely_intergenic );
 
-	for( seqI = 0; seqI < seq_count; ++seqI )
+	for( size_t seqI = 0; seqI < seq_count; ++seqI )
 	{
 		os << "genome " << seqI << " has " << alt_genic[seqI].count() << " " << site_class_name << " within CDS\n";
 		os << "genome " << seqI << " has " << alt_spanner[seqI].count() << " " << site_class_name << " that span CDS boundaries\n";
@@ -836,9 +941,14 @@ const uint INTERVAL_UNKNOWN = (std::numeric_limits<uint>::max)();
 
 int main( int argc, char* argv[] )
 {
+#if	WIN32
+	SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
+#endif
+
 	if( argc < 7 )
 	{
 		cerr << "bbAnalyze <xmfa file> <guide tree> <backbone seqpos file> <backbone col file> <annotated seq index> <output file>\n";
+		cerr << "annotated seq index starts at 0.\n";
 		return -1;
 	}
 	string aln_fname( argv[1] );
@@ -874,22 +984,23 @@ int main( int argc, char* argv[] )
 		return -6;
 	}
 	
+	// read the guide tree
+	PhyloTree< TreeNode > tree;
+	tree.readTree( tree_input );
+
+	// read the backbone column file	
+	vector< bb_seqentry_t > bb_seq_list;
+	vector< pair< size_t, ULA > > bb_col_list;
+	readBackboneSeqFile( bbseq_input, bb_seq_list );
+	readBackboneColsFile( bbcol_input, bb_col_list );
+
 	// read the alignment
 	IntervalList iv_list;
 	iv_list.ReadStandardAlignment( aln_input );
 
 	LoadSequences(iv_list, &cout);
 
-	// read the guide tree
-	PhyloTree< TreeNode > tree;
-	tree.readTree( tree_input );
 
-	// read the backbone column file
-	
-	vector< bb_seqentry_t > bb_seq_list;
-	vector< pair< size_t, ULA > > bb_col_list;
-	readBackboneSeqFile( bbseq_input, bb_seq_list );
-	readBackboneColsFile( bbcol_input, bb_col_list );
 
 	const size_t seq_count = iv_list.seq_table.size();
 
@@ -989,7 +1100,7 @@ int main( int argc, char* argv[] )
 	// mark small backbone segments
 	bitset_t too_small( bb_list.size(), false );
 	for( size_t bbI = 0; bbI < bb_list.size(); ++bbI )
-		if( bb_list[bbI].bb_cols.Length() < SHORT_SEGMENT )
+		if( bb_list[bbI].bb_cols.Length() < DISCARD_SEGMENT )
 			too_small.set(bbI, true);
 	bitset_t not_small = too_small;
 	not_small.flip();
