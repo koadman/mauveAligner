@@ -2488,12 +2488,12 @@ int main( int argc, char* argv[] )
 		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
 		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
 		//send temporary output format to file if requested
-        if (final.at(fI)->AlignmentLength() >= min_repeat_length)
+        if (alignment.at(0).size() >= min_repeat_length)
         {
 			if(only_extended)
 			{
 				//we don't want it..
-				if ( final.at(fI)->AlignmentLength() <= seed_size )
+				if ( alignment.at(0).size() <= seed_size )
 					continue;
 			}
             score_final = 0;
@@ -2610,7 +2610,7 @@ int main( int argc, char* argv[] )
 			if(only_extended)
 			{
 				//we don't want it..
-				if ( final.at(fI)->AlignmentLength() <= seed_size )
+				if ( scored.at(fI)->AlignmentLength() <= seed_size )
 					continue;
 			}
             // yuck,recalculating sp score to update after removing overlapping regions.. 
