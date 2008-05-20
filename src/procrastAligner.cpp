@@ -2488,8 +2488,14 @@ int main( int argc, char* argv[] )
 		vector< gnSequence* > seq_table( final[fI]->SeqCount(), seedml.seq_table[0] );
 		mems::GetAlignment(*final[fI], seq_table, alignment);	// expects one seq_table entry per matching component
 		//send temporary output format to file if requested
-        if (final.at(fI)->AlignmentLength() >= min_repeat_length )
+        if (final.at(fI)->AlignmentLength() >= min_repeat_length)
         {
+			if(only_extended)
+			{
+				//we don't want it..
+				if ( final.at(fI)->AlignmentLength() <= seed_size )
+					continue;
+			}
             score_final = 0;
             computeSPScore( alignment, pss, scores_final, score_final);
 		    //*output << "#procrastAlignment " << ++alignment_count << endl << *final.at(fI) << endl;
@@ -2601,6 +2607,12 @@ int main( int argc, char* argv[] )
 		
         if (scored.at(fI)->AlignmentLength() >= min_repeat_length )
         {
+			if(only_extended)
+			{
+				//we don't want it..
+				if ( final.at(fI)->AlignmentLength() <= seed_size )
+					continue;
+			}
             // yuck,recalculating sp score to update after removing overlapping regions.. 
             // couldn't I just subtract from the original score??
             vector<string> alignment;
@@ -2611,7 +2623,7 @@ int main( int argc, char* argv[] )
             computeSPScore( alignment, pss, scores_final, score_final);
             scored.at(fI)->spscore  = score_final;
             // pass it through a tandem repeat filter, too
-            if ((scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem)) && ( only_extended <= scored.at(fI)->extended))
+            if ((scored.at(fI)->spscore > min_spscore && ( scored.at(fI)->tandem <= allow_tandem)))
                 filtered_final.push_back(scored.at(fI));
         }
         
