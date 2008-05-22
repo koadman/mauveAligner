@@ -16,11 +16,11 @@ class SeedMatchEnumerator : public mems::MatchFinder
 public:
 	virtual SeedMatchEnumerator* Clone() const;
 
-	void FindMatches( mems::MatchList& match_list, size_t min_multi = 2, size_t max_multi = 1000 )
+	void FindMatches( mems::MatchList& match_list, size_t min_multi = 2, size_t max_multi = 1000, bool direct_repeats_only = false )
 	{
         this->max_multiplicity = max_multi;
         this->min_multiplicity = min_multi;
-        
+        this->only_direct = direct_repeats_only;
 		for( size_t seqI = 0; seqI < match_list.seq_table.size(); ++seqI ){
 			if( !AddSequence( match_list.sml_table[ seqI ], match_list.seq_table[ seqI ] ) ){
 				genome::ErrorMsg( "Error adding " + match_list.seq_filename[seqI] + "\n");
@@ -44,6 +44,7 @@ private:
     //used to store rmin, rmax values
     size_t max_multiplicity;
     size_t min_multiplicity;
+	bool only_direct;
 };
 
 SeedMatchEnumerator* SeedMatchEnumerator::Clone() const{
@@ -76,12 +77,25 @@ boolean SeedMatchEnumerator::HashMatch(mems::IdmerList& match_list){
 	
 	//Fill in the new Match and set direction parity if needed.
 	mems::IdmerList::iterator iter = match_list.begin();
-
+    
 	uint32 repeatI = 0;
 	for(; iter != match_list.end(); iter++)
 		mhe.SetStart(repeatI++, iter->position + 1);
 
 	SetDirection( mhe );
+	bool found_reverse = false;
+	if(this->only_direct)
+	{
+		
+		for( uint seqI = 0; seqI < mhe.Multiplicity(); seqI++)
+		{
+			if (mhe.Orientation(seqI) == 1)
+			{
+				found_reverse = true;
+				break;
+			}
+		}
+	}
 	if(mhe.Multiplicity() < 2){
 		std::cerr << "red flag " << mhe << "\n";
     }
@@ -90,6 +104,10 @@ boolean SeedMatchEnumerator::HashMatch(mems::IdmerList& match_list){
     {
         ;
     }
+	else if(this->only_direct && found_reverse)
+	{
+		;
+	}
     else{
 		mlist.push_back(mhe.Copy());
 	}

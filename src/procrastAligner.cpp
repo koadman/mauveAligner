@@ -1675,6 +1675,7 @@ int main( int argc, char* argv[] )
     string xml_file = "";
 	string stat_file = "";
 	string seed_file = "";
+	bool only_direct = false;
 	bool load_sml = false;
 	bool small_repeats = false;
 	bool large_repeats = false;
@@ -1705,6 +1706,7 @@ int main( int argc, char* argv[] )
             ("l", po::value <unsigned>(&min_repeat_length)->default_value(1), "minimum repeat length")
 			("large-repeats", po::value <bool>(&large_repeats)->default_value(false), "optimize for large repeats")
 			("load-sml", po::value <bool>(&load_sml)->default_value(false), "try to load existing SML file?")
+			("onlydirect",po::value<bool>(&only_direct)->default_value(false), "only process seed matches on same strand?")
 			("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches?")
 			("output", po::value<string>(&outputfile)->default_value(""), "procrastAligner output ")
 			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches?")
@@ -1842,7 +1844,7 @@ int main( int argc, char* argv[] )
 		w = 0;	
 	cout << "Using seed weight: " << seed_weight << " and w: " << w << endl;
 	SeedMatchEnumerator sme;
-	sme.FindMatches( seedml, rmin, rmax );
+	sme.FindMatches( seedml, rmin, rmax, only_direct );
 	
     // need single nuc & kmer frequency
 	string sequence = seedml.seq_table.at(0)->ToString();
@@ -1895,6 +1897,7 @@ int main( int argc, char* argv[] )
     int overlap_size = 1;
     int hit_match =0;
    
+	cout << "Total number of seed matches found: " << seedml.size() << endl;
 	vector< pair< int64, UngappedMatchRecord* > > seed_sort_list;
     for( size_t mI = 0; mI < seedml.size(); ++mI )
 	{
