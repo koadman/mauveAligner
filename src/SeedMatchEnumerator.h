@@ -84,18 +84,18 @@ boolean SeedMatchEnumerator::HashMatch(mems::IdmerList& match_list){
 
 	SetDirection( mhe );
 	bool found_reverse = false;
+	vector< size_t > component_map;
 	if(this->only_direct)
 	{
-		
 		for( uint seqI = 0; seqI < mhe.Multiplicity(); seqI++)
 		{
-			if (mhe.Orientation(seqI) == 1)
-			{
+			if (mhe.Orientation(seqI) == 0)
+				component_map.push_back(seqI);
+			else
 				found_reverse = true;
-				break;
-			}
 		}
 	}
+	mems::MatchProjectionAdapter mpaa(mhe.Copy(),  component_map);
 	if(mhe.Multiplicity() < 2){
 		std::cerr << "red flag " << mhe << "\n";
     }
@@ -106,10 +106,18 @@ boolean SeedMatchEnumerator::HashMatch(mems::IdmerList& match_list){
     }
 	else if(this->only_direct && found_reverse)
 	{
-		;
+		if ( mpaa.Multiplicity() > 1)
+		{
+			mems::Match new_mhe = mems::Match( mpaa.Multiplicity() );
+			new_mhe.SetLength( GetSar(0)->SeedLength() );
+			for(uint mult = 0; mult < mpaa.Multiplicity(); mult++)
+				new_mhe.SetStart(mult, mpaa.Start(mult));
+			mlist.push_back(new_mhe.Copy());
+		}
 	}
     else{
 		mlist.push_back(mhe.Copy());
+		
 	}
 	return true;
 }
