@@ -296,6 +296,8 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 	std::vector< mems::AbstractMatch* >::iterator chain_begin = chain.begin();
 	uint chainsize = chain.size()-1;
 
+	if (1)
+	{
 	try{
 	for( uint i = 0; i < chainsize; i++ )
 	{
@@ -305,11 +307,8 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		cr = new mems::GappedAlignment();
 		mems::AbstractMatch* m1 = chain.at(i);
 		mems::AbstractMatch* m2 = chain.at(i+1);
-
-		//  aed: muscle alignment happens here
-		//		 remember, aligning regions between each match component
+	
 		align_success = mems::MuscleInterface::getMuscleInterface().Align( *cr,  m1 , m2,  seq_table );
-   
 		if( align_success )
 		{
             //cerr << "muscle alignment success!!" << endl;
@@ -332,6 +331,7 @@ void GappedMatchRecord::finalize( std::vector<genome::gnSequence *> seq_table)
 		std::cerr << chain.size() << std::endl;
 	}catch(...){
 		std::cerr << "matrix exception?\n";
+	}
 	}
 
 	MatchRecord* mr = this->Copy();

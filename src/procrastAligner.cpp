@@ -580,7 +580,7 @@ vector< NeighborhoodGroup >& selectList( vector< NeighborhoodGroup >& left_list,
  */
 void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_linked, 
 						   vector< NeighborhoodGroup >& left_deferred_subsets, 
-						   vector< NeighborhoodGroup >& right_deferred_subsets )
+						   vector< NeighborhoodGroup >& right_deferred_subsets, bool chain )
 {
 	// update the left end and look for another superset to chain with
 	// then extend all the way to that match
@@ -686,60 +686,62 @@ void supersetLinkExtension( GappedMatchRecord*& M_i, int direction, int& last_li
 		genome::breakHere();
 	}
 
-	for( size_t cI = 0; cI < chainable.size(); ++cI )
+	if (chain)
 	{
-		if( chainable.size() > 1 && 1)
+		for( size_t cI = 0; cI < chainable.size(); ++cI )
 		{
-			cerr << "bad news bruthah\n";
-			genome::breakHere();
-		}
-		// chain with this guy
-		MatchLink& jk_link = mj_subsets[chainable[cI]];
-		MatchRecord* M_k = jk_link.subset;
-		if( M_k->extended )
-		{
-			cerr << "extensor crap\n";
-			breakHere();
-		}
-		if( M_k == M_i )
-		{
-			cerr << "crap\n";
-			breakHere();
-		}
+			if( chainable.size() > 1 && 1)
+			{
+				cerr << "bad news bruthah\n";
+				genome::breakHere();
+			}
+			// chain with this guy
+			MatchLink& jk_link = mj_subsets[chainable[cI]];
+			MatchRecord* M_k = jk_link.subset;
+			if( M_k->extended )
+			{
+				cerr << "extensor crap\n";
+				breakHere();
+			}
+			if( M_k == M_i )
+			{
+				cerr << "crap\n";
+				breakHere();
+			}
 
-		// update boundary coordinates
-		vector< size_t > component_map( M_i->Multiplicity() );
-		remapComponents(ij_link.sub_to_super_map, M_j->Multiplicity(), jk_link.sub_to_super_map, component_map );
-		bool changed = extendRange( M_i, M_k, component_map );
-		if( changed )
-			last_linked = 2;
+			// update boundary coordinates
+			vector< size_t > component_map( M_i->Multiplicity() );
+			remapComponents(ij_link.sub_to_super_map, M_j->Multiplicity(), jk_link.sub_to_super_map, component_map );
+			bool changed = extendRange( M_i, M_k, component_map );
+			if( changed )
+				last_linked = 2;
 
-		// unlink from superset
-		int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
-		unlinkSuperset(M_k,-direction*ij_parity*jk_parity);
-		// set subsuming match ptrs
-		M_k->subsuming_match = M_i;
-		M_k->subsumption_component_map = component_map;
-		M_i->chained_matches.push_back( M_k );
-		M_i->chained_component_maps.push_back( component_map );
+			// unlink from superset
+			int jk_parity = M_k->Orientation(0) == M_j->Orientation(jk_link.sub_to_super_map[0]) ? 1 : -1;
+			unlinkSuperset(M_k,-direction*ij_parity*jk_parity);
+			// set subsuming match ptrs
+			M_k->subsuming_match = M_i;
+			M_k->subsumption_component_map = component_map;
+			M_i->chained_matches.push_back( M_k );
+			M_i->chained_component_maps.push_back( component_map );
 
-		// compensate for the deletion in subsets
-		for( size_t subI = 0; subI < chainable.size(); subI++ )
-			if( chainable[subI] > chainable[cI] )
-				chainable[subI]--;
-		for( size_t subI = 0; subI < subsets.size(); subI++ )
-			if( subsets[subI] > chainable[cI] )
-				subsets[subI]--;
+			// compensate for the deletion in subsets
+			for( size_t subI = 0; subI < chainable.size(); subI++ )
+				if( chainable[subI] > chainable[cI] )
+					chainable[subI]--;
+			for( size_t subI = 0; subI < subsets.size(); subI++ )
+				if( subsets[subI] > chainable[cI] )
+					subsets[subI]--;
 
-		// inherit M_k's outward superset and stop chaining here
-		if( getSuperset( M_k, direction*ij_parity*jk_parity ).superset != NULL )
-		{
-			inheritSuperset( M_i, M_k, direction, ij_parity*jk_parity );
-			last_linked = 2;
-			break;
+			// inherit M_k's outward superset and stop chaining here
+			if( getSuperset( M_k, direction*ij_parity*jk_parity ).superset != NULL )
+			{
+				inheritSuperset( M_i, M_k, direction, ij_parity*jk_parity );
+				last_linked = 2;
+				break;
+			}
 		}
 	}
-
 	// process subsets
 	for( size_t sI = 0; sI < subsets.size(); ++sI )
 	{
@@ -998,7 +1000,7 @@ void neighborhoodListLookup( GappedMatchRecord* M_i,
  * Chains matches onto M_i or subsumes them as appropriate
  */
 void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup >& chainable_list,
-				  int direction, int& last_linked, bool find_novel_subsets )
+				  int direction, int& last_linked, bool find_novel_subsets, bool chain )
 {
 	// link the closest possible chainable first.
 	for( size_t gI = 0; gI < chainable_list.size(); gI++ )
@@ -1046,7 +1048,7 @@ void processChainableMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup
 		// if M_j isn't extending the boundaries of every component of M_i then
 		// it may be inconsistent with already chained matches.  just subsume it without
 		// chaining in that case.
-		if( !subsumed && !partial )
+		if( !subsumed && !partial && chain)
 		{
 			bool ok = testChainableMatch(M_i, M_j, xy_map);
             if (ok)
@@ -1137,7 +1139,7 @@ void processSupersetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGroup 
  * @param	M_e		(output) A MatchRecord containing just the extension, or NULL if extension failed
  * @return	FAILED, OK, or FIXME
  */
-int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Params& hmm_params, unsigned w, int direction, vector<GappedMatchRecord*>& novel_matches )
+int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Params& hmm_params, unsigned w, int direction, vector<GappedMatchRecord*>& novel_matches, int gap_open, int gap_extend, int extension_window)
 {
 	ccount +=1;
 	static bool debug_extension = false;
@@ -1147,7 +1149,11 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 	int multi = M_i->Multiplicity();
 	double e = 2.71828182845904523536;
 //	I think this works a little better...
+	
 	int extend_length = 80*pow(e,-0.01*multi);
+	//use user specified window if requested
+	if (extension_window >= 0 )
+		extend_length = extension_window;
 	vector<int> left_extend_vector(multi,0);
 	vector<int> right_extend_vector(multi,0);
 	int left_extend_length = extend_length;	
@@ -1206,7 +1212,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 			    left_extend_vector[j] = parity*(M_i->LeftEnd(j)-M_i->RightEnd(j-1)-1);
             }
             else
-			    left_extend_vector[j] = extend_length-1;
+			    left_extend_vector[j] = extend_length;
 
 		    if(M_i->RightEnd(j) <= 0 || M_i->RightEnd(j) > 4000000000u)
 			    right_extend_vector[j] = 0;
@@ -1218,7 +1224,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 			    right_extend_vector[j] = parity*(M_i->LeftEnd(j+1)-M_i->RightEnd(j)-1);
             }
 		    else
-			    right_extend_vector[j] = extend_length-1;	
+			    right_extend_vector[j] = extend_length;	
         }
 	}
     
@@ -1234,7 +1240,6 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 	GappedAlignment rightside(multi,right_extend_length);
 	vector< string > leftExtension_aln;
 	vector< string > rightExtension_aln;
-
 	if ( left_extend_length > 0 && direction == 1  )
 	{
 //      extract sequence data
@@ -1242,7 +1247,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 		{			
 			if( M_i->Orientation(j) == AbstractMatch::reverse )
 			{			
-				seq_table[0]->ToString( leftExtension[j], left_extend_length, M_i->RightEnd(j)+1 );
+				//seq_table[0]->ToString( leftExtension[j], left_extend_length, M_i->RightEnd(j)+1 );
 				leftside.SetLeftEnd(j,M_i->RightEnd(j)+1);
 				rc_filter->ReverseFilter(leftExtension[j]);
 			}else{
@@ -1253,7 +1258,8 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 			leftside.SetLength(left_extend_length,j);
 		}
 		bool align_success = false;
-		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( leftExtension_aln, leftExtension );
+		//mems::MuscleInterface::getMuscleInterface().SetMuscleArguments("-stable -quiet -seqtype DNA");
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( leftExtension_aln, leftExtension, gap_open, gap_extend );
 		if ( align_success ){		
 			leftside.SetAlignment(leftExtension_aln);
 			leftside.SetAlignmentLength(leftExtension_aln.at(0).size());
@@ -1279,7 +1285,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 			rightside.SetLength(right_extend_length,j);
 		}
 		bool align_success = false;		
-		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( rightExtension_aln, rightExtension );
+		align_success = mems::MuscleInterface::getMuscleInterface().CallMuscleFast( rightExtension_aln, rightExtension, gap_open, gap_extend );
 		if ( align_success ){
 			rightside.SetAlignment(rightExtension_aln);
 			rightside.SetAlignmentLength(rightExtension_aln.at(0).size());
@@ -1343,7 +1349,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
         int resultlen = result->AlignmentLength();
 
         //why set this to > 5? what about seed weight? or to > 0? seems strange to allow novel matches of length 1...
-	    if( cga_list.back()->Multiplicity() > 1 && cga_list.back()->Length() > 1 && cga_list.back()->AlignmentLength() > 1 )
+	    if( cga_list.back()->Multiplicity() > 1 && cga_list.back()->Length() > 0 && cga_list.back()->AlignmentLength() > 0 )
 	    {
 //          successful extension!!
 //          boundaries were improved, current match extended original match
@@ -1661,9 +1667,11 @@ int main( int argc, char* argv[] )
     bool debug_extension = false;
 
 	string sequence_file = "";
-	
-	unsigned w = 0;
+	int extension_window = 0;
+	int w = 0;
 	int kmersize =0;
+	int gap_open = 0;
+	int gap_extend = 0;
 	uint seed_weight = 0;
     uint min_repeat_length = 0;
     score_t min_spscore = 0;
@@ -1699,7 +1707,10 @@ int main( int argc, char* argv[] )
         desc.add_options()
 			("allow-redundant", po::value <bool>(&allow_redundant)->default_value(true), "allow redundant alignments?")
 			("chain", po::value<bool>(&chain)->default_value(true), "chain seeds?")
-			("extend", po::value<bool>(&extend_chains)->default_value(true), "extend chains?")
+			("extend", po::value<bool>(&extend_chains)->default_value(true), "perform gapped extension on chains?")
+			("window", po::value<int>(&extension_window)->default_value(-1), "size of window to use during gapped extension")
+			("gapopen",po::value <int>(&gap_open)->default_value(0), "gap open penalty")
+			("gapextend",po::value <int>(&gap_extend)->default_value(0), "gap extension penalty")
 			("h", po::value<float>(&pGoHomo)->default_value(0.008f), "Transition to Homologous")
 			("help", "get help message")
 			("highest", po::value<string>(&stat_file)->default_value("procrast.highest"), "file containing highest scoring alignment for each multiplicity ")
@@ -1723,7 +1734,7 @@ int main( int argc, char* argv[] )
 			("two-hits", po::value<bool>(&two_hits)->default_value(false), "require two hits within w to trigger gapped extension?")
 			("u", po::value<float>(&pGoUnrelated)->default_value(0.001f), "Transition to Unrelated")			
 			("unalign", po::value<bool>(&unalign)->default_value(true), "unalign non-homologous sequence?")
-			("w", po::value<unsigned>(&w)->default_value(0), "max gap width ")
+			("w", po::value<int>(&w)->default_value(0), "max gap width ")
 			("xmfa", po::value<string>(&xmfa_file)->default_value(""), "XMFA format output")
             ("xml", po::value<string>(&xml_file)->default_value(""), "XML format output")
 			("z", po::value <unsigned>(&seed_weight)->default_value(0), "seed weight")
@@ -1736,6 +1747,8 @@ int main( int argc, char* argv[] )
             return 1;
 		}
                 
+		
+
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);    
 
@@ -1840,8 +1853,12 @@ int main( int argc, char* argv[] )
 
 	if( w == 0 )
 		w = seed_weight * 3;	// default value
-	else if( w == -1 )//if w == -1, disable chaining
-		w = 0;	
+	else if( w < 0 )
+	{
+		w = 0;
+		chain = false;
+	}
+
 	cout << "Using seed weight: " << seed_weight << " and w: " << w << endl;
 	SeedMatchEnumerator sme;
 	sme.FindMatches( seedml, rmin, rmax, only_direct );
@@ -2051,19 +2068,19 @@ int main( int argc, char* argv[] )
 		vector< string > alignment;
 		vector<score_t> scores;
 		bool extended = false;
-		while( direction > -2 && chain )
+		while( direction > -2 )
 		{
 			last_linked = 0;
 			
 			// check for superset
-			if( getSuperset(M_i, direction).superset != NULL )
-				supersetLinkExtension( M_i, direction, last_linked, left_deferred_subsets, right_deferred_subsets );
+			if( getSuperset(M_i, direction).superset != NULL  )
+				supersetLinkExtension( M_i, direction, last_linked, left_deferred_subsets, right_deferred_subsets, chain );
 
 //          else
 //          A hack to allow our chaining to work without novel subsets would be to
 //          perform an additional neighborhood list lookup after superset link
 //          extension even if no chainables are found during link extension.
-            else
+			else
 			{
 				//
 				// perform a neighborhood list extension, 
@@ -2073,7 +2090,7 @@ int main( int argc, char* argv[] )
 				vector< NeighborhoodGroup > chainable_list;
 				vector< NeighborhoodGroup > subset_list;
 				vector< NeighborhoodGroup > novel_subset_list;
-                //tjt: ok
+				//tjt: ok
 				neighborhoodListLookup( M_i, match_pos_lookup_table,
 								superset_list, chainable_list, subset_list, novel_subset_list,
 								direction, seed_size, w, left_lookups, right_lookups, NULL);
@@ -2086,14 +2103,14 @@ int main( int argc, char* argv[] )
 				// now process each type of neighborhood group
 				// supersets are already done.  happy chrismakwanzuhkkah
 				// then process chainable
-				processChainableMatches( M_i, chainable_list, direction, last_linked, find_novel_subsets );
+				processChainableMatches( M_i, chainable_list, direction, last_linked, find_novel_subsets, chain );
 
 				// defer subset processing
 				for( size_t gI = 0; gI < subset_list.size(); gI++ )
-                {
+				{
 					vector< NeighborhoodGroup >& cur_subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
 					cur_subset_list.push_back( subset_list[gI] );
-                }
+				}
 				// defer novel subset processing
 				vector< NeighborhoodGroup >& cur_novel_subset_list = selectList( left_deferred_novel_subsets, right_deferred_novel_subsets, direction );
 				cur_novel_subset_list.clear();	// we only process novel subsets on the very last extension
@@ -2101,24 +2118,24 @@ int main( int argc, char* argv[] )
 					cur_novel_subset_list.push_back( novel_subset_list[gI] );
 
 			} // end if no superset was found then do neighborhood list lookup
-            //if find_novel_subsets not enabled, we can avoid this hack? is this true?
-            if (!find_novel_subsets)
-            {
-                vector< NeighborhoodGroup > superset_list;
-			    vector< NeighborhoodGroup > chainable_list;
-			    vector< NeighborhoodGroup > subset_list;
-			    vector< NeighborhoodGroup > novel_subset_list;
-                neighborhoodListLookup( M_i, match_pos_lookup_table,
-								    superset_list, chainable_list, subset_list, novel_subset_list,
-								    direction, seed_size, w, left_lookups, right_lookups, NULL);
+			//if find_novel_subsets not enabled, we can avoid this hack? is this true?
+			if (!find_novel_subsets)
+			{
+				vector< NeighborhoodGroup > superset_list;
+				vector< NeighborhoodGroup > chainable_list;
+				vector< NeighborhoodGroup > subset_list;
+				vector< NeighborhoodGroup > novel_subset_list;
+				neighborhoodListLookup( M_i, match_pos_lookup_table,
+									superset_list, chainable_list, subset_list, novel_subset_list,
+									direction, seed_size, w, left_lookups, right_lookups, NULL);
 
-			    // defer subset processing
-			    for( size_t gI = 0; gI < subset_list.size(); gI++ )
-			    {
-				    vector< NeighborhoodGroup >& cur_subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
-				    cur_subset_list.push_back( subset_list[gI] );
-			    }
-            }
+				// defer subset processing
+				for( size_t gI = 0; gI < subset_list.size(); gI++ )
+				{
+					vector< NeighborhoodGroup >& cur_subset_list = selectList( left_deferred_subsets, right_deferred_subsets, direction );
+					cur_subset_list.push_back( subset_list[gI] );
+				}
+			}
 			// if we didn't do a chaining or superset extension, try a gapped extension
 			if( last_linked == 0 )
 			{
@@ -2130,7 +2147,7 @@ int main( int argc, char* argv[] )
 				// only extend if two matches are chained if two-hits == true
                 // its fast enough now that printing to screen actually slows things down...
 				if( extend_chains && (!two_hits || (two_hits && M_i->chained_matches.size() > 1 )))
-					rcode = ExtendMatch(M_i, seqtable, hmm_params, w, direction, novel_matches);
+					rcode = ExtendMatch(M_i, seqtable, hmm_params, w, direction, novel_matches, gap_open, gap_extend, extension_window);
                 
 				if (rcode == FAILED || rcode == FIXME || novel_matches.size() == 0)
 				{
@@ -2176,7 +2193,7 @@ int main( int argc, char* argv[] )
 	                    std::sort( mplt_sort_list.begin(), mplt_sort_list.end() );
 
                         //don't use novel match if it clobbers the existing left end in the MPLT
-                        if (use_novel_matches)
+                        if (use_novel_matches )
                         {
                      
                             bool clobbers_existing_match = false;
@@ -2262,12 +2279,13 @@ int main( int argc, char* argv[] )
 				//   then we want to replace that part of the alignment with the superset
 				// if the superset continues beyond the end of at least one component, then 
 				// we want to create a superset link for it, and process it during a link extension
-				if ( superset_list.size() > 0 )
+				if ( superset_list.size() > 0 && chain )
 					processSupersetMatches( M_i, superset_list, direction, last_linked, true );
 			
 				// then process chainable
 				if ( chainable_list.size() > 0 )
-					processChainableMatches( M_i, chainable_list, direction, last_linked, find_novel_subsets );
+					processChainableMatches( M_i, chainable_list, direction, last_linked, find_novel_subsets, chain );
+
 				// defer subset processing
 				for( size_t gI = 0; gI < subset_list.size(); gI++ )
 				{
@@ -2440,7 +2458,8 @@ int main( int argc, char* argv[] )
 			subset_list.clear();
 		}
 	}
-
+	cout << "\n# of calls to MUSCLE: " << ccount << endl;
+	cout << "------------------------------"  << endl;
 	cout << "superset count: " << superset_count << endl;
 	cout << "chainable count: " << chainable_count << endl;
 	cout << "subset count: " << subset_count << endl;
