@@ -1247,7 +1247,7 @@ int ExtendMatch(GappedMatchRecord*& M_i, vector< gnSequence* >& seq_table, Param
 		{			
 			if( M_i->Orientation(j) == AbstractMatch::reverse )
 			{			
-				//seq_table[0]->ToString( leftExtension[j], left_extend_length, M_i->RightEnd(j)+1 );
+				seq_table[0]->ToString( leftExtension[j], left_extend_length, M_i->RightEnd(j)+1 );
 				leftside.SetLeftEnd(j,M_i->RightEnd(j)+1);
 				rc_filter->ReverseFilter(leftExtension[j]);
 			}else{
