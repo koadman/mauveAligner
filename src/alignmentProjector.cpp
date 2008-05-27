@@ -56,7 +56,7 @@ int main( int argc, char* argv[] )
 		input_ivs.seq_table = ml.seq_table;
 
 		// create a projection list
-		vector< size_t > projection;
+		vector< uint > projection;
 		IntervalList proj_ivs;
 		for( int i = 5; i < argc; ++i )
 		{
