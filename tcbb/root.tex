@@ -46,8 +46,8 @@
 % comment-line sign (%) from one \documentclass line to the other.
 % The first is for peer review format(single column), the second is for final publication(double column).
 
-\documentclass[12pt,journal,draftcls,letterpaper,onecolumn]{IEEEtran}
-%\documentclass[9.5pt,journal,final,finalsubmission,twocolumn]{IEEEtran}
+%\documentclass[12pt,journal,draftcls,letterpaper,onecolumn]{IEEEtran}
+\documentclass[9.5pt,journal,final,finalsubmission,twocolumn]{IEEEtran}
 \usepackage{setspace}
 \usepackage[Lenny]{fncychap}
 \usepackage{fancyhdr}
@@ -230,6 +230,7 @@
         Mark~A.~Ragan$^{4}$,
         and~Xavier~Messeguer$^{3}$% <-this % stops a space
         }
+
 \thanks{$^1$Microbial Evolutionary Genomics group, Institut Pasteur, Paris, France}
 \thanks{$^2$Atelier de Bioinformatique, Univ. Pierre et Marie Curie-Paris 6, Paris, France}
 \thanks{$^3$Algorithms and Genetics Group,Dept. of Computer Science, Technical University of Catalonia, Barcelona, Spain}
@@ -293,8 +294,7 @@ of real genomic DNA with simulated interspersed repeats.  Our method
 outperforms existing methods in terms of sensitivity,
 positive predictive value, and localizing boundaries of homology.  The
 described methods have been implemented in the free, open-source
-\texttt{procrastAligner} software, available from: \\
-\url{http://alggen.lsi.upc.es/recerca/align/procrastination}
+\texttt{procrastAligner} software, available from: \url{http://alggen.lsi.upc.es/recerca/align/procrastination}
 \end{abstract}
 
 \begin{keywords}
@@ -409,16 +409,15 @@ multi-match seeds in the input sequence, (2) chain individual
 seeds, (3) multiply align of regions between chained seeds, (4)
 gapped extension of seed chains (5) detect unrelated regions
 using a hidden Markov model, (6) apply transitive homology
-relationships, and (7) removal of any unrelated sequence from
-the final local multiple alignment.  We have previously published Steps 1-2 of our method\cite{ref-procrast},
-while steps 3-7 represent a new contribution
-and are the subject of the present manuscript. Steps 2-7 are applied
+relationships and removal of any unrelated sequence from
+the final local multiple alignment, and (7) statistical test for rejecting
+insignificant local alignments.  Steps 2-8 are applied
 repeatedly to seeds identified in step 1 to produce local multiple
 alignments of all homologous nucleotides in the input sequence.
 
-\begin{figure}[p]
+\begin{figure}[t!]
 \begin{center}
-\epsfig{file=./fig/extension.pdf,width=5.4in}
+\epsfig{file=./fig/extension.pdf,width=3.5in}
 %\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
 %\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.7in}}
 \end{center}
@@ -435,38 +434,36 @@ matches (3).  In step (4), we perform a gapped extension by computing
 a global multiple alignment on the regions to the left and right of
 each chain component.  The resulting alignment may contain unrelated
 sequence, so in step (5) we apply a hidden Markov model to detect
-poorly aligned regions indicative of unrelated sequence.  Step (6)
-computes transitive homology relationships to ensure a consistent
+poorly aligned regions indicative of unrelated sequence and then
+compute transitive homology relationships to ensure a consistent
 alignment and aid detection of divergent homologous sequences.
-Finally, in step (7) we unalign regions found to be non-homologous.
-If we find after step (2) that the alignment boundaries have been
+In step (6) we unalign regions found to be non-homologous, and
+in step (7) we perform a statistic test to reject insignificant
+local multiple alignments. If we find after step (2) that the alignment boundaries have been
 extended, we return to step (4) for another round of chaining.}
 \label{fig-main}
 \end{figure}
 
-
 \subsection{Chaining multi-match seeds from the input sequence}
 Given a sequence $\mathcal{S}=s_1, s_2,\dots, s_N$ of length $N$
-defined over an alphabet $\{A,C,G,T\}$, our goal is to identify
-local multiple alignments on subsequences of $\mathcal{S}$. Our
-filtration method first generates candidate chains of ungapped
-alignments, which are later scored and possibly re-aligned.  Denote
-an ungapped alignment, or match, among subsequences in $\mathcal{S}$
-as an object $M$. We assume as input a set of ungapped alignments
-$\mathbf{M}$.  We refer the number of regions in $\mathcal{S}$
-matched by a given match $M_i \in \mathbf{M}$ as the
+defined over an alphabet $\{A,C,G,T\}$, our method identifies
+local multiple alignments on homologous subsequences of
+$\mathcal{S}$. Our method first extracts candidate ungapped
+alignments, or multi-matches, among subsequences in $\mathcal{S}$,
+and we denote the set of all such matches as $\mathbf{M}$. To extract multi-matches from the input
+sequence, we utilize a palindromic spaced seed pattern\cite{ref-zhang}, which is
+analyzed at each position in the input sequence.
+Palindromic spaced seeds offer good efficiency and
+reasonable sensitivity on a variety of input
+sequences\cite{ref-procrast}.  We refer the number of matching regions
+in $\mathcal{S}$ by a given match $M_i \in \mathbf{M}$ as the
 \textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
-matching region of $M_i$ as a \textit{component} of $M_i$. Note that
-$|M_i| \geq 2~\forall~M \in \mathbf{M}$.  
-
-Our algorithm has an important limitation on the matches in
-$\mathbf{M}$: no two matches $M_i$ and $M_j$ may have the same
-left-end coordinate, e.g. $M_i.L_x \neq M_j.L_y~\forall~i, j, x, y$
-except for the identity case when $i=j$ and $x=y$.  This constraint
-has been referred to by others as \textit{consistency} and
-\textit{transitivity}~\cite{ref-transitivity} of matches.  In the
-present work we only require consistency and transitivity of matches
-longer than the seed length, e.g. seed matches may overlap.
+matching region of $M_i$ as a \textit{component} of $M_i$. Our
+algorithm has an important limitation on the matches in $\mathbf{M}$:
+no two matches $M_i$ and $M_j$ may have the same left-end coordinate,
+except for the identity case when $i=j$.  This constraint has been
+referred to by others as \textit{consistency} and
+\textit{transitivity}\cite{ref-transitivity} of matches.
 
 Once a list of multi-matches has been generated, we employ an
 efficient chaining and filtration algorithm to identify overlapping
@@ -488,6 +485,64 @@ include the entire region covered by the linked superset match and
 thus eliminate the need to re-examine sequence already covered by a
 previously chained match.
 
+\begin{comment}
+\subsection{Data structures}
+Our chaining algorithm begins with an initialization phase that creates three
+data structures. The first data structure is a set of \textit{Match
+Records} for each match $M \in \mathbf{M}$.  The \textit{Match
+Record} stores $M$, a unique identifier for $M$, and two items which
+will be described later in Section~\ref{ssec:extend}: a set of
+linked match records, and a \textit{subsuming match pointer}. The
+linked match records are further subdivided into four classes: a
+left and right \textit{superset link}, and left and right
+\textit{subset links}.  The \textit{subsuming match pointer} is
+initially set to a \textit{NULL} value. Figure~\ref{fig:proc} shows
+a schematic of the match record.
+
+We refer to the second data structure as a \textit{Match Position
+Lookup Table}, or $\mathbf{P}$. The table has $N$ entries $p_1,
+p_2,\dots,p_N$, one per character of $\mathcal{S}$. The entry for
+$p_t$ stores the unique identifier of the match $M_i$ and $x$ for
+which $M_i.L_x = t$ or the \textit{NULL} identifier if no match has
+$t$ as a left-end coordinate. We call the third data structure a
+\textit{Match extension procrastination queue}, or simply the
+\textit{procrastination queue}. Again, we denote the multiplicity of
+a match $M$ by $|M|$. The \textit{procrastination queue} is a binary
+heap of matches ordered on $|M|$ with higher values of $|M|$
+appearing near the top of the heap. The heap is initially populated
+with all $M \in \mathbf{M}$. This queue dictates the order in which
+matches will be considered for extension.
+
+\begin{figure}[t!]
+\centering \epsfig{file=fig/proc.pdf,width=3.6in} \caption[The match extension process and associated data
+structures]%
+{
+\looseness=-1 The match extension process and associated data
+structures. \textbf{(A)} First we pop the match at the front of the
+procrastination queue: $M_{1}$ and begin its leftward extension.
+Starting with the leftmost position of $M_{1}$, we use the
+\textit{Match Position Lookup Table} to enumerate every match with a
+left-end within some distance $w$. Only $M_4.L_1$ is within $w$ of
+$M_1$, so it forms a singleton \textit{neighborhood group} which we
+discard. \textbf{(B)} $M_1$ has no \textit{neighborhood groups} to
+the left, so we begin extending $M_1$ to the right.  We enumerate
+all matches within $w$ to the right of $M_1$. $M_2$ lies to the
+right of 3 of 4 components of $M_1$ and so is not subsumed, but
+instead gets linked as a right-subset of $M_1$. We add a
+left-superset link from $M_{2}$ to $M_1$. \textbf{(C)} Once finished
+with $M_{1}$ we pop $M_{2}$ from the front of the procrastination
+queue and begin leftward extension. We find the left-superset link
+from $M_2$ to $M_1$, so we extend the left-end coordinates of
+$M_{2}$ to cover $M_{1}$ accordingly. No further leftward extension
+of $M_2$ is possible because $M_1$ has no left-subset links.
+\textbf{(D)} Beginning rightward extension on $M_{2}$ we construct a
+neighborhood list and find a chainable match $M_{3}$, and a subset
+$M_{4}$. We extend $M_2$ to include $M_3$ and mark $M_4$ as
+inconsistent and hence not extendable. Upon completion of the
+chaining process we have generated a list of local multiple
+alignments.} \label{fig:proc}
+\end{figure}
+\end{comment}
 \subsection{Gapped extension of high-scoring chains}
 Our method computes gapped extensions of the chained multi-match seeds.
 After chaining a multi-match $M_i$, we perform gapped alignment on all
@@ -506,13 +561,13 @@ potentially more sensitive.  We have empirically determined that
 setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a
 good tradeoff between speed and sensitivity.  The resulting extension
 window is small for high multiplicity chains,
-keeping the alignment search space tractable.
+keeping the alignment search space tractable. 
 %\begin{equation}
 % \max(w, \sqrt{(\max(150^{2}-(2*|M_{i}|)^{2},0)}));
 %\end{equation}
 
 \subsection{Identifying unrelated regions}
-\begin{figure}[t]
+\begin{figure*}[t!]
 \centering \epsfig{file=./fig/hmm.pdf,width=5.6in}
 \caption[Hidden Markov model used to detect pairwise alignments of unrelated
 sequence]%
@@ -525,7 +580,7 @@ strand-symmetric, so that AC also indicates CA and the reverse
 complements TG and GT.  The emission probabilities are adjusted to the G+C content of the input genome
 as described in the test.  The values shown here correspond to a 47.5\% G+C genome.}
 \label{fig-hmm}
-\end{figure}
+\end{figure*}
 The MUSCLE alignment software dutifully reports the highest scoring
 global multiple alignment of input sequences, regardless of whether
 they are related by common ancestry. As a consequence of the gapped
@@ -538,19 +593,8 @@ possible pairs in $\texttt{{\{A,G,C,T,-\}}}$ with strand and species
 symmetry, i.e. \texttt{AG=GA=TC=CT}. The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD
 substitution matrix presented by Chiaromonte \textit{et al.}~\cite{hoxd}.
-We solved for the emission frequencies in the
-homologous and unrelated state using the same equation used to
-calculate the values of the HOXD substitution matrix on 47.5\%G+C
-content sequence\cite{hoxd}:
-\begin{equation}
-s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
-\end{equation}
-{w}here $p(x,y)$ is the fraction of the observed aligned pairs of
-nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
-$q_{2}(y)$ denote the background frequencies of $x$ and $y$,
-respectively. Chiaramonte \textit{et al.} scaled the resulting
-$s(x,y)$ values by $\psi=32.5421$ so the largest was 100,
-with the rest rounded to the nearest integer.  The resulting emission
+
+The resulting emission
 probabilities for the Homologous and Unrelated states are given
 in Figure~\ref{fig-hmm}. HMM probabilities can be derived using any strand/species-symmetric nucleotide substitution matrix,
 but any particular matrix makes specific assumptions about divergence time, mutation pressures,
@@ -559,15 +603,10 @@ Genomes can range in G+C content from 30-75\%, and at the extremes,
 a substitution matrix derived on 47.5\% G+C sequence (such as HOXD) does not
 perform well. Previously it has been shown that adapting substitution matrices to the composition
 of the organisms under comparison can improve sequence alignment accuracy\cite{ref-rev3b}.  We have thus developed a method to adapt HMM emission
-frequencies derived from an arbitrary substitution matrix
+probabilities derived from an arbitrary substitution matrix
 to organisms with different G+C content.
 
-
-
-\section{Calculating the Chiaromonte \textit{et al.} scaling factor}
-The emission probabilities for
-each possible pair of aligned nucleotides were extracted from the HOXD
-substitution matrix presented by Chiaromonte \textit{et al}\cite{hoxd}.
+\section{Extracting emission frequencies from the HOXD substitution matrix}
 We solved for the emission frequencies in the
 Homologous and Unrelated state using the same equation used to
 calculate the values of the HOXD substitution matrix on 47.5\%G+C
@@ -622,14 +661,35 @@ resulting expressions in to the normalizing equation to solve for
 $\psi$. For the HOXD matrix the scaling factor is $\psi=66.667$. Given
 $\psi$, we can calculate values for all $H_{xy}$.
 
-\section{Adapting HMM emission frequencies from an arbitrary substitution matrix to organisms with different G+C content}
+
+While emission frequencies for nucleotide substitutions can be derived from
+any strand/species-symmetric nucleotide substitution matrix, the gap-open
+and extend frequencies can not.  To empirically estimate gap-open and extend values
+for the unrelated state we aligned a 10-kb, 48\%~G+C content region
+taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates
+37,300-38,300) with an unrelated sequence.  We generated an unrelated
+sequence with identical nucleotide composition by reversing the
+extracted sequence without complementation.  We then forced an
+alignment with MUSCLE and counted the number of gap-open and gap-extend
+columns in the alignment of unrelated sequences.  Gap-open and
+extend frequencies for the homologous state were estimated by
+constructing an alignment of 10kb of orthologous sequence shared among
+a pair of divergent organisms.  We aligned the 48\%G+C segment between
+genes \textit{fruR} and \textit{secA} from \textit{E. coli} K12
+(Accession U00096.21) and \emph{Y. pestis} CO92 (Accession
+AL590842.1). We add the empirically derived gap-open and extend
+frequencies for each state and normalize the emission frequencies to a
+probability distribution.  The resulting emission probabilities are
+reported in Figure~\ref{fig-hmm}.
+
+\subsection{Adapting HMM parameters from an arbitrary substitution matrix to organisms with different G+C content}
 HMM probabilities can be derived using any strand/species symmetric nucleotide substitution matrix,
 but any particular matrix makes specific assumptions about divergence time, mutation pressures,
 and sequence composition of the aligned sequences.
 Genomes can range in G+C content from 30-75\%, and at the extremes,
 a substitution matrix derived on 47.5\% GC sequence (such as HOXD) does not
 perform well.  We have thus developed a method to adapt HMM emission
-frequencies derived from an arbitrary substitution matrix
+probabilities derived from an arbitrary substitution matrix
 to organisms with different G+C content
 
 Emission
@@ -669,47 +729,10 @@ $H_{XY}$ values are the original emission probabilities derived from the
 substitution matrix, and $H'_{XY}$ are emission probabilities adapted to
 the input genome's G+C content.
 
-While emission frequencies for nucleotide substitutions can be derived from
-any strand/species-symmetric nucleotide substitution matrix, the gap-open
-and extend frequencies can not.  To empirically estimate gap-open and extend values
-for the unrelated state we aligned a 10-kb, 48\%~G+C content region
-taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates
-37,300-38,300) with an unrelated sequence.  We generated an unrelated
-sequence with identical nucleotide composition by reversing the
-extracted sequence without complementation.  We then forced an
-alignment with MUSCLE and counted the number of gap-open and gap-extend
-columns in the alignment of unrelated sequences.  Gap-open and
-extend frequencies for the homologous state were estimated by
-constructing an alignment of 10kb of orthologous sequence shared among
-a pair of divergent organisms.  We aligned the 48\%G+C segment between
-genes \textit{fruR} and \textit{secA} from \textit{E. coli} K12
-(Accession U00096.21) and \emph{Y. pestis} CO92 (Accession
-AL590842.1). We add the empirically derived gap-open and extend
-frequencies for each state and normalize the emission frequencies to a
-probability distribution.  The resulting emission probabilities are
-reported in Figure~\ref{fig-hmm}.
+%\section{Configuring the transition probabilities of the HMM}
 
-Using the empirically derived transition and emission probabilities,
-we apply the posterior HMM decoder implemented in Gerton Lunter's
-HMMoC software\cite{Lunter2007} to compute the posterior probability (p.p.) that
-each alignment column represents homologous sequence.  Columns with a
-p.p. below 0.5 are considered to be unrelated; use of 0.5 as a p.p. threshold
-yields a maximum \textit{a posteriori} estimate of homology.  We then apply the
-transitive homology principle to our predictions, resulting in a final
-set of consistent homology predictions.  See Figure~\ref{fig-main},
-steps 5 and 6 for an example. We trim the alignment to exclude all
-columns beyond the Homologous state. If the original boundaries were
-improved, we trigger another round of chaining (and consequently
-another round of extension) in the same direction.
-When gapped extension fails to improve boundaries
-in one direction, extension in the other direction is attempted until
-no further extension is possible.
 
-\section{Resolving redundant alignments}
-\textbf{FIXME..}
-
-\section{Results}
-\begin{figure}[t]
+\begin{figure*}[t!]
 \centering \epsfig{file=./fig/repeat_accuracy_new.pdf,width=5.8in}
 \caption[Accuracy recovering simulated repeat families planted in the
 \textit{Mycoplasma genitalium} genome]%
@@ -728,13 +751,29 @@ there are 1.8 substitutions per site and 0.2 indels per site.  From
 the figure, it is apparent that \texttt{procrastAligner} performs better
 at higher mutation rates and multiplicities than \texttt{eulerAlign}.}
 \label{fig-results}
-\end{figure}
+\end{figure*}
 
+\section{Calculating the posterior probability of alignment columns}
+Using the empirically derived transition and emission probabilities,
+we apply the posterior HMM decoder implemented in Gerton Lunter's
+HMMoC software\cite{Lunter2007} to compute the posterior probability (p.p.) that
+each alignment column represents homologous sequence.  Columns with a
+p.p. below 0.5 are considered to be unrelated; use of 0.5 as a p.p. threshold
+yields a maximum \textit{a posteriori} estimate of homology.  We then apply the
+transitive homology principle to our predictions, resulting in a final
+set of consistent homology predictions.  See Figure~\ref{fig-main},
+steps 5 and 6 for an example. We trim the alignment to exclude all
+columns beyond the Homologous state. If the original boundaries were
+improved, we trigger another round of chaining (and consequently
+another round of extension) in the same direction.
+When gapped extension fails to improve boundaries
+in one direction, extension in the other direction is attempted until
+no further extension is possible.
+
+\section{Results}
 We have previously demonstrated the sensitivity of our chaining method
 in finding Alu repeats in the human
-genome\cite{ref-procrast}. Figure~\ref{fig-align} shows part of a
-local multiple alignment of one such Alu family as generated with
-\texttt{procrastAligner}. To highlight the benefits of our proposed
+genome\cite{ref-procrast}. To highlight the benefits of our proposed
 heuristic for gapped extension, we compare ~\texttt{procrastAligner}'s
 performance to the Eulerian path method for local multiple alignment
 as implemented by \texttt{eulerAlign}\cite{ref-related1}. The Eulerian
@@ -770,14 +809,14 @@ the composition of \emph{Mycoplasma genitalium}
 were chosen uniformly at random in the 580kb \textit{M. genitalium} genome,
 allowing tandem repeats but prohibiting mosaic repeats.
 
-\begin{figure}[t!]
+\begin{figure*}[t!]
 \centering
 \epsfig{file=./fig/boundary_scores.pdf,width=5.8in}
 \caption[Pairwise boundary accuracy metric]%
 {\textbf{Pairwise boundary accuracy metric}. We define our boundary accuracy metric to be an all-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R} to the boundaries predicted by the alignment program. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundary of any local multiple alignments output by the program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}.  Boundary predictions can be classified as (1) correct, (2) overprediction, and (3) underprediction, with each discussed in turn: (1) \emph{Correct prediction}. Consider scoring components \emph{r1} and \emph{r3}.  Local multiple alignment \emph{A} overlaps both \emph{r1} and \emph{r3} and no other alignment overlaps both \emph{r1} and \emph{r3}.  The left and right boundaries of alignment \emph{A} match the boundaries of \emph{r1\&r3} exactly, thus we assign scores of 0 for \emph{r1\&r3}.  (2) \emph{Overprediction}. Consider scoring components \emph{r1} and \emph{r2}.  These components are overlapped by alignments \emph{A} and \emph{C}.  Alignment \emph{A} has perfect boundary predictions for \emph{r1\&r2}, while alignment \emph{C} extends beyond the true boundaries of components \emph{r1} and \emph{r2} by 4 nucleotides on the left and 5 nucleotides on the right.  Our scoring metric always uses the maximum predicted boundaries for a pair of components, thus the boundary predictions from \emph{C} are reported for \emph{r1\&r2}. (3) \emph{Underprediction.}  Consider scoring components \emph{r3} and \emph{r5}.  Alignment \emph{B} hits both \emph{r3} and \emph{r5}, but stops short of the right-side boundary by 8nt in \emph{r3} and 4nt in \emph{r5}.  We average the error and record -6 for the right-side of \emph{r3\&r5}.
 Finally, component pairs that are not contained by any computed alignments are not scored, as indicated by \emph{n/a}.}
 \label{fig-overunder}
-\end{figure}
+\end{figure*}
 \subsection{Alignment accuracy metrics}
 \label{sec:metrics}
 We used each program to find local multiple alignments in each of the
@@ -803,13 +842,13 @@ further details on boundary under/overpredictions.
 
 
 \subsection{Accuracy when aligning interspersed repeats}
-\begin{figure}[t!]
+\begin{figure}[h!aa]
 \centering
 \subfigure[]{
-\epsfig{file=./fig/procrast_boundary_fig.pdf,width=2.7in}
+\epsfig{file=./fig/procrast_boundary_fig.pdf,width=3.2in}
 \label{fig:subfig1}}
 \subfigure[]{
-\epsfig{file=./fig/euler_boundary_fig.pdf,width=2.7in}
+\epsfig{file=./fig/euler_boundary_fig.pdf,width=3.2in}
 \label{fig:subfig2}}
 \caption[Boundary prediction performance]%
 {\textbf{Boundary prediction performance}. All-pairs boundary prediction accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity.  Accuracy on each combination is presented as a box-and-whiskers plot using the scoring metric detailed in Section~\ref{sec:metrics}.  Branch lengths range from 0 to 0.24 and increase by intervals of 0.01.  The $x$-axis label represents the multiplicity of the interspersed repeat in log$_2$-scale. i.e. axis label 8 indicates $2^{8}$ = multiplicity 256. The $y$-axis label is the prediction error in log$_2$-scale nucleotides. Values at 0 represent correctly identified repeat boundaries, values greater than 0 represent overpredictions, and values less than 0 represent underpredictions (see Figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} identifies the true interspersed repeat boundaries more accurately than \texttt{eulerAlign}.}
@@ -826,7 +865,7 @@ multiplicity were replicated three times and alignments generated in
 parallel on a 156-node compute cluster.  Results of the experiments
 are reported in Figure~\ref{fig-results} and
 Figure~\ref{fig-boundary}. Figure~\ref{fig-results} illustrates the
-sensitivity and PPV of \\
+sensitivity and PPV of 
 \texttt{procrastAligner} and
 \texttt{eulerAlign} on datasets ranging from 0 substitutions and
 indels per site to 2.16 substitutions and 0.24 indels per site (branch length 24).  As
@@ -853,38 +892,89 @@ the interspersed repeat.
 
 Finally, a direct comparison of run time is difficult, due to the differing natures of the local multiple alignment programs.  \texttt{eulerAlign} runtime depends on the iterations parameter, which controls the total number of local multiple alignments reported, whereas \texttt{procrastAligner} reports \textit{all} local multiple alignments in a single run.  Despite this, we report the average per-experiment CPU time for each program on the test dataset. \texttt{procrastAligner} required on average 55 seconds per experiment, with the longest taking just over two minutes. \texttt{eulerAlign} required 1 hour total compute time per experiment on average, which equates to about 4 seconds per iteration.  Both programs exhibited similar memory usage, \texttt{procrastAligner} requiring on average 50 MB per experiment and \texttt{eulerAlign} requiring on average 70 MB per experiment.
 
-\section{Estimating significance of local multiple alignments}
-to add..
 
-\textbf{FIXME}
+\section{Estimating significance of local multiple alignments}
 With increased seed matching sensitivity comes additional
 false positive seed hits, so a statistical test for rejecting
-insignificant local alignments will likely be required.  Unfortunately exact
-computation of $p$-values for local multiple alignments remains a
+insignificant local alignments is essential.  BLAST statistics have proven essential for searching for significant similarity hits, for amino acid and nucleotide sequences. Exact computation of $p$-values for local multiple alignments remains a
 daunting challenge, although fast approximation methods for pairwise
 alignments have shown promise\cite{repseek} and potentially can be
-extended to multiple alignments\cite{ref-related1,Prakash2005}.
+extended to multiple alignments\cite{ref-related1, Prakash2005}.  We will
+now review the method we use for estimating significance of local multiple alignments.
+
+Differing from similarity between two or more sequences, there exists random similarities within a sequence. Therefore, one is interested in computing the likelihood that a given repeat is found by chance in order to decide whether it is biologically pertinent or not. A lot of effort has been put to assign a probability of finding a segment of score $S$ between two sequences (see \cite{Ewens2001} and references therein) or shared by $k$ sequences \cite{ref-related1}. These statistics show that, $N$, the number of high scoring similarity segments between two sequences of size $m$ and $n$ with a score $S \geq x$ converges to \cite{Karlin1990}:
+
+\begin{equation}
+	E[ N^{(S\geq x)} ] = Kmn p^x
+	\label{E_mn}
+\end{equation}
+
+$K$ is a scale parameter that depends on the scoring system and $p$ (also often seen as $p=e^{-\lambda}$) can be understand as the per site probability to find a segment of score 1. Using a Poisson approximation, the probability that the largest score is greater or equal than $x$ is given by:
+
+\begin{equation}
+	P( S_1 \geq x) = 1 - exp( -E[ N^{(S\geq x)} ] )
+	\label{P_s1}
+\end{equation}
+
+For gap-free alignments, both parameters $K$ and $p$ can be computed numerically \cite{Karlin1990} whereas their estimation relies on simulations when gaps are allowed  \cite{Waterman1994, Altschul2001}.
+
+These results can be easily extended to 2-copy repeats within the same strand of a sequence of size $n$, by substituting $mn$ by ${{n}\choose{2}}$ in the above equations. When the two copies can belongs to either strand, we have to count successively cases where 0,1 or 2 copies are on the forward strand; copies of the same strand can swapped without changing the repeat. Because of the symmetry, the number of possible positions is halved. Therefore, the expected number of 2-copy repeats with a score greater or equal than $x$ is:
+
+\begin{eqnarray}
+	E[ N_{(r=2, S\geq x)} ]  & = & K \times  \Big( n (n-1) \frac 12 (\frac 1 2 + 1 + \frac 1 2) \Big) \times  p^x \nonumber \\
+	                                      & = & K  n (n-1)   p^x
+	\label{E_r2}
+\end{eqnarray}
+
+
+More generally, the expected number of repeats of multiplicity $r$ on both strands that have a score greater or equal than $x$ is given by:
+
+\begin{equation}
+	E[ N_{(r, S\geq x)} ]   =  K \times  \Big( \frac{n!}{(n-r)! }  \frac 12 \sum_{k=0}^{r}{\frac{1}{k! (r-k)!}} \Big) \times  p^{(r-1)x}
+	\label{E_repeat}
+\end{equation}
+
+In the above equation, the two unknown parameters $K$ and $p$ can be estimated on the 2-copy repeats using random sequences of the same size and identical composition. This can be done by using either the direct method \cite{Olsen1999} using a $log(-log(1-P))$ transformation of the equation \ref{P_s1} or by using the declumping \cite{Waterman1994} or the island method \cite{Olsen1999} using a $log(E)$ of equation \ref{E_r2}. Once $K$ and $p$ are estimated, equation \ref{P_s1} along with equation \ref{E_repeat} can be used to asses a probability of any observed repeat of a given score and a given multiplicity. The adequate score to be used is the average score of all pairs.  Importantly, these equations show a perfect fit with repeats from random genomes (data not shown).
+
+The introduction of a preliminary method for estimating significance of local multiple alignments will allow
+for increased sensitivity (i.e. smaller seed size, seed families) while maintaining specificity. This statistical
+test helps to filter out spurious alignments, although it doesn't resolve redundant alignments. To address redundant alignments, we follow
+the approached proposed in \cite{ref-related1} by grouping all alignments which share at least one aligned column. Then, we can select the reference alignment
+at the alignment in the group with the highest Sum-of-Pairs (SP) score, breaking ties either by multiplicity or repeat length. The selection of a reference alignment from each redundant group can be defined by the user via a command-line parameter, allowing for the reference alignment to be  on the type of repeat analysis performed. 
+
+\begin{comment}
+\begin{figure}[h!]
+\centering \epsfig{file=./fig/exactseeds.pdf,width=4.5in}
+\caption{First test, Exact Seeds. We generated 1000 random sequence of size $10^{5}$bp with GC = 0.6. For each sequence,
+we detected the longest 2-copy, 3-copy, ..., 5-copy repeat. Using all sequences, we then generated the F
+cumulative distribution and plotted it as a function of t (here the seed length). Results
+are shown in figure 1 (dots with line r = 2, r = 3, ...). Using the multiplicity r = 2, we
+estimated both K = 1.5527 and p = 0.2859.}
+
+\label{fig-hmm}
+\end{figure}
+\end{comment}
 
 \section{Discussion}
 We have presented a sensitive and efficient gapped-extension heuristic for local
 multiple alignment. We have extended our previous results by
 converting chains of ungapped multi-matches into gapped local multiple
-alignments. Our method is based around an efficient heuristic for
-local multiple alignment, featuring a novel method for gapped
-extensions joining global multiple alignment with a homology test based on a hidden Markov
-model.  Experimental results demonstrate that the
+alignments. We have also added a method to remove spurious local multiple alignments by introducing a statistical estimation of significance
+performed directly on the input sequence.  Experimental results demonstrate that the
 described method offers a level of alignment accuracy exceeding
 that of previous methods. Accurately predicting homology boundaries has important implications; for example, tools to build repeat family databases can directly use the alignments without the manual curation required in current approaches and also is likely to aid in the evolutionary analysis of transposon proliferation.  Further improvement of the alignment
 methodology will likely require increasingly sensitive methods for
-seed matching in conjunction with a statistical methodology to assign
-significance to local multiple alignments.  One possible avenue to
+seed matching. One possible avenue to
 increase seed matching sensitivity and reduce boundary
 underpredictions would be merging overlapping seed matches into a
 shorter, higher-multiplicity match.  A second avenue would be to use
 palindromic seed families instead of using a single seed
-pattern. 
+pattern~\cite{ref-pattern}.
+
+
+
 \begin{figure}[t!]
-\centering \epsfig{file=./fig/alu_align.pdf,width=5.8in}
+\centering \epsfig{file=./fig/alu_align.pdf,width=3.5in}
 \caption[Alu repeat alignment]%
 {\textbf{Alu repeat alignment}. Partial view of an Alu repeat alignment output by procrastAligner in the \emph{H. sapiens} BAC
 clone RP11-355H10 (Accession AC010145.10). Each row represents an
@@ -894,21 +984,24 @@ values indicate complement strand.  Local multiple alignment was
 generated with \texttt{procrastAligner} with parameters: \texttt{--z=9
 --w=50}.  }
 \label{fig-align}
-\end{figure}\
+\end{figure}
+
 \subsection{Implementation}
 We have implemented our method in a program, \texttt{procrastAligner},
 available for Linux, Windows, and Mac OS X. Our open-source
-implementation is available as C++ source code licensed under the GPL , and can be downloaded from: \\
+implementation is available as C++ source code licensed under the GPL , and can be downloaded from:
 \url{http://alggen.lsi.upc.es/recerca/align/procrastination}.
 
-\section*{ Acknowledgment}
+\section{ Acknowledgments }
 The authors would like to thank Yu Zhang for providing the
-\texttt{eulerAlign} program. We are grateful to Guillaume Achaz for
-helpful discussions on the gapped extension algorithm. Accuracy
+\texttt{eulerAlign} program. We would also like to thank
+Webb Miller for providing the HOXD substitution matrix data. Accuracy
 evaluations utilized a compute resource grant from the Australian
 Partnership for Advanced Computing.  AED was supported by NSF grant
 DBI-0630765. TJT was supported by Spanish Ministry MECD Grant
 TIN2004-03382 and AGAUR Training Grant FI-IQUC-2005.
+
+others who read the paper..
 
 % trigger a \newpage just before the given reference
 % number - used to balance the columns on the last page
@@ -1192,6 +1285,7 @@ Thompson, J.D., Plewniak, F., Poch, O.:
 \newblock {A comprehensive comparison of multiple sequence alignment programs}.
 \newblock Nucleic Acids Res \textbf{27} (1999)  2682--90
 
+
 \bibitem{repseek}
 Achaz, G., Boyer, F., Rocha, E.P.C., Viari, A., Coissac, E.:
 \newblock Repseek, a tool to retrieve approximate repeats from large dna
@@ -1202,6 +1296,34 @@ Achaz, G., Boyer, F., Rocha, E.P.C., Viari, A., Coissac, E.:
 Prakash, A., Tompa, M.:
 \newblock Statistics of local multiple alignments.
 \newblock Bioinformatics \textbf{21 Suppl 1} (2005)
+
+\bibitem{Altschul2001}
+S~F Altschul, R~Bundschuh, R~Olsen, and T~Hwa.
+\newblock The estimation of statistical parameters for local alignment score
+  distributions.
+\newblock {\em Nucleic Acids Res}, 29(2):351--361, Jan 2001.
+
+\bibitem{Ewens2001}
+W~J Ewens and Grant~G R.
+\newblock {\em Statistical Methods in Bioinformatics}.
+\newblock Springer-Verlag New-York, 2001.
+
+\bibitem{Karlin1990}
+S~Karlin and S~F Altschul.
+\newblock Methods for assessing the statistical significance of molecular
+  sequence features by using general scoring schemes.
+\newblock {\em Proc Natl Acad Sci U S A}, 87(6):2264--2268, Mar 1990.
+
+\bibitem{Olsen1999}
+R~Olsen, R~Bundschuh, and T~Hwa.
+\newblock Rapid assessment of extremal statistics for gapped local alignment.
+\newblock {\em Proc Int Conf Intell Syst Mol Biol}, pages 211--222, 1999.
+
+\bibitem{Waterman1994}
+M~S Waterman and M~Vingron.
+\newblock Rapid and accurate estimates of statistical significance for sequence
+  data base searches.
+\newblock {\em Proc Natl Acad Sci U S A}, 91(11):4625--4628, May 1994.
 
 \end{thebibliography}
 %\include{appendix}
