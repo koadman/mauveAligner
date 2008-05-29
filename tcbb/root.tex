@@ -49,9 +49,6 @@
 %\documentclass[12pt,journal,draftcls,letterpaper,onecolumn]{IEEEtran}
 \documentclass[9.5pt,journal,final,finalsubmission,twocolumn]{IEEEtran}
 \usepackage{setspace}
-\usepackage[Lenny]{fncychap}
-\usepackage{fancyhdr}
-\usepackage{fancybox}
 \usepackage{pifont}
 \usepackage{multirow}
 \usepackage{comment}
@@ -561,7 +558,7 @@ potentially more sensitive.  We have empirically determined that
 setting $l$ based on multiplicity ($l = 70e^{-0.01*|M_{i}|}$) offers a
 good tradeoff between speed and sensitivity.  The resulting extension
 window is small for high multiplicity chains,
-keeping the alignment search space tractable. 
+keeping the alignment search space tractable.
 %\begin{equation}
 % \max(w, \sqrt{(\max(150^{2}-(2*|M_{i}|)^{2},0)}));
 %\end{equation}
@@ -865,7 +862,7 @@ multiplicity were replicated three times and alignments generated in
 parallel on a 156-node compute cluster.  Results of the experiments
 are reported in Figure~\ref{fig-results} and
 Figure~\ref{fig-boundary}. Figure~\ref{fig-results} illustrates the
-sensitivity and PPV of 
+sensitivity and PPV of
 \texttt{procrastAligner} and
 \texttt{eulerAlign} on datasets ranging from 0 substitutions and
 indels per site to 2.16 substitutions and 0.24 indels per site (branch length 24).  As
@@ -940,7 +937,7 @@ The introduction of a preliminary method for estimating significance of local mu
 for increased sensitivity (i.e. smaller seed size, seed families) while maintaining specificity. This statistical
 test helps to filter out spurious alignments, although it doesn't resolve redundant alignments. To address redundant alignments, we follow
 the approached proposed in \cite{ref-related1} by grouping all alignments which share at least one aligned column. Then, we can select the reference alignment
-at the alignment in the group with the highest Sum-of-Pairs (SP) score, breaking ties either by multiplicity or repeat length. The selection of a reference alignment from each redundant group can be defined by the user via a command-line parameter, allowing for the reference alignment to be  on the type of repeat analysis performed. 
+at the alignment in the group with the highest Sum-of-Pairs (SP) score, breaking ties either by multiplicity or repeat length. The selection of a reference alignment from each redundant group can be defined by the user via a command-line parameter, allowing for the reference alignment to be  on the type of repeat analysis performed.
 
 \begin{comment}
 \begin{figure}[h!]
