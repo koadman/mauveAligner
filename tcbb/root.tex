@@ -48,7 +48,6 @@
 
 %\documentclass[12pt,journal,draftcls,letterpaper,onecolumn]{IEEEtran}
 \documentclass[9.5pt,journal,final,finalsubmission,twocolumn]{IEEEtran}
-\usepackage{setspace}
 \usepackage{pifont}
 \usepackage{multirow}
 \usepackage{comment}
@@ -414,7 +413,7 @@ alignments of all homologous nucleotides in the input sequence.
 
 \begin{figure}[t!]
 \begin{center}
-\epsfig{file=./fig/extension.pdf,width=3.5in}
+\epsfig{file=./fig/extension.eps,width=3.5in}
 %\subfigure[Visual representation of our algorithm]{\epsfig{file=./figures/extension.eps,width=3.0in}}
 %\subfigure[Flowchart of the algorithmic process ]{ \epsfig{file=./figures/flowchart.eps,width=1.7in}}
 \end{center}
@@ -565,7 +564,7 @@ keeping the alignment search space tractable.
 
 \subsection{Identifying unrelated regions}
 \begin{figure*}[t!]
-\centering \epsfig{file=./fig/hmm.pdf,width=5.6in}
+\centering \epsfig{file=./fig/hmm.eps,width=5.6in}
 \caption[Hidden Markov model used to detect pairwise alignments of unrelated
 sequence]%
 {\textbf{Hidden Markov model used to detect pairwise alignments of unrelated
@@ -730,7 +729,7 @@ the input genome's G+C content.
 
 
 \begin{figure*}[t!]
-\centering \epsfig{file=./fig/repeat_accuracy_new.pdf,width=5.8in}
+\centering \epsfig{file=./fig/repeat_accuracy_new.eps,width=5.8in}
 \caption[Accuracy recovering simulated repeat families planted in the
 \textit{Mycoplasma genitalium} genome]%
 {\textbf{Accuracy recovering simulated repeat families planted in the
@@ -808,7 +807,7 @@ allowing tandem repeats but prohibiting mosaic repeats.
 
 \begin{figure*}[t!]
 \centering
-\epsfig{file=./fig/boundary_scores.pdf,width=5.8in}
+\epsfig{file=./fig/boundary_scores.eps,width=5.8in}
 \caption[Pairwise boundary accuracy metric]%
 {\textbf{Pairwise boundary accuracy metric}. We define our boundary accuracy metric to be an all-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R} to the boundaries predicted by the alignment program. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundary of any local multiple alignments output by the program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}.  Boundary predictions can be classified as (1) correct, (2) overprediction, and (3) underprediction, with each discussed in turn: (1) \emph{Correct prediction}. Consider scoring components \emph{r1} and \emph{r3}.  Local multiple alignment \emph{A} overlaps both \emph{r1} and \emph{r3} and no other alignment overlaps both \emph{r1} and \emph{r3}.  The left and right boundaries of alignment \emph{A} match the boundaries of \emph{r1\&r3} exactly, thus we assign scores of 0 for \emph{r1\&r3}.  (2) \emph{Overprediction}. Consider scoring components \emph{r1} and \emph{r2}.  These components are overlapped by alignments \emph{A} and \emph{C}.  Alignment \emph{A} has perfect boundary predictions for \emph{r1\&r2}, while alignment \emph{C} extends beyond the true boundaries of components \emph{r1} and \emph{r2} by 4 nucleotides on the left and 5 nucleotides on the right.  Our scoring metric always uses the maximum predicted boundaries for a pair of components, thus the boundary predictions from \emph{C} are reported for \emph{r1\&r2}. (3) \emph{Underprediction.}  Consider scoring components \emph{r3} and \emph{r5}.  Alignment \emph{B} hits both \emph{r3} and \emph{r5}, but stops short of the right-side boundary by 8nt in \emph{r3} and 4nt in \emph{r5}.  We average the error and record -6 for the right-side of \emph{r3\&r5}.
 Finally, component pairs that are not contained by any computed alignments are not scored, as indicated by \emph{n/a}.}
@@ -842,10 +841,10 @@ further details on boundary under/overpredictions.
 \begin{figure}[h!aa]
 \centering
 \subfigure[]{
-\epsfig{file=./fig/procrast_boundary_fig.pdf,width=3.2in}
+\epsfig{file=./fig/procrast_boundary_fig.eps,width=3.2in}
 \label{fig:subfig1}}
 \subfigure[]{
-\epsfig{file=./fig/euler_boundary_fig.pdf,width=3.2in}
+\epsfig{file=./fig/euler_boundary_fig.eps,width=3.2in}
 \label{fig:subfig2}}
 \caption[Boundary prediction performance]%
 {\textbf{Boundary prediction performance}. All-pairs boundary prediction accuracy of \texttt{procrastAligner} and \texttt{eulerAlign} were measured for 200 combinations of branch length and multiplicity.  Accuracy on each combination is presented as a box-and-whiskers plot using the scoring metric detailed in Section~\ref{sec:metrics}.  Branch lengths range from 0 to 0.24 and increase by intervals of 0.01.  The $x$-axis label represents the multiplicity of the interspersed repeat in log$_2$-scale. i.e. axis label 8 indicates $2^{8}$ = multiplicity 256. The $y$-axis label is the prediction error in log$_2$-scale nucleotides. Values at 0 represent correctly identified repeat boundaries, values greater than 0 represent overpredictions, and values less than 0 represent underpredictions (see Figure~\ref{fig-overunder}). In general, \texttt{procrastAligner} identifies the true interspersed repeat boundaries more accurately than \texttt{eulerAlign}.}
@@ -971,7 +970,7 @@ pattern~\cite{ref-pattern}.
 
 
 \begin{figure}[t!]
-\centering \epsfig{file=./fig/alu_align.pdf,width=3.5in}
+\centering \epsfig{file=./fig/alu_align.eps,width=3.5in}
 \caption[Alu repeat alignment]%
 {\textbf{Alu repeat alignment}. Partial view of an Alu repeat alignment output by procrastAligner in the \emph{H. sapiens} BAC
 clone RP11-355H10 (Accession AC010145.10). Each row represents an
