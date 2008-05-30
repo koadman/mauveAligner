@@ -1696,6 +1696,7 @@ int main( int argc, char* argv[] )
 	bool chain = true;
 	bool two_hits = false;
 	bool unalign = true;
+	float percent_id = 0.0;
     float pGoHomo = 0.004f;
     float pGoUnrelated = 0.004f;
     bool only_extended = false;
@@ -1720,6 +1721,7 @@ int main( int argc, char* argv[] )
 			("onlydirect",po::value<bool>(&only_direct)->default_value(false), "only process seed matches on same strand?")
 			("onlyextended",po::value<bool>(&only_extended)->default_value(false), "only output extended matches?")
 			("output", po::value<string>(&outputfile)->default_value(""), "procrastAligner output ")
+			("percentid", po::value<float>(&percent_id)->default_value(0.0), "min repeat family % id")
 			("novel-subsets", po::value<bool>(&find_novel_subsets)->default_value(false), "find novel subset matches?")
             ("novel-matches", po::value<bool>(&use_novel_matches)->default_value(true), "use novel matches found during gapped extension?")
 			("rmax",  po::value<unsigned>(&rmax)->default_value(500), "maximum repeat multiplicity (max copy number)")
@@ -1795,7 +1797,8 @@ int main( int argc, char* argv[] )
             cout << "rmax < 2, setting rmax == 2\n"; 
             rmax = 2;
         }
-
+		if (percent_id > 1 )
+			percent_id = 1.0;
 		if (vm.count("z")) {
             cout << "seed weight set to " 
                  << seed_weight << ".\n";
@@ -1897,6 +1900,8 @@ int main( int argc, char* argv[] )
     
 	Params hmm_params = getAdaptedHoxdMatrixParameters( double(monofreq["G"]+monofreq["C"])/double(sequence.size()) );
 
+	if (percent_id > 0 )
+		adaptToPercentIdentity(hmm_params, percent_id);
 	hmm_params.iGoHomologous = pGoHomo;
 	hmm_params.iGoUnrelated = pGoUnrelated;
 
