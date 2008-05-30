@@ -892,51 +892,53 @@ Finally, a direct comparison of run time is difficult, due to the differing natu
 \section{Estimating significance of local multiple alignments}
 With increased seed matching sensitivity comes additional
 false positive seed hits, so a statistical test for rejecting
-insignificant local alignments is essential.  BLAST statistics have proven essential for searching for significant similarity hits, for amino acid and nucleotide sequences. Exact computation of $p$-values for local multiple alignments remains a
-daunting challenge, although fast approximation methods for pairwise
+insignificant local alignments is essential.  BLAST statistics have proven
+invaluable for assessing the significance of pairwise local alignments, for amino acid and nucleotide sequences.
+Fast methods to approximate the significance of pairwise
 alignments have shown promise\cite{repseek} and potentially can be
-extended to multiple alignments\cite{ref-related1, Prakash2005}.  We will
-now review the method we use for estimating significance of local multiple alignments.
+extended to multiple alignments\cite{ref-related1, Prakash2005}.  We
+now describe the method we use for estimating significance of local
+multiple alignments.
 
-Differing from similarity between two or more sequences, there exists random similarities within a sequence. Therefore, one is interested in computing the likelihood that a given repeat is found by chance in order to decide whether it is biologically pertinent or not. A lot of effort has been put to assign a probability of finding a segment of score $S$ between two sequences (see \cite{Ewens2001} and references therein) or shared by $k$ sequences \cite{ref-related1}. These statistics show that, $N$, the number of high scoring similarity segments between two sequences of size $m$ and $n$ with a score $S \geq x$ converges to \cite{Karlin1990}:
+For the present work, we are concerned not with random similarity between two or more sequences, but rather, random similarity arising within a signle sequence.  We would like to compute the likelihood that a given repeat would appear by chance in order to decide whether the repeat reflects true sequence homology or random similarity.  Much effort has been expended to derive the probability of finding a segment of score $S$ between two sequences (see \cite{Ewens2001} and references therein) or shared by $k$ sequences \cite{ref-related1}. These statistics show that, $N$, the number of high scoring similarity segments between two sequences of size $m$ and $n$ with a score $S \geq x$ converges to \cite{Karlin1990}:
 
 \begin{equation}
-	E[ N^{(S\geq x)} ] = Kmn p^x
-	\label{E_mn}
+    E[ N^{(S\geq x)} ] = Kmn p^x
+    \label{E_mn}
 \end{equation}
 
-$K$ is a scale parameter that depends on the scoring system and $p$ (also often seen as $p=e^{-\lambda}$) can be understand as the per site probability to find a segment of score 1. Using a Poisson approximation, the probability that the largest score is greater or equal than $x$ is given by:
+$K$ is a scale parameter that depends on the scoring system and $p$ (also often seen as $p=e^{-\lambda}$) can be understood as the per site probability of finding a segment of score 1. Using a Poisson approximation, the probability that the largest score is greater than or equal to $x$ is given by:
 
 \begin{equation}
-	P( S_1 \geq x) = 1 - exp( -E[ N^{(S\geq x)} ] )
-	\label{P_s1}
+    P( S_1 \geq x) = 1 - exp( -E[ N^{(S\geq x)} ] )
+    \label{P_s1}
 \end{equation}
 
 For gap-free alignments, both parameters $K$ and $p$ can be computed numerically \cite{Karlin1990} whereas their estimation relies on simulations when gaps are allowed  \cite{Waterman1994, Altschul2001}.
 
-These results can be easily extended to 2-copy repeats within the same strand of a sequence of size $n$, by substituting $mn$ by ${{n}\choose{2}}$ in the above equations. When the two copies can belongs to either strand, we have to count successively cases where 0,1 or 2 copies are on the forward strand; copies of the same strand can swapped without changing the repeat. Because of the symmetry, the number of possible positions is halved. Therefore, the expected number of 2-copy repeats with a score greater or equal than $x$ is:
+The above statistics to compute expectation of matching across two sequences can be easily extended to 2-copy repeats within the same strand of a sequence of size $n$, by substituting $mn$ by ${{n}\choose{2}}$ in the above equations. Taking both strands of DNA into account, we have to count successively cases where 0,1 or 2 copies are on the forward strand; copies on the same strand can swapped without changing the repeat structure. Because of the symmetry, the number of possible positions is halved. Therefore, the expected number of 2-copy repeats with a score greater or equal than $x$ is:
 
 \begin{eqnarray}
-	E[ N_{(r=2, S\geq x)} ]  & = & K \times  \Big( n (n-1) \frac 12 (\frac 1 2 + 1 + \frac 1 2) \Big) \times  p^x \nonumber \\
-	                                      & = & K  n (n-1)   p^x
-	\label{E_r2}
+    E[ N_{(r=2, S\geq x)} ]  & = & K \times  \Big( n (n-1) \frac 12 (\frac 1 2 + 1 + \frac 1 2) \Big) \times  p^x \nonumber \\
+                                          & = & K  n (n-1)   p^x
+    \label{E_r2}
 \end{eqnarray}
 
 
-More generally, the expected number of repeats of multiplicity $r$ on both strands that have a score greater or equal than $x$ is given by:
+More generally, the expected number of repeats of multiplicity $r$ on both strands that have a score greater than or equal to $x$ is given by:
 
 \begin{equation}
-	E[ N_{(r, S\geq x)} ]   =  K \times  \Big( \frac{n!}{(n-r)! }  \frac 12 \sum_{k=0}^{r}{\frac{1}{k! (r-k)!}} \Big) \times  p^{(r-1)x}
-	\label{E_repeat}
+    E[ N_{(r, S\geq x)} ]   =  K \times  \Big( \frac{n!}{(n-r)! }  \frac 12 \sum_{k=0}^{r}{\frac{1}{k! (r-k)!}} \Big) \times  p^{(r-1)x}
+    \label{E_repeat}
 \end{equation}
 
-In the above equation, the two unknown parameters $K$ and $p$ can be estimated on the 2-copy repeats using random sequences of the same size and identical composition. This can be done by using either the direct method \cite{Olsen1999} using a $log(-log(1-P))$ transformation of the equation \ref{P_s1} or by using the declumping \cite{Waterman1994} or the island method \cite{Olsen1999} using a $log(E)$ of equation \ref{E_r2}. Once $K$ and $p$ are estimated, equation \ref{P_s1} along with equation \ref{E_repeat} can be used to asses a probability of any observed repeat of a given score and a given multiplicity. The adequate score to be used is the average score of all pairs.  Importantly, these equations show a perfect fit with repeats from random genomes (data not shown).
+In the above equation, the two unknown parameters $K$ and $p$ can be estimated on 2-copy repeats using random sequences of the same size and identical composition.  This can be done by using either the direct method \cite{Olsen1999} with a $log(-log(1-P))$ transformation of the equation \ref{P_s1}, or by using the declumping method \cite{Waterman1994}, or by the island method \cite{Olsen1999} using a $log(E)$ of equation \ref{E_r2}. Once $K$ and $p$ are estimated, equation \ref{P_s1} along with equation \ref{E_repeat} can be used to asses the probability of any observed repeat of a given score and a given multiplicity. An adequate score to be used is the average pairwise alignment score of repeat components.  Importantly, these equations show a perfect fit with repeats from random genomes (data not shown).
 
-The introduction of a preliminary method for estimating significance of local multiple alignments will allow
-for increased sensitivity (i.e. smaller seed size, seed families) while maintaining specificity. This statistical
+Although our significance measure for local multiple alignments is only an approximation, its introduction will allow
+for increased sensitivity (i.e. smaller seed size, seed families) while maintaining specificity. The statistical
 test helps to filter out spurious alignments, although it doesn't resolve redundant alignments. To address redundant alignments, we follow
 the approached proposed in \cite{ref-related1} by grouping all alignments which share at least one aligned column. Then, we can select the reference alignment
-at the alignment in the group with the highest Sum-of-Pairs (SP) score, breaking ties either by multiplicity or repeat length. The selection of a reference alignment from each redundant group can be defined by the user via a command-line parameter, allowing for the reference alignment to be  on the type of repeat analysis performed.
+as the alignment in the group with the highest Sum-of-Pairs (SP) score, breaking ties either by multiplicity or repeat length. The selection of a reference alignment from each redundant group can be defined by the user via a command-line parameter, allowing for the reference alignment to be tailored towards specific repeat analysis tasks.
 
 \begin{comment}
 \begin{figure}[h!]
