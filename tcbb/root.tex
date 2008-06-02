@@ -230,9 +230,9 @@
 
 \IEEEcompsocitemizethanks{
 \IEEEcompsocthanksitem T.J. Treangen is with the Microbial Evolutionary Genomics group, Institut Pasteur, Paris, France \protect\\ and the UPMC Univ Paris 06, Atelier de Bioinformatique, Paris, France
-\IEEEcompsocthanksitem A.E. Darling is with the Institute for Molecular Bioscience, Univ. of Queensland, Brisbane, Australia
+\IEEEcompsocthanksitem A.E. Darling is with the Institute for Molecular Bioscience, The University of Queensland, Brisbane, Australia
 \IEEEcompsocthanksitem G. Achaz is with the UPMC Univ Paris 06, CNRS, MNHN, IRD, UMR 7138, Paris, France  \protect\\ and the UPMC Univ Paris 06, Atelier de Bioinformatique, Paris, France
-\IEEEcompsocthanksitem M. Ragan is with the Institute for Molecular Bioscience, Univ. of Queensland, Brisbane, Australia
+\IEEEcompsocthanksitem M. Ragan is with the Institute for Molecular Bioscience, The University of Queensland, Brisbane, Australia
 \IEEEcompsocthanksitem X. Messeguer is with the Algorithms and Genetics Group,Dept. of Computer Science, Technical University of Catalonia, Barcelona, Spain
 \IEEEcompsocthanksitem T.J. Treangen and A.E. Darling contributed equally to this work.}
 
@@ -267,12 +267,11 @@
 
 % make the title area
 \maketitle
-\IEEEdisplaynotcompsoctitleabstractindextext
-\IEEEcompsoctitleabstractindextext{%
+%\IEEEdisplaynotcompsoctitleabstractindextext
+%\IEEEcompsoctitleabstractindextext{
 \begin{abstract}
 The identification of homologous DNA is a fundamental building block
-of comparative genomic and molecular evolution studies. To date,
-pairwise local sequence alignment methods have been the prevailing
+of comparative genomic and molecular evolution studies. Pairwise local sequence alignment methods have been the prevailing
 technique to identify homologous nucleotides. However, existing
 methods that identify and align all homologous nucleotides in one or
 more genomes have suffered poor scalability and limited accuracy. We
@@ -291,14 +290,16 @@ have developed a method to adapt an arbitrary substitution matrix
 performance of our method and previous approaches on a hybrid dataset
 of real genomic DNA with simulated interspersed repeats.  Our method
 outperforms existing methods in terms of sensitivity,
-positive predictive value, and localizing boundaries of homology.  The
+positive predictive value, and localizing boundaries of homology.   
+In addition, we present a statistical test for estimating significance of local
+multiple alignments. The
 described methods have been implemented in the free, open-source
 \texttt{procrastAligner} software, available from: \url{http://alggen.lsi.upc.es/recerca/align/procrastination}
 \end{abstract}
 
 \begin{IEEEkeywords}
 Sequence alignment, genome comparison, DNA repeats, local alignment
-\end{IEEEkeywords}}
+\end{IEEEkeywords}
 
 \IEEEpeerreviewmaketitle
 \section{Introduction}
@@ -772,7 +773,7 @@ no further extension is possible.
 
 \begin{figure*}[t!]
 \centering
-\epsfig{file=./fig/boundary_scores.eps,width=6.8in}
+\epsfig{file=./fig/boundary_scores.eps,width=6.5in}
 \caption[Pairwise boundary accuracy metric]%
 {\textbf{Pairwise boundary accuracy metric}. We define our boundary accuracy metric to be an all-pairs score by comparing the boundaries of all \emph{r} components of the inserted repeat \emph{R} to the boundaries predicted by the alignment program. For any pair of components, $\emph{r}_{i}$ and $\emph{r}_{j}$, we take the maximum boundary of any local multiple alignments output by the program. The figure shows a multiplicity five interspersed repeat \emph{R} and four local multiple alignments, \emph{A, B, C, D}.  Boundary predictions can be classified as (1) correct, (2) overprediction, and (3) underprediction, with each discussed in turn: (1) \emph{Correct prediction}. Consider scoring components \emph{r1} and \emph{r3}.  Local multiple alignment \emph{A} overlaps both \emph{r1} and \emph{r3} and no other alignment overlaps both \emph{r1} and \emph{r3}.  The left and right boundaries of alignment \emph{A} match the boundaries of \emph{r1\&r3} exactly, thus we assign scores of 0 for \emph{r1\&r3}.  (2) \emph{Overprediction}. Consider scoring components \emph{r1} and \emph{r2}.  These components are overlapped by alignments \emph{A} and \emph{C}.  Alignment \emph{A} has perfect boundary predictions for \emph{r1\&r2}, while alignment \emph{C} extends beyond the true boundaries of components \emph{r1} and \emph{r2} by 4 nucleotides on the left and 5 nucleotides on the right.  Our scoring metric always uses the maximum predicted boundaries for a pair of components, thus the boundary predictions from \emph{C} are reported for \emph{r1\&r2}. (3) \emph{Underprediction.}  Consider scoring components \emph{r3} and \emph{r5}.  Alignment \emph{B} hits both \emph{r3} and \emph{r5}, but stops short of the right-side boundary by 8nt in \emph{r3} and 4nt in \emph{r5}.  We average the error and record -6 for the right-side of \emph{r3\&r5}.
 Finally, component pairs that are not contained by any computed alignments are not scored, as indicated by \emph{n/a}.}
