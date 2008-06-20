@@ -737,7 +737,7 @@ int doAlignment( int argc, char* argv[] ){
 				{
 					cerr << "Error writing to \"" << bb_seq_fname << "\"" << endl;
 				}else{
-
+					bb_list.clear();
 					BigGapsDetector bgd( island_gap_size );
 					detectBackbone( interval_list, bb_list, &bgd );
 
