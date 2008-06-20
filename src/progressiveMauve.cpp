@@ -353,6 +353,7 @@ int doAlignment( int argc, char* argv[] ){
 		adaptToPercentIdentity( hmm_params, hmm_identity );
 
 		detectAndApplyBackbone(iv_list, bb_list, hmm_params);
+		bb_list.clear();
 
 		BigGapsDetector bgd( island_gap_size );
 		detectBackbone( iv_list, bb_list, &bgd );
