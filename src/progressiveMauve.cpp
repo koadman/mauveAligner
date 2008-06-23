@@ -408,7 +408,7 @@ int doAlignment( int argc, char* argv[] ){
 	
 	// print the version if the user requested it
 	if( opt_version.set ){
-		cerr << "mauveAligner " << " build date " << __DATE__ << " at " << __TIME__ << endl;
+		cerr << "progressiveMauve " << " build date " << __DATE__ << " at " << __TIME__ << endl;
 	}
 
 	if( seq_files.size() == 0 )
