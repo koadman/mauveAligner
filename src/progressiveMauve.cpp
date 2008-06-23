@@ -772,6 +772,11 @@ int doAlignment( int argc, char* argv[] ){
 	interval_list.WriteStandardAlignment(*match_out);
 	match_out->flush();
 
+	for( size_t seqI = 0; seqI < pairwise_match_list.seq_table.size(); seqI++ )
+		delete pairwise_match_list.seq_table[seqI];	// an auto_ptr or shared_ptr could be great for this
+	for( size_t seqI = 0; seqI < pairwise_match_list.sml_table.size(); seqI++ )
+		delete pairwise_match_list.sml_table[seqI];
+
 // only explicitly free memory if absolutely necessary
 // since free() is very slow and the OS will reclaim it at program exit anyways
 	if(opt_mem_clean.set)
@@ -779,10 +784,6 @@ int doAlignment( int argc, char* argv[] ){
 		// free memory used by pairwise matches
 		for( size_t mI = 0; mI < pairwise_match_list.size(); mI++ )
 			pairwise_match_list[mI]->Free();
-		for( size_t seqI = 0; seqI < pairwise_match_list.seq_table.size(); seqI++ )
-			delete pairwise_match_list.seq_table[seqI];	// an auto_ptr or shared_ptr could be great for this
-		for( size_t seqI = 0; seqI < pairwise_match_list.sml_table.size(); seqI++ )
-			delete pairwise_match_list.sml_table[seqI];
 
 		if( opt_output.set )
 			delete match_out;
