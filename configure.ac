@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(mauveAligner, 1.0.0)
+AC_INIT(mauveAligner, 1.1.0)
 
 dnl Get the target and build system types and add appropriate options
 AC_CANONICAL_TARGET
@@ -34,7 +34,7 @@ AC_DEFINE(GETOPT_UNDEFINED,[],"Define this if the system does not provide getopt
 ()")
 )
 
-PKG_CHECK_MODULES(DEPS, libMems-1.5 >= 1.0.0)
+PKG_CHECK_MODULES(DEPS, libMems-1.6 >= 1.0.0)
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)
 
