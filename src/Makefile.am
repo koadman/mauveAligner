@@ -18,7 +18,8 @@ countInPlaceInversions toGrimmFormat joinAlignmentFiles mauveToXMFA \
 stripGapColumns gappiness progressiveMauve progressiveMauveStatic \
 sortContigs extractBCITrees calculateBackboneCoverage2 createBackboneMFA \
 pairCompare procrastAligner scoreALU evd alignmentProjector stripSubsetLCBs \
-projectAndStrip makeBadgerMatrix multiEVD randomGeneSample getOrthologList
+projectAndStrip makeBadgerMatrix multiEVD randomGeneSample getOrthologList \
+bbFilter bbAnalyze makeMc4Matrix
 
 EXTRA_PROGRAMS = mauveMpatrol mauveEfence toGBKsequence multiToRawSequence unalign
 
@@ -231,4 +232,16 @@ randomGeneSample_LDADD = $(LIBRARY_CL)
 getOrthologList_SOURCES = getOrthologList.cpp
 getOrthologList_LDFLAGS = @STATIC_FLAG@
 getOrthologList_LDADD = $(LIBRARY_CL)
+
+bbFilter_SOURCES = bbFilter.cpp
+bbFilter_LDFLAGS = @STATIC_FLAG@
+bbFilter_LDADD = $(LIBRARY_CL)
+
+bbAnalyze_SOURCES = bbAnalyze.cpp
+bbAnalyze_LDFLAGS = @STATIC_FLAG@
+bbAnalyze_LDADD = $(LIBRARY_CL)
+
+makeMc4Matrix_SOURCES = makeMc4Matrix.cpp
+makeMc4Matrix_LDFLAGS = @STATIC_FLAG@
+makeMc4Matrix_LDADD = $(LIBRARY_CL)
 
