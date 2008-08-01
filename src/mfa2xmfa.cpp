@@ -4,6 +4,7 @@
 
 #include "libGenome/gnFASSource.h"
 #include "libGenome/gnSequence.h"
+#include <algorithm>
 #include <fstream>
 
 using namespace std;
