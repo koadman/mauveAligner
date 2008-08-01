@@ -223,6 +223,42 @@ void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >
 		sml_files[seqI] = seq_files[seqI] + "." + pattern + ".sml";
 }
 
+void applyBackbone( IntervalList& iv_list, string& bbcols_fname, string& bb_fname, size_t island_gap_size, double hmm_identity, double pgh, double pgu )
+{
+	ofstream bb_out( bb_fname.c_str() );
+	backbone_list_t bb_list;
+	// adapt to the GC of the sequences
+	double gc_content = computeGC( iv_list.seq_table );
+	std::cout << "Organisms have " << std::setprecision(3) << gc_content*100 << "% GC\n";
+
+	Params hmm_params = getAdaptedHoxdMatrixParameters( gc_content );
+	hmm_params.iGoHomologous = pgh;
+	hmm_params.iGoUnrelated = pgu;
+	adaptToPercentIdentity( hmm_params, hmm_identity );
+
+	detectAndApplyBackbone(iv_list, bb_list, hmm_params);
+	bb_list.clear();
+
+	BigGapsDetector bgd( island_gap_size );
+	detectBackbone( iv_list, bb_list, &bgd );
+
+	writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
+	std::vector< bb_seqentry_t > bb_seq_list;
+	bb_out.close();
+	std::ifstream bbseq_input( bb_fname.c_str() );
+	readBackboneSeqFile( bbseq_input, bb_seq_list );
+
+	mergeAdjacentSegments( bb_seq_list );
+	addUniqueSegments( bb_seq_list );
+	bbseq_input.close();
+	bb_out.open(bb_fname.c_str());
+	writeBackboneSeqFile( bb_out, bb_seq_list );
+
+	ofstream bbcols_out( bbcols_fname.c_str() );
+	writeBackboneColumns( bbcols_out, bb_list );
+	iv_list.backbone_filename = bbcols_fname;
+}
+
 /**
  * progressive alignment.  wheee.
  */
@@ -341,41 +377,9 @@ int doAlignment( int argc, char* argv[] ){
 			LoadMFASequences(ml, ml.seq_filename[0], &cout);
 		iv_list.seq_table = ml.seq_table;
 		string bb_fname = opt_output.arg_value + ".backbone";
-		ofstream bb_out( bb_fname.c_str() );
-		backbone_list_t bb_list;
-		// adapt to the GC of the sequences
-		double gc_content = computeGC( iv_list.seq_table );
-		std::cout << "Organisms have " << std::setprecision(3) << gc_content*100 << "% GC\n";
-
-		Params hmm_params = getAdaptedHoxdMatrixParameters( gc_content );
-		hmm_params.iGoHomologous = pgh;
-		hmm_params.iGoUnrelated = pgu;
-		adaptToPercentIdentity( hmm_params, hmm_identity );
-
-		detectAndApplyBackbone(iv_list, bb_list, hmm_params);
-		bb_list.clear();
-
-		BigGapsDetector bgd( island_gap_size );
-		detectBackbone( iv_list, bb_list, &bgd );
-
-		writeBackboneSeqCoordinates( bb_list, iv_list, bb_out );
-		std::vector< bb_seqentry_t > bb_seq_list;
-		bb_out.close();
-		std::ifstream bbseq_input( bb_fname.c_str() );
-		readBackboneSeqFile( bbseq_input, bb_seq_list );
-
-		mergeAdjacentSegments( bb_seq_list );
-		addUniqueSegments( bb_seq_list );
-		bbseq_input.close();
-		bb_out.open(bb_fname.c_str());
-		writeBackboneSeqFile( bb_out, bb_seq_list );
-
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
-		ofstream bbcols_out( bbcols_fname.c_str() );
-		writeBackboneColumns( bbcols_out, bb_list );
-		iv_list.backbone_filename = bbcols_fname;
+		applyBackbone( iv_list, bbcols_fname, bb_fname, island_gap_size, hmm_identity, pgh, pgu );
 		iv_list.WriteStandardAlignment(out_file);
-
 		return 0;
 	}
 
@@ -653,20 +657,10 @@ int doAlignment( int argc, char* argv[] ){
 	if( opt_gap_open.set )
 	{
 		pss.gap_open = atoi(opt_gap_open.arg_value.c_str());
-
-		// tell MUSCLE to use the same gap open
-		string musc_args = mi.GetExtraMuscleArguments();
-		musc_args += " -gapopen " + opt_gap_open.arg_value + " ";
-		mi.SetExtraMuscleArguments(musc_args);
 	}
 	if( opt_gap_extend.set )
 	{
 		pss.gap_extend = atoi(opt_gap_open.arg_value.c_str());
-
-		// tell MUSCLE to use the same gap extend
-		string musc_args = mi.GetExtraMuscleArguments();
-		musc_args += " -gapextend " + opt_gap_extend.arg_value + " ";
-		mi.SetExtraMuscleArguments(musc_args);
 	}
 	if( opt_substitution_matrix.set )
 	{
@@ -679,11 +673,6 @@ int doAlignment( int argc, char* argv[] ){
 		score_t matrix[4][4];
 		readSubstitutionMatrix( sub_in, matrix );
 		pss = PairwiseScoringScheme(matrix, pss.gap_open, pss.gap_extend);
-
-		// tell MUSCLE to use the same substitution matrix
-		string musc_args = mi.GetExtraMuscleArguments();
-		musc_args += " -matrix " + opt_substitution_matrix.arg_value + " ";
-		mi.SetExtraMuscleArguments(musc_args);
 	}
 	aligner.setPairwiseScoringScheme(pss);
 
@@ -714,59 +703,10 @@ int doAlignment( int argc, char* argv[] ){
 
 	if( !opt_disable_backbone.set )
 	{
-		// now apply islands by default if the genomes aren't collinear
-		string bb_fname = opt_output.arg_value + ".bbcols";
-		ofstream bbcols_out( bb_fname.c_str() );
-		if( bbcols_out.is_open() )
-		{
-			backbone_list_t bb_list;
-			double gc_content = computeGC( interval_list.seq_table );
-			std::cout << "Organisms have " << std::setprecision(3) << gc_content*100 << "% GC\n";
-			Params hmm_params = getAdaptedHoxdMatrixParameters( gc_content );
-//			Params hmm_params = getHoxdParams();
-			hmm_params.iGoHomologous = pgh;
-			hmm_params.iGoUnrelated = pgu;
-			adaptToPercentIdentity( hmm_params, hmm_identity );
-			detectAndApplyBackbone(interval_list, bb_list, hmm_params);
-			writeBackboneColumns( bbcols_out, bb_list );
-			if( opt_backbone_output.set )
-			{
-				string bb_seq_fname = opt_backbone_output.arg_value;
-				ofstream bb_seq_out( bb_seq_fname.c_str() );
-				if( !bb_seq_out.is_open() )
-				{
-					cerr << "Error writing to \"" << bb_seq_fname << "\"" << endl;
-				}else{
-					bb_list.clear();
-					BigGapsDetector bgd( island_gap_size );
-					detectBackbone( interval_list, bb_list, &bgd );
 
-					writeBackboneSeqCoordinates( bb_list, interval_list, bb_seq_out );
-					std::vector< bb_seqentry_t > bb_seq_list;
-					bb_seq_out.close();
-					std::ifstream bbseq_input( bb_seq_fname.c_str() );
-					readBackboneSeqFile( bbseq_input, bb_seq_list );
-
-					mergeAdjacentSegments( bb_seq_list );
-					addUniqueSegments( bb_seq_list );
-					bbseq_input.close();
-					bb_seq_out.open(bb_seq_fname.c_str());
-					writeBackboneSeqFile( bb_seq_out, bb_seq_list );
-
-//					writeBackboneSeqCoordinates( bb_list, interval_list, bb_seq_out );
-				}
-			}
-			if(opt_mem_clean.set)
-			{
-				for(size_t bbI = 0; bbI < bb_list.size(); bbI++ )
-					for(size_t bbJ = 0; bbJ < bb_list[bbI].size(); bbJ++ )
-						bb_list[bbI][bbJ]->Free();
-			}
-			interval_list.backbone_filename = bb_fname;
-		}else{
-			cerr << "Warning!  Could not open backbone file: " << bb_fname << endl;
-			cerr << "Continuing without applying backbone detection\n";
-		}
+		string bbcols_fname = opt_output.arg_value + ".bbcols";
+		string bb_seq_fname = opt_backbone_output.arg_value;
+		applyBackbone( interval_list, bbcols_fname, bb_seq_fname, island_gap_size, hmm_identity, pgh, pgu );
 	}
 
 	interval_list.WriteStandardAlignment(*match_out);
