@@ -11,17 +11,21 @@ INCLUDES = @DEPS_CFLAGS@
 # ./bagFFT/
 
 bin_PROGRAMS = mauveAligner mauveStatic scoreAlignment \
-extractBackbone transposeCoordinates uniqueMerCount toRawSequence\
-calculateBackboneCoverage calculateCoverage mfa2xmfa addUnalignedIntervals\
-toMultiFastA getAlignmentWindows extractBackbone2 uniquifyTrees \
-countInPlaceInversions toGrimmFormat joinAlignmentFiles mauveToXMFA \
-stripGapColumns gappiness progressiveMauve progressiveMauveStatic \
-sortContigs extractBCITrees calculateBackboneCoverage2 createBackboneMFA \
-pairCompare procrastAligner scoreALU evd alignmentProjector stripSubsetLCBs \
-projectAndStrip makeBadgerMatrix multiEVD randomGeneSample getOrthologList \
-bbFilter bbAnalyze makeMc4Matrix
+uniqueMerCount toRawSequence \
+mfa2xmfa addUnalignedIntervals \
+toMultiFastA getAlignmentWindows uniquifyTrees \
+toGrimmFormat mauveToXMFA \
+stripGapColumns progressiveMauve progressiveMauveStatic \
+extractBCITrees createBackboneMFA \
+procrastAligner alignmentProjector stripSubsetLCBs \
+projectAndStrip makeBadgerMatrix randomGeneSample getOrthologList \
+bbFilter bbAnalyze  
 
-EXTRA_PROGRAMS = mauveMpatrol mauveEfence toGBKsequence multiToRawSequence unalign
+EXTRA_PROGRAMS = bbBreakOnGenes mauveMpatrol mauveEfence toGBKsequence \
+multiToRawSequence unalign makeMc4Matrix applyBackbone multiEVD evd scoreALU \
+calculateBackboneCoverage2 sortContigs countInPlaceInversions gappiness \
+joinAlignmentFiles extractBackbone2 pairCompare \
+calculateCoverage calculateBackboneCoverage extractBackbone transposeCoordinates
 
 mauveAligner_SOURCES = mauveAligner.cpp mauveAligner.h
 mauveAligner_LDADD = $(LIBRARY_CL)
@@ -244,4 +248,12 @@ bbAnalyze_LDADD = $(LIBRARY_CL)
 makeMc4Matrix_SOURCES = makeMc4Matrix.cpp
 makeMc4Matrix_LDFLAGS = @STATIC_FLAG@
 makeMc4Matrix_LDADD = $(LIBRARY_CL)
+
+bbBreakOnGenes_SOURCES = bbBreakOnGenes.cpp
+bbBreakOnGenes_LDFLAGS = @STATIC_FLAG@
+bbBreakOnGenes_LDADD = $(LIBRARY_CL)
+
+applyBackbone_SOURCES = applyBackbone.cpp
+applyBackbone_LDFLAGS = @STATIC_FLAG@
+applyBackbone_LDADD = $(LIBRARY_CL)
 
