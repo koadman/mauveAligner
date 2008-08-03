@@ -22,7 +22,7 @@ projectAndStrip makeBadgerMatrix randomGeneSample getOrthologList \
 bbFilter bbAnalyze  
 
 EXTRA_PROGRAMS = bbBreakOnGenes mauveMpatrol mauveEfence toGBKsequence \
-multiToRawSequence unalign makeMc4Matrix applyBackbone multiEVD evd scoreALU \
+multiToRawSequence unalign makeMc4Matrix multiEVD evd scoreALU \
 calculateBackboneCoverage2 sortContigs countInPlaceInversions gappiness \
 joinAlignmentFiles extractBackbone2 pairCompare \
 calculateCoverage calculateBackboneCoverage extractBackbone transposeCoordinates
@@ -253,7 +253,4 @@ bbBreakOnGenes_SOURCES = bbBreakOnGenes.cpp
 bbBreakOnGenes_LDFLAGS = @STATIC_FLAG@
 bbBreakOnGenes_LDADD = $(LIBRARY_CL)
 
-applyBackbone_SOURCES = applyBackbone.cpp
-applyBackbone_LDFLAGS = @STATIC_FLAG@
-applyBackbone_LDADD = $(LIBRARY_CL)
 
