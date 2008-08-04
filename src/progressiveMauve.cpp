@@ -706,6 +706,8 @@ int doAlignment( int argc, char* argv[] ){
 
 		string bbcols_fname = opt_output.arg_value + ".bbcols";
 		string bb_seq_fname = opt_backbone_output.arg_value;
+		if( !opt_backbone_output.set )
+			bb_seq_fname = opt_output.arg_value + ".backbone";
 		applyBackbone( interval_list, bbcols_fname, bb_seq_fname, island_gap_size, hmm_identity, pgh, pgu );
 	}
 
