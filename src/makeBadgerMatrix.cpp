@@ -7,23 +7,13 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include <sstream>
-#include "libGenome/gnFilter.h"
 #include "libMems/IntervalList.h"
 #include "libMems/MatchList.h"
-#include "libMems/GappedAlignment.h"
-#include "libMems/Matrix.h"
-#include "libMems/MatchProjectionAdapter.h"
 #include "libMems/Aligner.h"
-#include "libMems/Islands.h"
-#include "libGenome/gnFASSource.h"
-#include <boost/tuple/tuple.hpp>
 
 using namespace std;
 using namespace genome;
 using namespace mems;
-
-typedef boost::tuple< uint, gnSeqI, gnSeqI, vector< uint > > bbcol_t;
 
 class livComp {
 public:
@@ -38,9 +28,9 @@ protected:
 
 int main( int argc, char* argv[] )
 {
-	if( argc < 3 )
+	if( argc != 4 )
 	{
-		cerr << "Usage: makeBadgerMatrix <input xmfa> <output badger file>\n";
+		cerr << "Usage: makeBadgerMatrix <input xmfa> <output badger file> <LCB coordinate file>\n";
 		return -1;
 	}
 	ifstream aln_in;
@@ -56,6 +46,13 @@ int main( int argc, char* argv[] )
 		return -1;
 	}
 
+	ofstream coord_out;
+	coord_out.open( argv[3] );
+	if( !coord_out.is_open() ){
+		cerr << "Error writing to " << argv[3] << endl;
+		return -2;
+	}
+
 	try{
 		IntervalList input_ivs;
 		input_ivs.ReadStandardAlignment( aln_in );
@@ -64,6 +61,23 @@ int main( int argc, char* argv[] )
 		vector< pair< Interval*, uint > > labeled_ivs( input_ivs.size() );
 		for( size_t ivI = 0; ivI < input_ivs.size(); ivI++ )
 			labeled_ivs[ivI] = make_pair( &input_ivs[ivI], ivI );
+
+		// write out block boundaries
+		for( uint seqI = 0; seqI < input_ivs.seq_filename.size(); ++seqI )
+		{
+			if(seqI > 0) coord_out << '\t';
+			coord_out << "seq" << seqI << "_leftend\tseq" << seqI << "_rightend";
+		}
+		coord_out << endl;
+		for( size_t ivI = 0; ivI < input_ivs.size(); ivI++ )
+		{
+			for( uint seqI = 0; seqI < input_ivs.seq_filename.size(); ++seqI )
+			{
+				if(seqI > 0) coord_out << '\t';
+				coord_out << labeled_ivs[ivI].first->Start(seqI) << '\t' << labeled_ivs[ivI].first->End(seqI);
+			}
+			coord_out << endl;
+		}
 
 		for( uint seqI = 0; seqI < input_ivs.seq_filename.size(); ++seqI )
 		{
