@@ -71,6 +71,8 @@ int main( int argc, char* argv[] )
 		coord_out << endl;
 		for( size_t ivI = 0; ivI < input_ivs.size(); ivI++ )
 		{
+			if( labeled_ivs[ivI].first->Multiplicity() == 1 )
+				continue;
 			for( uint seqI = 0; seqI < input_ivs.seq_filename.size(); ++seqI )
 			{
 				if(seqI > 0) coord_out << '\t';
