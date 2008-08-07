@@ -274,7 +274,9 @@ int main( int argc, char* argv[] )
 				getline( line_str, buf, '.' );
 				getline( line_str, buf );
 				int64 rend = atoi(buf.c_str());
+				gene_bounds[aI].push_back( lend -1);
 				gene_bounds[aI].push_back( lend );
+				gene_bounds[aI].push_back( rend );
 				gene_bounds[aI].push_back( rend+1 );
 	
 			}
@@ -314,8 +316,37 @@ int main( int argc, char* argv[] )
 	std::ifstream bbseq_input( output_fname.c_str() );
 	readBackboneSeqFile( bbseq_input, bb_seq_list );
 
+	// testing:  check whether any gene boundaries are violated
+	gene_bounds[0].push_back(31337);	// test the test:
+	gene_bounds[0].push_back(31333);	// insert some bogus gene bounds to make sure
+	gene_bounds[0].push_back(31341);	// they get found and reported
+	gene_bounds[0].push_back(31345);
+	for( uint seqI = 0; seqI < iv_list.seq_table.size(); seqI++ )
+	{
+		cerr << "Checking seq " << seqI << " for errors\n";
+		std::sort( gene_bounds[seqI].begin(), gene_bounds[seqI].end() );
+		BbSeqEntrySorter bs(seqI);
+		std::sort( bb_seq_list.begin(), bb_seq_list.end(), bs );
+		size_t gI = 0;
+		size_t bI = 0;
+		cerr << gene_bounds[seqI].size() << " gene boundaries and " << bb_seq_list.size() << " bb segs\n";
+		for( ; gI < gene_bounds[seqI].size() && bI < bb_seq_list.size(); gI++ )
+		{
+			cout << "checking " << bb_seq_list[bI][seqI].first << ", " <<bb_seq_list[bI][seqI].second << endl;  
+			while( bI < bb_seq_list.size() && gene_bounds[seqI][gI] > abs(bb_seq_list[bI][seqI].second) )
+				bI++;
+			if( bI == bb_seq_list.size() )
+				break;
+			if(abs(bb_seq_list[bI][seqI].first) + 1 < gene_bounds[seqI][gI] && gene_bounds[seqI][gI] < abs(bb_seq_list[bI][seqI].second) - 1)
+			{
+				cerr << "segment " <<bb_seq_list[bI][seqI].first << ", " <<bb_seq_list[bI][seqI].second << " violates gene boundary " << gene_bounds[seqI][gI] << " in seq " << seqI << endl;  
+			}else
+				cout << "segment " <<bb_seq_list[bI][seqI].first << ", " <<bb_seq_list[bI][seqI].second << " is okay for " << gene_bounds[seqI][gI] << " in seq " << seqI << endl;  
+		}
+	}
+
 //	mergeAdjacentSegments( bb_seq_list );
-	addUniqueSegments( bb_seq_list );
+//	addUniqueSegments( bb_seq_list );
 	bbseq_input.close();
 	bb_output.open(output_fname.c_str());
 	writeBackboneSeqFile( bb_output, bb_seq_list );
