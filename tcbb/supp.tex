@@ -1,0 +1,97 @@
+
+\subsection{Extracting emission frequencies from the HOXD70 substitution matrix}
+We solved for the emission frequencies in the
+Homologous and Unrelated state using the same equation used to
+calculate the values of the HOXD70 substitution matrix on 47.5\%G+C
+content sequence~\cite{hoxd}:
+\begin{equation}
+s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
+\end{equation}
+{w}here $p(x,y)$ is the fraction of the observed aligned pairs of
+nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
+$q_{2}(x)$ denote the background frequencies of $x$ and $y$,
+respectively. Chiaromonte \textit{et al.} scaled the resulting
+$s(x,y)$ values so the largest was 100,
+with the rest rounded to the nearest integer.  Given that the training
+data has $47.5\%$~$G+C$ content and considering strand symmetry and undirected changes, we can compute emission probabilities for the Unrelated state
+of our HMM:
+\begin{multline}\\
+U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})
+= 0.06890625 \\
+U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2}) =
+0.05640625 \\
+U_{AC}=U_{AG}=U_{TC}=U_{TG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) =
+0.06234375 \\
+U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) =
+0.06234375 \\
+\end{multline}
+
+Where $f_{GC}=0.475$ and $f_{AT}=0.525$ are background frequencies of
+G/C and A/T, respectively and the notation $U_{XY}$ indicates the probability of observing nucleotide X aligned to
+nucleotide Y in Unrelated sequence.    Note, each $(\frac{f_{XY}})$ is divided by 2 to take the frequency of only 1 nucleotide from each frequency.
+
+Then we derive emission probabilities for
+the Homologous state as, for example:
+\begin{equation}
+\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
+\end{equation}
+where $\frac{1}{\psi}$ is the unknown scaling factor used to normalize $H_{CC}$ to 100. The full list of equations follows:
+\begin{multline}\\
+\log_{2}\bigg(\frac{H_{AC}}{U_{AC}}\bigg) = \frac{-114}{\psi}\\
+\log_{2}\bigg(\frac{H_{AG}}{U_{AC}}\bigg) = \frac{-31}{\psi}\\
+\log_{2}\bigg(\frac{H_{AT}}{U_{AC}}\bigg) = \frac{-123}{\psi}\\
+\log_{2}\bigg(\frac{H_{CG}}{U_{CC}}\bigg) = \frac{-125}{\psi}\\
+\log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi}\\
+\log_{2}\bigg(\frac{H_{CC}}{U_{CC}}\bigg) = \frac{100}{\psi}\\
+\end{multline}
+
+The system of six equations has seven free variables.  Moreover, the $H_{xy}$ must sum to 1 to make a probability distribution:
+\begin{equation}
+2*H_{AA} + 4*H_{AC} + 4*H_{AG} + 2*H_{AT} + 2*H_{CC} + 2*H_{CG} = 1
+\end{equation}
+%$0.03072937146$
+%$32.54215601$
+We can solve the above six equations for $H_{xy}$ and substitute the
+resulting expressions in to the normalizing equation to solve for
+$\psi$. For the HOXD70 matrix the scaling factor is $\psi=66.667$. Given
+$\psi$, we can calculate values for all $H_{xy}$.
+
+
+\subsection{Adapting HMM parameters from an arbitrary substitution matrix to organisms with different G+C content}
+Emission
+probabilities in the Unrelated state can be directly adapted to the
+background nucleotide distribution as follows:
+\begin{multline}\\
+U_{AA}=U_{AT}=U_{TA}=U_{TT}=(\frac{f_{AT}}{2})(\frac{f_{AT}}{2})\\
+U_{CC}=U_{CG}=U_{GC}=U_{GG}=(\frac{f_{GC}}{2})(\frac{f_{GC}}{2})\\
+U_{AC}=U_{AG}=U_{TC}=U_{AG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2})\\
+U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2})\\
+\end{multline}
+$f_{AT}$ is the fraction of nucleotides which are A/T and
+$f_{GC}$ is the fraction of G/C in the input genome.  Note that $f_{AT}=1-f_{GC}$.
+
+To adapt emission probabilities in the homologous state, we consider the
+probability of nucleotide substitution under the standard assumption
+that sequences evolve according to a continuous-time reversible Markov process.
+Thus, the probability of nucleotide $X$ mutating to nucleotide $Y$ over time $t$
+can be written as: $H_{XY}=\pi_X Q(X,Y)t$, where $\pi_X$ represents the background
+frequency of nucleotide $X$ and $Q(X,Y)$ is the instantaneous substitution rate for $X$
+mutating to $Y$. As do other existing methods that correct for composition bias using an adapted substitution matrix~\cite{repseek}, we explicitly assume $t$ to be 1.  Because the background frequencies on which the substitution matrix was computed are
+known (e.g. 47.5\%GC for HOXD70), we can simply replace the $\pi_X$ from the HOXD70 matrix
+with the $\pi'_X$ from the input genome. Given that the substitution process is
+strand-symmetric and reversible, we can compute adapted
+emission probabilities for the Homologous state as follows:
+\begin{multline}\\
+H_{AG}=H_{AG}\\
+H_{AC}=H_{AC}\\
+H'_{AA}=(\frac{f_{AT}}{f'_{AT}})H_{AA}\\
+H'_{AT}=(\frac{f_{AT}}{f'_{AT}})H_{AT}\\
+H'_{CC}=(\frac{f_{GC}}{f'_{GC}})H_{CC}\\
+H'_{CG}=(\frac{f_{GC}}{f'_{GC}})H_{CG}\\
+\end{multline}
+where $f'_{AT}$ and $f'_{GC}$ represent the input genome's AT and GC content,
+$H_{XY}$ values are the original emission probabilities derived from the
+substitution matrix, and $H'_{XY}$ are emission probabilities adapted to
+the input genome's G+C content.
+
+%\section{Configuring the transition probabilities of the HMM}
