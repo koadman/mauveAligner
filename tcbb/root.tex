@@ -61,14 +61,14 @@
 
 % make the title area
 \maketitle
-\linenumbers 
+\linenumbers
 %\IEEEdisplaynotcompsoctitleabstractindextext
 %\IEEEcompsoctitleabstractindextext{
 \begin{abstract}
-Pairwise local sequence alignment methods have been the prevailing technique to identify homologous nucleotides between related species. However, existing methods that identify and align all homologous nucleotides in one or more genomes have suffered from poor scalability and limited accuracy. We propose a novel method that couples a gapped extension heuristic with an efficient filtration method for local multiple alignment.  During gapped extension, we use the MUSCLE implementation of progressive multiple alignment with iterative refinement.  The resulting gapped extensions potentially contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of homology. The HMM
+Pairwise local sequence alignment methods have been the prevailing technique to identify homologous nucleotides between related species. However, existing methods that identify and align all homologous nucleotides in one or more genomes have suffered from poor scalability and limited accuracy. We propose a novel method that couples a gapped extension heuristic with an efficient filtration method for local multiple alignment.  During gapped extension, we use the MUSCLE implementation of progressive global multiple alignment with iterative refinement.  The resulting gapped extensions potentially contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of homology. The HMM
 emission frequencies for nucleotide substitutions can be derived from any strand/species-symmetric nucleotide substitution matrix, and we have developed a method to adapt an arbitrary substitution matrix
 to organisms with different G+C content. We evaluate the performance of our method and previous approaches on a hybrid dataset of real genomic DNA with simulated interspersed repeats.  Our method
-outperforms a related method in terms of sensitivity, positive predictive value, and localizing boundaries of homology. In addition, we present a statistical test for estimating significance of local multiple alignments. The described methods have been implemented in freely available software,\texttt{Repeatoire}, available from: \url{http://wwwabi.snv.jussieu.fr/public/Repeatoire}
+outperforms a related method in terms of sensitivity, positive predictive value, and localizing boundaries of homology. Finally, we present a statistical test for estimating significance of local multiple alignments. The described methods have been implemented in freely available software, \texttt{Repeatoire}, available from: \url{http://wwwabi.snv.jussieu.fr/public/repeatoire}
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -87,14 +87,14 @@ The importance of accurate homology identification to comparative genomics can n
 Local pairwise alignments can be merged to create a multiple alignment by a variety of
 methods~\cite{ref-tba,ref-dialign,ref-related1}. Such methods commonly assume that pairwise homology relationships are transitive, such that if nucleotide $a$ is homologous to nucleotide $b$, and $b$ is to $c$, then $a$ must also be homologous to $c$.  Thus, in order to merge pairwise alignments, such methods must tackle the challenging problem of resolving inconsistent transitive homology relationships.
 Multiple alignment has been demonstrated to be more accurate than pairwise alignment, especially when dealing with a large number of divergent sequences~\cite{ref-mlagan,ref-aubergene}.  As the number of homologous sequences grows, we might expect that the number of inconsistent relationships in a collection of pairwise alignments would grow quadratically, whereas a direct multiple alignment method would provide an increasingly accurate alignment.  Moreover, highly repetitive regions in the input sequences can cause serious efficiency
-problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS (insertion sequence element) repeats in microbes are two common examples of the overwhelming abundance of repetitive sequence in whole genomes.
+problems for pairwise methods, as they create $O(r^{2})$ pairwise alignments in the presence of a repeat with $r$ copies.  Mammalian Alu repeats and IS (insertion sequence) repeats in microbes are two common examples of the overwhelming abundance of repetitive sequence in whole genomes.
 
 Local multiple alignment has the inherent potential to avoid pitfalls associated with pairwise alignment. Although optimal multiple alignment under the Sum-of-pairs objective function remains intractable~\cite{ref-wangjiang}, progressive alignment heuristics offer excellent speed and accuracy~\cite{ref-clustalw,ref-tcoffee} especially when combined with tree-independent iterative
 refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-probcons}. In the context of \textit{local}
 multiple alignment, the fundamental problem with such an approach is
 that current methods for progressive alignment with iterative
 refinement compute \textit{global} alignments, i.e. they implicitly
-assume that input sequences are homologous over their entire length. 
+assume that input sequences are homologous over their entire length.
 
 \section{A heuristic for gapped extension of local multiple alignments}
 We present a novel heuristic for directly computing local multiple alignments via gapped extension of chained seed matches. Our method for computing local multiple alignments utilizes the MUSCLE
@@ -102,9 +102,9 @@ multiple alignment algorithm to compute gapped extensions of ungapped
 multi-match seeds (see Figure~\ref{fig-main}). Gapped alignments arise
 when extending seed matches to fully capture surrounding sequence
 homology. Our method first computes a
-global multiple alignment on a dynamically calculated window of nucleotides
+global multiple alignment on a dynamically-sized window of nucleotides
 flanking a seed match.  However, as we do not know the boundaries of the
-homologous sequence a priori, this approach may result in the
+homologous sequence \textit{a priori}, this approach may result in the
 alignment of unrelated sequences.  To resolve the problem, we employ a hidden Markov model configured to detect
 unrelated regions embedded in the global multiple alignment.
 Unrelated regions are then removed from the alignment and the
@@ -118,7 +118,7 @@ seeds, (C) Perform multiple alignments on regions between chained seeds, (D)
 Perform gapped extension of seed chains (E) Detect unrelated regions
 using a hidden Markov model, and finally, (F) Trim any unrelated regions from
 the final local multiple alignment. For steps (A) and (B), we employ the palindromic seed identification
-and chaining algorithm implemented in our previous work (\texttt{procrastAligner}~\cite{ref-procrast}). The remaining steps are applied
+and chaining algorithm implemented in our previous work (\texttt{procrastAligner}~\cite{ref-procrast}). The remaining steps (C-F) are applied
 repeatedly to seeds identified in step (A) to produce local multiple
 alignments of all homologous nucleotides in the input sequence.
 
@@ -132,9 +132,9 @@ sequence, we utilize a palindromic spaced seed pattern~\cite{ref-zhang}, which i
 analyzed at each position in the input sequence.
 Palindromic spaced seeds were presented our previous work and were shown to offer good efficiency and
 reasonable sensitivity on a variety of input
-sequences~\cite{ref-procrast}.  We refer the number of matching regions
+sequences~\cite{ref-procrast}.  We refer to the number of matching regions
 in $\mathcal{S}$ by a given match $M_i \in \mathbf{M}$ as the
-\textit{multiplicity} of $M_i$, denoted as $|M_i|$. We refer to each
+\textit{multiplicity} of $M_i$, also denoted as $|M_i|$. We refer to each
 matching region of $M_i$ as a \textit{component} of $M_i$. Our
 algorithm has an important limitation on the matches in $\mathbf{M}$:
 no two matches $M_i$ and $M_j$ may have the same left-end coordinate,
@@ -178,7 +178,7 @@ extended, we return to step (D) for another round of chaining.}
 \subsection{Chaining multi-match seeds from the input sequence}
 Once a list of multi-matches has been generated, we utilize an
 efficient chaining and filtration algorithm to identify overlapping
-and nested chains of multi-matches~\cite{ref-procrast}. In order to
+and nested chains of multi-matches.  The chaining and filtration algorithm has been described in previous work~\cite{ref-procrast}. In order to
 process each region of sequence $\mathcal{O}(1)$ times, matches
 are prioritized for chaining in order of decreasing $|M_i|$.  The
 method chains multi-match seeds of the same $|M_i|$
@@ -204,16 +204,16 @@ is controlled via the $w$ parameter. We have empirically determined that reasona
 for $w$ in a wide variety of settings can range from 2 to 3 times the seed length. However, since this
 parameter can be configured manually and large values of
 $w$ could potentially result in aligning unrelated sequence, the HMM test (discussed in detail later) can be optionally applied
-aligned regions between multi-match seeds to avoid aligning unrelated sequence. If the test detects any part of the 
+to regions between multi-match seeds to avoid aligning unrelated sequence. If the test detects any part of the
 region to be unrelated, the multi-match chain is broken and separated into two individual multi-matches.
 
 \subsection{Gapped extension of high-scoring chains}
 Next, our method computes gapped extensions of the chained multi-match seeds.
 We can optionally require that two or more seeds be present
-in the chain and use lower seed weights ($k$), a technique which has
-previously been proven
+in the chain and use lower seed weights ($k$), a technique which previously has
+been proven
 successful~\cite{ref-blastz,ref-gappedblast,ref-blat}.  To perform a
-gapped extension in each direction, we use MUSCLE to align dynamically-calculated window
+gapped extension in each direction, we use MUSCLE to align a dynamically-sized window
 of nucleotides ($l$) to the left and right of the current local
 multiple alignment.  Small values of $l$ restrict the alignment search
 space, while larger values require more computation but are
@@ -249,8 +249,8 @@ sequence. We have configured a hidden Markov model (Figure
 ~\ref{fig-hmm}) to detect alignments of unrelated sequence. The HMM
 consists of two hidden states, Homologous and Unrelated. The
 observable states are the pairwise alignment columns, which are all
-possible pairs in $\texttt{{\{A,G,C,T,-\}}}$ with strand
-symmetry and undirected changes, i.e. \texttt{AG=GA=TC=CT}. The emission probabilities for
+possible pairs in $\texttt{{\{A,G,C,T,-\}}}$.  We assume reversibility of the
+evolutionary process which implies, for example, that a substitution from A to G is equiprobable to a substitution from G to A, and also T to G (reverse complement) and G to T (also reverse complement).   The emission probabilities for
 each possible pair of aligned nucleotides were extracted from the HOXD70
 substitution matrix presented by Chiaromonte \textit{et al.}~\cite{hoxd} :
 \large
@@ -260,7 +260,7 @@ substitution matrix presented by Chiaromonte \textit{et al.}~\cite{hoxd} :
   & \texttt{A} & \texttt{C} & \texttt{G} & \texttt{T} \\
 \texttt{A} & 91 & -114 & -31 & -123 \\
 \texttt{C} & -114 & 100 & -125 & -31 \\
-\texttt{G} & -31 & -125 & -100 & -114 \\
+\texttt{G} & -31 & -125 & 100 & -114 \\
 \texttt{T} & -123 & -31 & -114 & 91 \\ \end{array}
 \end{equation}
 \end{center}
@@ -280,11 +280,11 @@ respectively. Chiaromonte \textit{et al.} scaled the resulting
 $s(x,y)$ values so the largest was 100,
 with the rest rounded to the nearest integer. The resulting emission
 probabilities for the Homologous and Unrelated states are given
-in Figure~\ref{fig-hmm} (see supplemental material for
-more details on the derivation of the emission probabilities). 
+in Figure~\ref{fig-hmm} (see Supplemental Material for
+more details on the derivation of the emission probabilities).
 
-The HMM probabilities can be derived using any nucleotide substitution matrix with  strand symmetry and undirected changes,
-but any particular matrix makes specific assumptions about divergence time, mutation pressures,
+The HMM probabilities can be derived using any general time-reversible nucleotide substitution matrix,
+but any given matrix makes specific assumptions about divergence time, mutation pressures,
 and sequence composition of the aligned sequences.
 Genomes can range in G+C content from 30-75\%, and at the extremes,
 a substitution matrix derived on 47.5\% G+C sequence (such as HOXD70) does not
@@ -293,9 +293,7 @@ of the organisms under comparison can improve sequence alignment accuracy~\cite{
 probabilities derived from an arbitrary substitution matrix
 to organisms with different G+C content (see supplemental material).
 
-While emission frequencies for nucleotide substitutions can be derived from
-any any nucleotide substitution matrix with  strand symmetry and undirected changes, the gap-open
-and extend frequencies can not.  To empirically estimate gap-open and extend values
+Gap-open and gap-extend frequencies are not typically encoded in a nucleotide substitution matrix.  To empirically estimate gap-open and extend values
 for the unrelated state we aligned a 10-kb, 48\%~G+C content region
 taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates
 37,300-38,300) with an unrelated sequence.  We generated an unrelated
@@ -364,14 +362,16 @@ Finally, component pairs that are not contained by any computed alignments are n
 We have previously demonstrated the sensitivity of our chaining method
 in finding Alu repeats in the human
 genome~\cite{ref-procrast}. To highlight the benefits of our proposed
-heuristic for gapped extension, we compare the performance of the implementation of our method ( ~\texttt{Repeatoire}) to the Eulerian path method for local multiple alignment
+heuristic for gapped extension, we compare the performance of the implementation of our method (\texttt{Repeatoire}) to the Eulerian path method for local multiple alignment
 as implemented by \texttt{EulerAlign}~\cite{ref-related1}. The Eulerian
 path method uses a \textit{de Bruijn} graph for filtration, and goes
 beyond filtration to compute gapped alignments using banded dynamic
-programming.  To the best of our knowledge, \texttt{Repeatoire} and
+programming.  
+
+To the best of our knowledge, \texttt{Repeatoire} and
 \texttt{EulerAlign} represent the only two automated methods to directly
 construct local multiple alignments of \emph{generic} repeat families from genomic DNA.
-
+\textbf{FIXME: add brief discussion of why other methods can not be compared here}
 
 \subsection*{Simulating interspersed repeats}
 We evaluate accuracy of each method when aligning simulated repeat
@@ -457,15 +457,16 @@ often fails to fully align low multiplicity repeats, even when mutation rates ar
 Manual experimentation with \texttt{EulerAlign} parameters, such as: -v (tolerance for mismatches), -k (seed $k$-mer size) from 11 to 15, and -i (number of iterations) from 1000 up to 10,000, failed to improve its performance on low-multiplicity repeats.
 We conjecture that \texttt{Repeatoire}'s overall improved accuracy largely derives
 from its use of spaced seed patterns~\cite{ref-procrast} and tolerance
-of gaps. With the \texttt{-v} option enabled, the Eulerian path method allows up to 10\% mismatches for matching $k$-mers to seed gapped alignment extensions. While this certainly improves the sensitivity at lower mutation rates, the experimental results presented Figure~\ref{fig-results} show that it is inadequate for higher mutation rates. In addition to sensitivity and PPV benchmarks, we also assess how well
+of gaps. With the \texttt{-v} option enabled, the Eulerian path method allows up to 10\% mismatches for matching $k$-mers to seed gapped alignment extensions. While this certainly improves the sensitivity at lower mutation rates, the experimental results presented Figure~\ref{fig-results} show that it is inadequate for higher mutation rates. 
+In addition to sensitivity and PPV benchmarks, we also assess how well
 each aligner recovers the true boundaries of interspersed
 repeats.  Figure~\ref{fig-boundary} illustrates the ability of each
 program to accurately localize the known boundaries of the simulated interspersed
 repeats. From the figure, we first see the benefits of gapped extension when comparing our previous work
-that did not perform gapped extension. For low multiplicities (2 to 4) and low mutation rates (0 to 0.05), procrastAligner performs as well
-as the gapped extension algorithm implemented in Repeatoire, which can be attributed to the sensitivity offered by using palindromic seeds. Worth noting is that even when there is no mutations, procrastAligner can result in underextended boundaries. This can be explained due the the default seed size is small (15 nt) and can result in spurious matches or matching existing repeats in the reference genome, which will lead to underextended boundaries in spite of low mutation rates. However, once the repeat multiplicity or mutation rates increase, there is severe deterioration in the boundary predication accuracy, resulting in significant underprediction of the true boundaries.
+that did not perform gapped extension. For low multiplicities (2 to 4) and low mutation rates (0 to 0.05), \texttt{procrastAligner} performs as well
+as the gapped extension algorithm implemented in \texttt{Repeatoire}, which can be attributed to the sensitivity offered by using palindromic seeds. Worth noting is that even when there is no mutations, \texttt{procrastAligner} can result in underextended boundaries. This can be explained due the the default seed size is small (15 nt) and can result in spurious matches or matching existing repeats in the reference genome, which will lead to underextended boundaries in spite of low mutation rates. However, once the repeat multiplicity or mutation rates increase, there is severe deterioration in the boundary predication accuracy, resulting in significant underprediction of the true boundaries.
 
-When comparing both gapped extension algorithms, \texttt{EulerAlign} and \texttt{Repeatoire}, we found that \texttt{Repeatoire} more accurately predict
+When comparing the gapped extension algorithms, \texttt{EulerAlign} and \texttt{Repeatoire}, we found that \texttt{Repeatoire} more accurately predicts
 the repeat boundaries for all studied combinations of branch length (repeat degeneracy)
 and multiplicity (repeat copy number).  Moreover, the standard error in \texttt{Repeatoire}'s
 boundary predictions is typically very low, often within a few nucleotides of the true boundaries.  \texttt{EulerAlign}, on the other hand,
@@ -540,7 +541,7 @@ converting chains of ungapped multi-matches into gapped local multiple
 alignments through steps (C) through (F) of the presented heuristic. We have also added a method to remove spurious local multiple alignments by introducing a statistical estimation of significance
 performed directly on the input sequence. We have implemented our method in the \texttt{Repeatoire} software. Experimental results demonstrate that the
 described method offers a level of alignment accuracy exceeding
-that of a related method. 
+that of a related method.
 
 Accurately predicting homology boundaries has important implications; for example, tools to build repeat family databases can directly use the alignments without the manual curation required in current approaches and also is likely to aid in the evolutionary analysis of repeat proliferation.  We also would like to emphasize the importance of correctly selecting an appropriate substitution matrix for the expected amount of divergency among the repeats. The default substitution matrix our program uses is the HOXD70 matrix, which is optimized for 70\% sequence identity. Thus, using the default substitution matrix when performing repeat detection on less diverged families can result in overextended repeat boundaries, or vice versa.
 
@@ -551,8 +552,8 @@ shorter, higher-multiplicity match.  A second avenue would be to use palindromic
 \subsection*{Implementation}
 We have implemented our method in a program, \texttt{Repeatoire},
 available for Linux, Windows, and Mac OS X. Our open-source
-implementation is available as C++ source code licensed under the GPL , and can be downloaded from: \\
-\url{http://wwwabi.snv.jussieu.fr/public/Repeatoire}.
+implementation is available as C++ source code licensed under the GPL, and can be downloaded from: \\
+\url{http://wwwabi.snv.jussieu.fr/public/repeatoire}.
 
 \section{ Acknowledgment }
 The authors would like to thank Y Zhang for providing the
