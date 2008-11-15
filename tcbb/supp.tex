@@ -1,17 +1,5 @@
-\subsection*{Calculating emission frequencies from the HOXD70 substitution matrix}
-We calculated the emission frequencies in the
-Homologous and Unrelated state using the same equation used to
-calculate the values of the HOXD70 substitution matrix on 47.5\%G+C
-content sequence~\cite{hoxd}:
-\begin{equation}
-s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
-\end{equation}
-{w}here $p(x,y)$ is the fraction of the observed aligned pairs of
-nucleotides $x$ and $y$ in the training set used and $q_{1}(x)$ and
-$q_{2}(y)$ denote the background frequencies of $x$ and $y$,
-respectively. Chiaromonte \textit{et al.} scaled the resulting
-$s(x,y)$ values so the largest was 100,
-with the rest rounded to the nearest integer.  Given that the training
+\subsection*{Calculating emission probabilities from the HOXD70 substitution matrix}
+We will now outline how we have dervied the HMM emission probabilities using the HOXD substitution matrix. First, given that the training
 data has $47.5\%$~$G+C$ content and considering reversibility of the substitution process, we can compute emission probabilities for the Unrelated state
 of our HMM:
 \begin{multline}\\
@@ -23,14 +11,14 @@ U_{AC}=U_{AG}=U_{TC}=U_{TG}=(\frac{f_{AT}}{2})(\frac{f_{GC}}{2}) =
 0.06234375 \\
 U_{CA}=U_{CT}=U_{GA}=U_{GT}=(\frac{f_{GC}}{2})(\frac{f_{AT}}{2}) =
 0.06234375 \\
+\label{eq-ff}
 \end{multline}
 Where $f_{GC}=0.475$ and $f_{AT}=0.525$ are background frequencies of
 G/C and A/T, respectively and the notation $U_{XY}$ indicates the probability of observing nucleotide X aligned to
 nucleotide Y in Unrelated sequence.    Note, each $f_{XY}$ is divided by 2 to yield the frequency of a single nucleotide from dinucleotide background frequencies.
 
-Previous work
-has shown how to extract scaling factors and background frequencies from substitution matrices~\cite{ref-rev3a}. Accordingly, we derive emission probabilities for
-the Homologous state as, for example:
+By using Equation~\ref{eq-hoxd} (from Section~\ref{section-main}), we can derive emission probabilities for
+the Homologous state as follows:
 \begin{equation}
 \log_{2}\bigg(\frac{H_{AA}}{U_{AA}}\bigg) = \frac{91}{\psi},
 \end{equation}
@@ -59,7 +47,7 @@ $\psi$, we can calculate values for all $H_{xy}$.
 
 Emission
 probabilities in the Unrelated state can be directly adapted to the
-background nucleotide distribution ($f_{GC}, f_{AT}$ using \textbf {Equation 4}. To adapt emission probabilities in the homologous state, we consider the
+background nucleotide distribution ($f_{GC}, f_{AT}$) using Equation~\ref{eq-ff}. To adapt emission probabilities in the homologous state, we consider the
 probability of nucleotide substitution under the standard assumption
 that sequences evolve according to a continuous-time reversible Markov process.
 Thus, the probability of nucleotide $X$ mutating to nucleotide $Y$ over time $t$
