@@ -1,5 +1,6 @@
+\thispagestyle{empty}
 \subsection*{Calculating emission probabilities from the HOXD70 substitution matrix}
-We will now outline how we have dervied the HMM emission probabilities using the HOXD substitution matrix. First, given that the training
+We will now outline how we have dervied the HMM emission probabilities using the HOXD70 substitution matrix. First, given that the training
 data has $47.5\%$~$G+C$ content and considering reversibility of the substitution process, we can compute emission probabilities for the Unrelated state
 of our HMM:
 \begin{multline}\\
@@ -51,7 +52,7 @@ background nucleotide distribution ($f_{GC}, f_{AT}$) using Equation~\ref{eq-ff}
 probability of nucleotide substitution under the standard assumption
 that sequences evolve according to a continuous-time reversible Markov process.
 Thus, the probability of nucleotide $X$ mutating to nucleotide $Y$ over time $t$
-can be written as: 
+can be written as:
 \begin{equation}
 H_{XY}=\pi_X \exp^{Q(X,Y)t}
 \end{equation}
@@ -66,7 +67,7 @@ with the $\pi'_X$ from the input genome as follows:
 \begin{equation}
 H'_{XY}=(\frac{\pi'_X}{\pi_X})  H_{XY}
 \end{equation}
-
+\thispagestyle{empty}
 %DERIVATION HERE!!
 Given that the substitution process is
 strand-symmetric and reversible, we can thus compute adapted
