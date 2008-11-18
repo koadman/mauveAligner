@@ -295,7 +295,7 @@ in Figure~\ref{fig-hmm}.
 
 
 The HMM probabilities can be derived using any general time-reversible nucleotide substitution matrix,
-but any given matrix makes specific assumptions about divergence time, mutation pressures,
+but any given matrix makes specific assumptions about divergence, mutation pressures,
 and sequence composition of the aligned sequences.
 Genomes can range in G+C content from 20-75\%, and at the extremes,
 a substitution matrix derived on 47.5\% G+C sequence does not
@@ -375,7 +375,7 @@ programming.
 To the best of our knowledge, \texttt{Repeatoire} and
 \texttt{EulerAlign} represent the only two automated methods to directly
 construct local multiple alignments of \emph{generic} repeat families from genomic DNA.
-Numerous other repeat detection and classification tools exist (PILER~\cite{ref-piler}, RepeatScout~\cite{repeatscout}, RepSeek~\cite{repseek}), however none of them solve the general problem of local, gapped multiple alignment of interspersed repeats.  PILER focuses on identifying specific repeat classes from pairwise alignments (e.g. transposable elements, CRISPR repeats, etc), and is thus not suited for generic local multiple alignment. We carefully considered RepeatScout for comparison since it shares several characteristics with our approach (such a gapped extension algorithm and ability to detect repeat families \emph{de novo} in genome sequences), but unfortunately outputs only a consensus sequence for each repeat family, prohibiting any boundary prediction and alignment quality evaluation.  While it may be possible to provide some very generic comparison with those methods, for example by limiting ourselves to pairwise sequence alignment, we decided to focus the comparison on methods suited for \emph{interspersed repeat detection in large genome sequences via gapped local multiple alignment}, since that is the novelty of our approach.
+Numerous other repeat detection and classification tools exist (PILER~\cite{ref-piler}, RepeatScout~\cite{repeatscout}, RepSeek~\cite{repseek}), however these tools do not address the general problem of local, gapped multiple alignment of interspersed repeats.  PILER focuses on identifying specific repeat classes from pairwise alignments (e.g. transposable elements, CRISPR repeats, etc), and is thus not suited for generic local multiple alignment. We carefully considered RepeatScout for comparison since it shares several characteristics with our approach (such a gapped extension algorithm and ability to detect repeat families \emph{de novo} in genome sequences), but unfortunately outputs only a consensus sequence for each repeat family, prohibiting any boundary prediction and alignment quality evaluation.  While it may be possible to provide some very generic comparison with those methods, for example by limiting ourselves to pairwise sequence alignment, we decided to focus the comparison on methods suited for \emph{interspersed repeat detection in large genome sequences via gapped local multiple alignment}, since that is the novelty of our approach.
 
 \subsection*{Simulating interspersed repeats}
 We evaluate accuracy of each method when aligning simulated repeat
@@ -426,7 +426,7 @@ program's output which are also aligned in the simulated repeat
 family.  $\mathrm{FN}$ is the number of aligned nucleotide pairs in
 the simulated repeat family which are missing from the program's
 output.  This sensitivity measure is identical to the Sum-of-Pairs
-accuracy defined by BaliBASE~\cite{ref-balibase}.  We calculate the
+accuracy defined by BALiBASE~\cite{ref-balibase}.  We calculate the
 positive predictive value (PPV) as $\frac{\mathrm{TP}}{\mathrm{TP} +
 \mathrm{FP}}$, where $\mathrm{TP}$ is defined as above, and
 $\mathrm{FP}$ is the total number of nucleotide pairs from the
@@ -469,7 +469,7 @@ repeats.  Figure~\ref{fig-boundary} illustrates the ability of each
 program to accurately localize the known boundaries of the simulated interspersed
 repeats. From the figure, we first see the benefits of gapped extension when comparing our previous work
 that did not perform gapped extension. For low multiplicities (2 to 4) and low mutation rates (0 to 0.05), \texttt{procrastAligner} performs as well
-as the gapped extension algorithm implemented in \texttt{Repeatoire}, which can be attributed to the sensitivity offered by using palindromic seeds. Worth noting is that even when there are no mutations, \texttt{procrastAligner} can result in underextended boundaries. This can be explained since the seed size is small (15 nt) and can result in spurious matches or matching existing repeats in the reference genome, which will lead to underextended boundaries in spite of low mutation rates. However, once the repeat multiplicity or mutation rates increase, there is severe deterioration in the boundary predication accuracy, resulting in significant underprediction of the true boundaries.
+as the gapped extension algorithm implemented in \texttt{Repeatoire}, which can be attributed to the sensitivity offered by using palindromic seeds. Worth noting is that even when there are no mutations, \texttt{procrastAligner} can result in underextended boundaries. This can be explained since the seed size is small (15 nt) and can result in spurious matches in the reference genome, which will lead to underextended boundaries in spite of low mutation rates. However, once the repeat multiplicity or mutation rates increase, there is severe deterioration in the boundary predication accuracy, resulting in significant underprediction of the true boundaries.
 
 \begin{figure*}[p]
 \centering
