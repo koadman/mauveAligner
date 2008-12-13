@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libGenome", "..\..\libGenome\projects\libGenome.vcproj", "{5B7186E6-EBD1-40CD-9B95-9974937EB5C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libMems", "..\..\libMems\projects\libMems.vcproj", "{20FE3C39-9B04-4D5F-8249-115D8812B93E}"
