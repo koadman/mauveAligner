@@ -54,12 +54,14 @@
 
 \IEEEcompsocitemizethanks{
 \IEEEcompsocthanksitem T.J. Treangen is with the Institut Pasteur, Microbial Evolutionary Genomics; CNRS, URA2171, Paris, France \protect\\ and the UPMC Univ. Paris 06, Atelier de BioInformatique, Paris, France
-\IEEEcompsocthanksitem A.E. Darling is with the Institute for Molecular Bioscience, Univ. of Queensland, Brisbane, Australia
+\IEEEcompsocthanksitem A.E. Darling is with The University of Queensland, Institute for Molecular Bioscience,
+and ARC Centre of Excellence in Bioinformatics, Brisbane, Australia
 \IEEEcompsocthanksitem G. Achaz is with the UPMC Univ. Paris 06, CNRS, MNHN, IRD, UMR 7138, Paris, France  \protect\\ and the UPMC Univ Paris 06, Atelier de Bioinformatique, Paris, France
-\IEEEcompsocthanksitem M. Ragan is with the Institute for Molecular Bioscience, Univ. of Queensland, Brisbane, Australia
-\IEEEcompsocthanksitem X. Messeguer is with the Algorithms and Genetics Group,Dept. of Computer Science, Technical Univ. of Catalonia, Barcelona, Spain
+\IEEEcompsocthanksitem M. Ragan is with The University of Queensland, Institute for Molecular Bioscience,
+and ARC Centre of Excellence in Bioinformatics, Brisbane, Australia
+\IEEEcompsocthanksitem X. Messeguer is with the Algorithms and Genetics Group, Dept. of Computer Science, Technical University of Catalonia, Barcelona, Spain
 \IEEEcompsocthanksitem E.P.C. Rocha is with the Institut Pasteur, Microbial Evolutionary Genomics; CNRS, URA2171, Paris, France \protect\\ and the UPMC Univ. Paris 06, Atelier de BioInformatique, Paris, France
-\IEEEcompsocthanksitem $\dagger$ T.J Treangen and A.E. Darling have contributed equally to this work.
+%\IEEEcompsocthanksitem $\dagger$ T.J Treangen and A.E. Darling have contributed equally to this work.
 }
 % The paper headers
 %\markboth{Journal of \LaTeX\ Class Files,~Vol.~1, No.~8,~August~2002}{Shell \MakeLowercase{\textit{et al.}}: Bare Demo of IEEEtran.cls for Journals}
@@ -78,7 +80,7 @@
 \begin{abstract}
 Pairwise local sequence alignment methods have been the prevailing technique to identify homologous nucleotides between related species. However, existing methods that identify and align all homologous nucleotides in one or more genomes have suffered from poor scalability and limited accuracy. We propose a novel method that couples a gapped extension heuristic with an efficient filtration method for identifying interspersed repeats in genome sequences.  During gapped extension, we use the MUSCLE implementation of progressive global multiple alignment with iterative refinement.  The resulting gapped extensions potentially contain alignments of unrelated sequence.  We detect and remove such undesirable alignments using a hidden Markov model to predict the posterior probability of homology. The HMM
 emission frequencies for nucleotide substitutions can be derived from any strand/species-symmetric nucleotide substitution matrix. We evaluate the performance of our method and previous approaches on a hybrid dataset of real genomic DNA with simulated interspersed repeats.  Our method
-outperforms a related method in terms of sensitivity, positive predictive value, and localizing boundaries of homology. The described methods have been implemented in freely available software, \texttt{Repeatoire}, available from: \url{http://wwwabi.snv.jussieu.fr/public/repeatoire}
+outperforms a related method in terms of sensitivity, positive predictive value, and localizing boundaries of homology. The described methods have been implemented in freely available software, \texttt{Repeatoire}, available from: \url{http://wwwabi.snv.jussieu.fr/public/Repeatoire}
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -87,7 +89,7 @@ Sequence alignment, genome comparison, DNA repeats, local multiple alignment, hi
 
 \IEEEpeerreviewmaketitle
 \section{Introduction}
-Pairwise local sequence alignment has a long and fruitful history in computational biology and new approaches continue to be proposed~\cite{ref-pattern,ref-chaos,ref-yass,ref-kahveciMAP}. Traditional pairwise methods for repeat analysis either identify repeat families \textit{de novo}~\cite{ref-reputer} or using a database of known repeat motifs~\cite{ref-repbase}. Advanced filtration methods based on spaced-seeds have greatly improved the sensitivity, specificity, and efficiency of many local alignment methods~\cite{ref-zhang04,ref-zhang06,ref-buhler05,ref-xu04,ref-batzoglouNAR, ref-rasmussen}. Common applications of local alignment range from orthology mapping~\cite{ref-orthomcl} to genome assembly~\cite{ref-arachne2} to information engineering tasks such as data compression~\cite{ref-ane}. Recent advances in sequence data acquisition technology~\cite{ref-454, sequencing, hybrid} (see ~\cite{ref-nextgenseq} for a review) provide low-cost sequencing and will continue to fuel the growth of molecular sequence databases. To cope with advances in data volume, corresponding advances in computational methods are necessary; thus we present an efficient method for local multiple alignment of interspersed DNA repeats in genome sequences.
+Pairwise local sequence alignment has a long and fruitful history in computational biology and new approaches continue to be proposed~\cite{ref-pattern,ref-chaos,ref-yass,ref-kahveciMAP}. Traditional pairwise methods for repeat analysis either identify repeat families \textit{de novo}~\cite{ref-reputer} or using a database of known repeat motifs~\cite{ref-repbase}. Advanced filtration methods based on spaced-seeds have greatly improved the sensitivity, specificity, and efficiency of many local alignment methods~\cite{ref-zhang04,ref-zhang06,ref-buhler05,ref-xu04,ref-batzoglouNAR, ref-rasmussen}. Common applications of local alignment range from orthology mapping~\cite{ref-orthomcl} to genome assembly~\cite{ref-arachne2} to information engineering tasks such as data compression~\cite{ref-ane}. Recent advances in sequence data acquisition technology~\cite{ref-454, sequencing, hybrid} (see~\cite{ref-nextgenseq} for a review) provide low-cost sequencing and will continue to fuel the growth of molecular sequence databases. To cope with advances in data volume, corresponding advances in computational methods are necessary; thus we present an efficient method for local multiple alignment of interspersed DNA repeats in genome sequences.
 
 Unlike pairwise alignment, local multiple alignment constructs a single multiple alignment for all occurrences of a repeat element in one or more sequences.  The repeat element may be identical or have degeneracy in the form of mismatches and indels.  As such, local multiple alignments identify the basic repeating units in one or
 more sequences and can serve as a basis for downstream analysis tasks such as multiple genome alignment~\cite{ref-mauve,ref-mga,ref-mgcat,ref-deweyReview}, global alignment with repeats~\cite{ref-otherSammethPaper,ref-aba}, or repeat classification and analysis~\cite{ref-piler}.
@@ -104,7 +106,7 @@ refinement~\cite{ref-muscle}, or probabilistic consistency measures~\cite{ref-pr
 multiple alignment, the fundamental problem with such an approach is
 that current methods for progressive alignment with iterative
 refinement compute \textit{global} alignments, i.e. they implicitly
-assume that input sequences are homologous over their entire length.
+assume that input sequences need to be aligned over their entire length.
 
 \section{A novel heuristic for detecting interspersed DNA repeats}
 \label{section-main}
@@ -113,7 +115,7 @@ global multiple alignment algorithm to compute gapped extensions of ungapped
 multi-match seeds (see Figure~\ref{fig-main}). Gapped alignments arise
 when extending seed matches to fully capture surrounding sequence
 homology. Our method first computes a
-global multiple alignment on a dynamically-sized window of nucleotides
+global multiple alignment on a dynamically sized window of nucleotides
 flanking a seed match.  However, as we do not know the boundaries of the
 homologous sequence \textit{a priori}, this approach may result in the
 alignment of unrelated sequences.  To resolve the problem, we employ a hidden Markov model configured to detect
@@ -276,8 +278,8 @@ each possible pair of aligned nucleotides can be derived from any strand/species
 
 Thus, we extracted the emission probabilities for the
 Homologous and Unrelated state using the same equation used to
-calculate the values of the HOXD70 substitution matrix on 47.5\%G+C
-content sequence~\cite{hoxd}:
+calculate the values of the HOXD70 substitution matrix on sequence of 47.5%
+G+C content~\cite{hoxd}:
 \begin{equation}
 s(x,y)= \log_{2}{\Bigg(\frac{p(x,y)}{q_{1}(x)q_{2}(y)}\Bigg)}
 \label{eq-hoxd}
@@ -305,7 +307,7 @@ probabilities derived from an arbitrary substitution  matrix (i.e. HOXD70)
 to organisms with different G+C content (see supplemental material).
 
 Gap-open and gap-extend frequencies are not typically encoded in a nucleotide substitution matrix.  To empirically estimate gap-open and gap-extend values
-for the unrelated state we aligned a 10-kb, 48\%~G+C content region
+for the unrelated state we aligned a 10-kb region of 48\% G+C content
 taken from \emph{E. coli} CFT073 (Accession AF447814.1, coordinates
 37,300-38,300) with an unrelated sequence.  We generated an unrelated
 sequence with identical nucleotide composition by shuffling the extracted sequence.  We then forced an
@@ -374,7 +376,7 @@ programming.
 To the best of our knowledge, \texttt{Repeatoire} and
 \texttt{EulerAlign} represent the only two automated methods to directly
 construct local multiple alignments of \emph{generic} repeat families from genomic DNA.
-Numerous other repeat detection and classification tools exist (PILER~\cite{ref-piler}, RepeatScout~\cite{repeatscout}, RepSeek~\cite{repseek}, REPuter~\cite{ref-reputer}), however these tools do not address the general problem of local, gapped multiple alignment of interspersed repeats.  PILER focuses on identifying specific repeat classes from pairwise alignments (e.g. transposable elements, CRISPR repeats, etc), and is thus not suited for generic local multiple alignment. We carefully considered RepeatScout for comparison since it shares several characteristics with our approach (such a gapped extension algorithm and ability to detect repeat families \emph{de novo} in genome sequences), but unfortunately outputs only a consensus sequence for each repeat family, prohibiting any boundary prediction and alignment quality evaluation.  While it may be possible to provide some very generic comparison with those methods, for example by limiting ourselves to pairwise sequence alignment, we decided to focus the comparison on methods suited for \emph{interspersed repeat detection in large genome sequences via gapped local multiple alignment}, since that is the novelty of our approach.
+Numerous other repeat detection and classification tools exist (PILER~\cite{ref-piler}, RepeatScout~\cite{repeatscout}, RepSeek~\cite{repseek}, REPuter~\cite{ref-reputer}), however these tools do not address the general problem of local, gapped multiple alignment of interspersed repeats.  PILER focuses on identifying specific repeat classes from pairwise alignments (e.g. transposable elements, CRISPR repeats, etc), and is thus not suited for generic local multiple alignment. We carefully considered RepeatScout for comparison since it shares several characteristics with our approach (such a gapped extension algorithm and ability to detect repeat families \emph{de novo} in genome sequences), but unfortunately it outputs only a consensus sequence for each repeat family, prohibiting any boundary prediction and alignment quality evaluation.  While it may be possible to provide some very generic comparison with those methods, for example by limiting ourselves to pairwise sequence alignment, we decided to focus the comparison on methods suited for \emph{interspersed repeat detection in large genome sequences via gapped local multiple alignment}, since that is the novelty of our approach.
 
 \subsection*{Simulating interspersed repeats}
 We evaluate accuracy of each method when aligning simulated repeat
@@ -394,12 +396,12 @@ topology.  Mutation rates were varied between 0 and 0.24 ($y$-axis
 in Figure~\ref{fig-results}), with the nucleotide substitution rate
 fixed to be 9 times more frequent than the indel rate.  Rate heterogeneity among sites was modeled with a gamma
 distribution ($\theta = 1.0, k = 0.5$).  Indel size was
-Poisson distributed with intensity 3, and insertions and deletions
+Poisson-distributed with intensity 3, and insertions and deletions
 were taken to be equally likely.  Each family's ancestral
 sequence was randomly generated using nucleotide frequencies equal to
 the composition of \emph{Mycoplasma genitalium}
 ($A=0.34,T=0.34,G=0.16,C=0.16$). Insertion sites for repeat copies
-were chosen uniformly at random in the 580kb \textit{M. genitalium} genome,
+were chosen uniformly at random in the 580-kb \textit{M. genitalium} genome,
 allowing tandem repeats but prohibiting mosaic repeats. It is important to note that some or all copies of the simulated repeat families
 could possibly be inserted inside of larger existing repeats in the  \textit{M. genitalium} genome, which would
 likely result in each repeat detection program overextending the boundaries and scored as such. However, we make the assumption
@@ -490,7 +492,7 @@ When comparing the gapped extension algorithms, \texttt{EulerAlign} and \texttt{
 the repeat boundaries for all studied combinations of mutation rates (repeat degeneracy)
 and multiplicity (repeat copy number).  Moreover, the standard error in \texttt{Repeatoire}'s
 boundary predictions is typically very low, often within a few nucleotides of the true boundaries.  \texttt{EulerAlign}, on the other hand,
-exhibits more erratic behavior.  For low multiplicity repeats it has a strong tendency to
+exhibits more-erratic behavior.  For low multiplicity repeats it has a strong tendency to
 underpredict the repeat boundaries.  At high multiplicities ($\geq32$) \texttt{EulerAlign} tends to
 slightly overpredict the boundaries, by including flanking unrelated sequence in the alignment of
 the interspersed repeat.
@@ -525,15 +527,17 @@ extended to multiple alignments~\cite{ref-related1, Prakash2005}.
 \subsection*{Implementation}
 We have implemented our method in a program, \texttt{Repeatoire},
 available for Linux, Windows, and Mac OS X and can be downloaded from:
-\url{http://wwwabi.snv.jussieu.fr/public/repeatoire}. 
+\url{http://wwwabi.snv.jussieu.fr/public/Repeatoire}.
 
 \section{ Acknowledgment }
-The authors would like to thank Y Zhang for providing the
+First two authors contributed equally to this work. The authors would like to thank Y Zhang for providing the
 \texttt{EulerAlign} program for evaluation. We would also like to thank
 W Miller for providing the HOXD70 substitution matrix data.  Finally, we would like to thank the three anonymous reviewers for their constructive suggestions that improved the manuscript. Accuracy evaluations utilized a compute resource grant from the Australian
 Partnership for Advanced Computing.  AED was supported by NSF grant
-DBI-0630765. TJT was supported in part by Spanish Ministry MECD Grant
-TIN2004-03382.
+DBI-0630765. TJT was partially supported by LogicTools
+(TIN2004-03382) and LogicTools-2 (TIN2007-68093-C02-01) research projects, funded by the Spanish Ministry of Science and
+Technology and the EU program FEDER. 
+
 
 % trigger a \newpage just before the given reference
 % number - used to balance the columns on the last page
