@@ -88,6 +88,7 @@ void makeAllPairwiseGenomeHSSBreakOnGenes( IntervalList& iv_list, vector< Compac
 			applyBreakpoints( bp_list, hss_list, gmsm );
 			// break on gene bounds in seqI
 			std::sort(hss_list.begin(), hss_list.end(), ssc );
+//			if( !(seqI == 1 && seqJ == 15 ) )
 			applyBreakpoints( gene_bounds[seqI], hss_list, gmsm );
 			// and again on seqJ
 			getBpList( iv_ptrs, seqJ, bp_list );
@@ -97,7 +98,8 @@ void makeAllPairwiseGenomeHSSBreakOnGenes( IntervalList& iv_list, vector< Compac
 			applyBreakpoints( bp_list, hss_list, gmsm1 );
 			// break on gene bounds in seqJ
 			std::sort(hss_list.begin(), hss_list.end(), ssc1 );
-			applyBreakpoints( gene_bounds[seqJ], hss_list, gmsm );
+//			if( !(seqI == 1 && seqJ == 15 ) )
+			applyBreakpoints( gene_bounds[seqJ], hss_list, gmsm1 );
 
 			// now transform into interval-specific columns
 			std::sort(hss_list.begin(), hss_list.end(), ssc );
