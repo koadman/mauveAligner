@@ -92,7 +92,9 @@ int main( int argc, char* argv[] )
 					continue;
 				if( labeled_ivs[ivI].first->Multiplicity() == 1 )
 					continue;
-				badger_out << "," << (labeled_ivs[ivI].first->Orientation(seqI) == AbstractMatch::reverse? "-" : "") << labeled_ivs[ivI].second;
+				int fs = labeled_ivs[ivI].first->FirstStart();
+				const char* dir = labeled_ivs[ivI].first->Orientation(seqI) == labeled_ivs[ivI].first->Orientation(fs) ? "" : "-";
+				badger_out << "," << dir << labeled_ivs[ivI].second + 1;
 			}
 			badger_out << endl;
 		}
