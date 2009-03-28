@@ -5,10 +5,11 @@ else
 P_CXXFLAGS = -DCOMMAND_LINE
 endif
 AM_CXXFLAGS = $(D_CXXFLAGS) $(P_CXXFLAGS) 
-
+# since we are building static openmp, include the whole pthread library
+# to work around a bug on 32-bit linux
+AM_LDFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 LIBRARY_CL = $(DEPS_LIBS) 
 INCLUDES = @DEPS_CFLAGS@ 
-# ./bagFFT/
 
 bin_PROGRAMS = mauveAligner mauveStatic scoreAlignment \
 uniqueMerCount toRawSequence \
