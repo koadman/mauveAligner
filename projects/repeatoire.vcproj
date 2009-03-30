@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="procrastAligner"
+	Name="repeatoire"
 	ProjectGUID="{F601FC5F-B8E0-431B-B3FC-28F871CF7451}"
-	RootNamespace="procrastAligner"
+	RootNamespace="repeatoire"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAligner.exe"
+				OutputFile="$(OutDir)/repeatoire.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -153,7 +153,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAligner.exe"
+				OutputFile="$(OutDir)/repeatoire.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -237,7 +237,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAlignerfd.exe"
+				OutputFile="$(OutDir)/repeatoirefd.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -322,7 +322,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAligner.exe"
+				OutputFile="$(OutDir)/repeatoire.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -407,7 +407,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAligner.exe"
+				OutputFile="$(OutDir)/repeatoire.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -493,7 +493,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAligner.exe"
+				OutputFile="$(OutDir)/repeatoire.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -578,7 +578,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAlignerfd.exe"
+				OutputFile="$(OutDir)/repeatoirefd.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -664,7 +664,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib rpcrt4.lib wsock32.lib ole32.lib shell32.lib comdlg32.lib gdi32.lib advapi32.lib user32.lib mmc.lib comctl32.lib winmm.lib psapi.lib"
-				OutputFile="$(OutDir)/procrastAligner.exe"
+				OutputFile="$(OutDir)/repeatoire.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\Microsoft SDK\Lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
@@ -717,7 +717,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\procrastAligner.cpp"
+				RelativePath="..\src\repeatoire.cpp"
 				>
 			</File>
 		</Filter>

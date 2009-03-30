@@ -107,7 +107,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "calculateBackboneCoverage2"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "extractBCITrees", "extractBCITrees.vcproj", "{25420BBB-2E89-4664-B43B-8240C287B0F0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "procrastAligner", "procrastAligner.vcproj", "{F601FC5F-B8E0-431B-B3FC-28F871CF7451}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "repeatoire", "repeatoire.vcproj", "{F601FC5F-B8E0-431B-B3FC-28F871CF7451}"
 	ProjectSection(ProjectDependencies) = postProject
 		{20FE3C39-9B04-4D5F-8249-115D8812B93E} = {20FE3C39-9B04-4D5F-8249-115D8812B93E}
 	EndProjectSection
