@@ -6,8 +6,6 @@ P_CXXFLAGS = -DCOMMAND_LINE
 endif
 OPTIMIZATION = -O3 -Wall -funroll-loops -fomit-frame-pointer -ftree-vectorize -funsafe-math-optimizations
 AM_CXXFLAGS = $(OPTIMIZATION) $(D_CXXFLAGS) $(P_CXXFLAGS) 
-# since we are building static openmp, include the whole pthread library
-# to work around a bug on 32-bit linux
 AM_LDFLAGS = @STATIC_FLAG@
 LIBRARY_CL = $(DEPS_LIBS) 
 #AM_LDADD = $(DEPS_LIBS) 
@@ -54,7 +52,6 @@ EXTRA_mauveStatic_SOURCES = getopt.c getopt.h getopt1.c
 mauveStatic_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
 
 #mauveAligner4_SOURCES = mauveAligner.cpp
-#mauveAligner4_LDFLAGS = @STATIC_FLAG@ $(OPTIMIZATION) -Wl,--whole-archive -lpthread -Wl,--no-whole-archive 
 #mauveAligner4_LDADD = $(LIBRARY_CL)
 #mauveAligner4_CXXFLAGS = MAX_SEQ_COUNT=4
 #EXTRA_mauveAligner4_SOURCES = getopt.c getopt.h getopt1.c
@@ -87,7 +84,6 @@ EXTRA_transposeCoordinates_SOURCES = getopt.c getopt.h getopt1.c
 transposeCoordinates_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
 
 uniqueMerCount_SOURCES = uniqueMerCount.cpp
-uniqueMerCount_LDFLAGS = @STATIC_FLAG@ $(OPTIMIZATION) -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 uniqueMerCount_LDADD = $(LIBRARY_CL)
 EXTRA_uniqueMerCount_SOURCES = getopt.c getopt.h getopt1.c
 uniqueMerCount_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
