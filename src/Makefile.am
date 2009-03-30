@@ -8,7 +8,7 @@ OPTIMIZATION = -O3 -Wall -funroll-loops -fomit-frame-pointer -ftree-vectorize -f
 AM_CXXFLAGS = $(OPTIMIZATION) $(D_CXXFLAGS) $(P_CXXFLAGS) 
 # since we are building static openmp, include the whole pthread library
 # to work around a bug on 32-bit linux
-AM_LDFLAGS = @STATIC_FLAG@ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+AM_LDFLAGS = @STATIC_FLAG@
 LIBRARY_CL = $(DEPS_LIBS) 
 #AM_LDADD = $(DEPS_LIBS) 
 INCLUDES = @DEPS_CFLAGS@ 
