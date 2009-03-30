@@ -4,7 +4,7 @@ D_CXXFLAGS = -Wall -g -DCOMMAND_LINE -D__GNDEBUG__
 else
 P_CXXFLAGS = -DCOMMAND_LINE
 endif
-OPTIMIZATION = -O3 -Wall -mfpmath=sse -msse -msse2 -funroll-loops -fomit-frame-pointer -ftree-vectorize -funsafe-math-optimizations
+OPTIMIZATION = -O3 -Wall -funroll-loops -fomit-frame-pointer -ftree-vectorize -funsafe-math-optimizations
 AM_CXXFLAGS = $(OPTIMIZATION) $(D_CXXFLAGS) $(P_CXXFLAGS) 
 # since we are building static openmp, include the whole pthread library
 # to work around a bug on 32-bit linux
