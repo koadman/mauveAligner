@@ -50,7 +50,7 @@ AC_SUBST(DEPS_LIBS)
 dnl Mac OS X won't allow static compilation...
 STATIC_FLAG="-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive"
 if ( test "x$target_vendor" = "xapple") then
-        STATIC_FLAG="-nodefaultlibs -shared-libgcc -lstdc++-static -lgcc_eh -lgcc -lSystem"
+        STATIC_FLAG=""
 fi
 AC_SUBST(STATIC_FLAG)
 
