@@ -220,7 +220,7 @@ void getDefaultSmlFileNames( const vector< string >& seq_files, vector< string >
 	getPatternText(seed_pattern, pattern);
 	sml_files.resize(seq_files.size());
 	for( int seqI = 0; seqI < seq_files.size(); seqI++ )
-		sml_files[seqI] = seq_files[seqI] + "." + pattern + ".sml";
+		sml_files[seqI] = seq_files[seqI] + "." + pattern + ".sslist";
 }
 
 void applyBackbone( IntervalList& iv_list, string& bbcols_fname, string& bb_fname, size_t island_gap_size, double hmm_identity, double pgh, double pgu )
@@ -408,7 +408,7 @@ int doAlignment( int argc, char* argv[] ){
 
 	// set sml_names
 	for( size_t seq_fileI = 0; seq_fileI < seq_files.size(); seq_fileI++ )
-		sml_files.push_back( seq_files[seq_fileI] + ".sml" );
+		sml_files.push_back( seq_files[seq_fileI] + ".sslist" );
 	
 	// print the version if the user requested it
 	if( opt_version.set ){
