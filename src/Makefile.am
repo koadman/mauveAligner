@@ -18,7 +18,7 @@ toMultiFastA getAlignmentWindows uniquifyTrees \
 toGrimmFormat mauveToXMFA \
 stripGapColumns progressiveMauve progressiveMauveStatic \
 extractBCITrees createBackboneMFA \
-procrastAligner alignmentProjector stripSubsetLCBs \
+repeatoire alignmentProjector stripSubsetLCBs \
 projectAndStrip makeBadgerMatrix randomGeneSample getOrthologList \
 bbFilter bbAnalyze  
 
@@ -170,8 +170,8 @@ createBackboneMFA_LDADD = $(LIBRARY_CL)
 pairCompare_SOURCES = pairCompare.cpp
 pairCompare_LDADD = $(LIBRARY_CL)
 
-procrastAligner_SOURCES = procrastAligner.cpp MatchRecord.h SeedMatchEnumerator.h
-procrastAligner_LDADD = $(LIBRARY_CL) 
+repeatoire_SOURCES = repeatoire.cpp MatchRecord.h SeedMatchEnumerator.h
+repeatoire_LDADD = $(LIBRARY_CL) 
 
 scoreALU_SOURCES = scoreALU.cpp
 scoreALU_LDADD = $(LIBRARY_CL) 
