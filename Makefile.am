@@ -8,7 +8,7 @@ projects/extractBackbone.vcproj \
 projects/extractBCITrees.vcproj \
 projects/extractSubalignments.vcproj \
 projects/mauveAligner.vcproj \
-projects/procrastAligner.vcproj \
+projects/repeatoire.vcproj \
 projects/progressiveMauve.vcproj \
 projects/rootTrees.vcproj \
 projects/scoreAlignment.vcproj \
