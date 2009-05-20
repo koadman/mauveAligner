@@ -204,6 +204,21 @@ int main( int argc, char* argv[] )
 				goodI++;
 			}
 	}
+	map< string, int > sitepattern_count;
+	// count how many segments of each site pattern
+	for( size_t bbI = 0; bbI < binseqs[0].size(); bbI++ )
+	{
+		// construct the site pattern
+		string sitepat( seqs.size(), '0' );
+		for( int seqI = 0; seqI < seqs.size(); seqI++ )
+			sitepat[seqI] = binseqs[seqI][bbI];
+		map< string, int >::iterator iter = sitepattern_count.find(sitepat);
+		if(iter == sitepattern_count.end())
+			sitepattern_count.insert( make_pair( sitepat, 1 ) );
+		else
+			iter->second++;
+	}
+
 	// write out the seqs!!
 	if( target_format == "beast" )
 	{
@@ -228,6 +243,17 @@ int main( int argc, char* argv[] )
 		}
 		anal_output << "\t</alignment>\n";
 	}else{
+		// write out a header line with the number of times each site pattern is used.
+		for( size_t bbI = 0; bbI < binseqs[0].size(); bbI++ )
+		{
+			// construct the site pattern
+			string sitepat( seqs.size(), '0' );
+			for( int seqI = 0; seqI < seqs.size(); seqI++ )
+				sitepat[seqI] = binseqs[seqI][bbI];
+			if(bbI>0)	anal_output << ' ';
+			anal_output << sitepattern_count[sitepat];
+		}
+		anal_output << endl;
 		// write genoplast format
 		for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
 		{
