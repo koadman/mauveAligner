@@ -544,6 +544,10 @@ int doAlignment( int argc, char* argv[] ){
 	if( opt_mums.set )
 	{
 		WriteList(pairwise_match_list, *match_out);
+		for( size_t seqI = 0; seqI < pairwise_match_list.seq_table.size(); seqI++ )
+			delete pairwise_match_list.seq_table[seqI];	// an auto_ptr or shared_ptr could be great for this
+		for( size_t seqI = 0; seqI < pairwise_match_list.sml_table.size(); seqI++ )
+			delete pairwise_match_list.sml_table[seqI];
 		return 0;
 	}
 
