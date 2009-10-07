@@ -2,7 +2,6 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.59])
 AC_INIT(mauveAligner, 1.2.0)
 AC_CONFIG_SRCDIR([src/mauveAligner.cpp])
-AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_AUX_DIR(config)
 
 
@@ -10,6 +9,7 @@ dnl Get the target and build system types and add appropriate options
 AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([no-define])
+AM_CONFIG_HEADER([src/config.h])
 
 AC_PREFIX_DEFAULT(/usr/local)
 
