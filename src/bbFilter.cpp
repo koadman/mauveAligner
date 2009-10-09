@@ -11,7 +11,7 @@ public:
 	BbSorter( size_t seqI ){ m_seq = seqI; }
 	bool operator()( const labeled_bb_t& a, const labeled_bb_t& b )
 	{
-		return abs(a.first[m_seq].first) < abs(b.first[m_seq].first);
+		return genome::absolut(a.first[m_seq].first) < genome::absolut(b.first[m_seq].first);
 	}
 	size_t m_seq;
 };

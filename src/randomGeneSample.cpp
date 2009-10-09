@@ -96,7 +96,7 @@ int main( int argc, char* argv[] )
 			size_t bbI = 0;
 			for( ; bbI < backbone.size(); bbI++ )
 			{
-				if( abs(backbone[bbI][sgI].first) <= lend && rend <= abs(backbone[bbI][sgI].second) )
+				if( genome::absolut(backbone[bbI][sgI].first) <= lend && rend <= genome::absolut(backbone[bbI][sgI].second) )
 					break;
 			}
 			size_t seqI = 0;
@@ -125,8 +125,8 @@ int main( int argc, char* argv[] )
 			if( input_ivs[ivI].Start(sgI) != NO_MATCH )
 			{
 //				cerr << "iv: " << ivI << "\tstart: " << input_ivs[ivI].Start(sgI) << "\tlength: " << input_ivs[ivI].Length(sgI) << endl;
-				gnSeqI iv_rend = abs(input_ivs[ivI].Start(sgI)) + input_ivs[ivI].Length(sgI);
-				if(  abs(input_ivs[ivI].Start(sgI)) < lend && rend < iv_rend )
+				gnSeqI iv_rend = genome::absolut(input_ivs[ivI].Start(sgI)) + input_ivs[ivI].Length(sgI);
+				if(  genome::absolut(input_ivs[ivI].Start(sgI)) < lend && rend < iv_rend )
 					break;
 			}
 		}
