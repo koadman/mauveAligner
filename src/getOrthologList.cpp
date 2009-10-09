@@ -58,8 +58,8 @@ double computeAvgCoverage( vector< bb_seqentry_t >& backbone, vector< size_t >& 
 		for( size_t bbI = 0; bbI < nway_bb.size(); bbI++ )
 		{
 			gnLocation loc;
-			loc.SetStart(abs(backbone[nway_bb[bbI]][oI].first));
-			loc.SetEnd(abs(backbone[nway_bb[bbI]][oI].second));
+			loc.SetStart(absolut(backbone[nway_bb[bbI]][oI].first));
+			loc.SetEnd(absolut(backbone[nway_bb[bbI]][oI].second));
 			gnLocation intloc = floc.GetIntersection(loc,gnLocation::determinedRegions);
 			intlen += intloc.GetEnd()-intloc.GetStart();
 		}
@@ -146,9 +146,9 @@ int main( int argc, char* argv[] )
 		size_t bbI = 0;
 		for( size_t bbI = 0; bbI < backbone.size(); bbI++ )
 		{
-			if( (abs(backbone[bbI][sgI].first) <= lend && lend <= abs(backbone[bbI][sgI].second)) ||
-			    (abs(backbone[bbI][sgI].first) <= rend && rend <= abs(backbone[bbI][sgI].second)) ||
-			    (lend <= abs(backbone[bbI][sgI].first) && abs(backbone[bbI][sgI].first) <= rend) )
+			if( (absolut(backbone[bbI][sgI].first) <= lend && lend <= absolut(backbone[bbI][sgI].second)) ||
+			    (absolut(backbone[bbI][sgI].first) <= rend && rend <= absolut(backbone[bbI][sgI].second)) ||
+			    (lend <= absolut(backbone[bbI][sgI].first) && absolut(backbone[bbI][sgI].first) <= rend) )
 				intersecting_bb.push_back(bbI);
 		}
 		vector< size_t > nway_bb;
@@ -186,8 +186,8 @@ int main( int argc, char* argv[] )
 					loc1.SetStart( input_ivs[ivI].LeftEnd(sgI) );
 					loc1.SetEnd( input_ivs[ivI].RightEnd(sgI) );
 					gnLocation loc2;
-					loc2.SetStart( abs(backbone[nway_bb[bbI]][sgI].first) );
-					loc2.SetEnd( abs(backbone[nway_bb[bbI]][sgI].second) );
+					loc2.SetStart( absolut(backbone[nway_bb[bbI]][sgI].first) );
+					loc2.SetEnd( absolut(backbone[nway_bb[bbI]][sgI].second) );
 					gnLocation intloc = loc1.GetIntersection( loc2, gnLocation::determinedRegions );
 					gnLocation intloc2 = intloc.GetIntersection( loc, gnLocation::determinedRegions );
 					inter_size += intloc2.GetEnd() - intloc2.GetStart();
@@ -257,7 +257,7 @@ int main( int argc, char* argv[] )
 					for( size_t bbI = 0; bbI < nway_bb.size(); bbI++ )
 					{
 						gnLocation bbloc;
-						bbloc.SetBounds( abs(backbone[nway_bb[bbI]][seqI].first), abs(backbone[nway_bb[bbI]][seqI].second) );
+						bbloc.SetBounds( absolut(backbone[nway_bb[bbI]][seqI].first), absolut(backbone[nway_bb[bbI]][seqI].second) );
 						gnLocation l2 = bbloc.GetIntersection( l, gnLocation::determinedRegions );
 						if( l2.GetEnd() - l2.GetStart() > max_bb )
 							max_bb = l2.GetEnd() - l2.GetStart();

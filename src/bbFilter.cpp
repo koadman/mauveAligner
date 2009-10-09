@@ -27,7 +27,7 @@ public:
 		for( size_t i = 0; i < a.size(); i++ )
 			if( a[i].first != 0 )
 			{
-				tot += abs(a[i].second - a[i].first) + 1;
+				tot += genome::absolut(a[i].second - a[i].first) + 1;
 				sc++;
 			}
 		if( tot == 0 )
