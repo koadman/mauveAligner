@@ -4,7 +4,7 @@ D_CXXFLAGS = -Wall -g -DCOMMAND_LINE -D__GNDEBUG__
 else
 P_CXXFLAGS = -DCOMMAND_LINE
 endif
-OPTIMIZATION = -O2 -Wall -funroll-loops -fomit-frame-pointer -ftree-vectorize -funsafe-math-optimizations
+OPTIMIZATION = -O2 -Wall -funroll-loops -fomit-frame-pointer -ftree-vectorize 
 AM_CXXFLAGS = $(OPTIMIZATION) $(D_CXXFLAGS) $(P_CXXFLAGS) 
 AM_LDFLAGS = @STATIC_FLAG@
 LIBRARY_CL = $(DEPS_LIBS) 
