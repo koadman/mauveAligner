@@ -20,7 +20,7 @@ stripGapColumns progressiveMauve progressiveMauveStatic \
 extractBCITrees createBackboneMFA \
 repeatoire alignmentProjector stripSubsetLCBs \
 projectAndStrip makeBadgerMatrix randomGeneSample getOrthologList \
-bbFilter bbAnalyze  
+bbFilter bbAnalyze backbone_global_to_local 
 
 EXTRA_PROGRAMS = bbBreakOnGenes mauveMpatrol mauveEfence toGBKsequence \
 multiToRawSequence unalign makeMc4Matrix multiEVD evd scoreALU \
@@ -212,4 +212,6 @@ makeMc4Matrix_LDADD = $(LIBRARY_CL)
 bbBreakOnGenes_SOURCES = bbBreakOnGenes.cpp
 bbBreakOnGenes_LDADD = $(LIBRARY_CL)
 
+backbone_global_to_local_SOURCES = backbone_global_to_local.cpp
+backbone_global_to_local_LDADD = $(LIBRARY_CL)
 
