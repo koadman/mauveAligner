@@ -76,7 +76,8 @@ int main( int argc, char* argv[] )
 			for( uint seqI = 0; seqI < input_ivs.seq_filename.size(); ++seqI )
 			{
 				if(seqI > 0) coord_out << '\t';
-				coord_out << labeled_ivs[ivI].first->Start(seqI) << '\t' << labeled_ivs[ivI].first->End(seqI);
+				string sign = labeled_ivs[ivI].first->Start(seqI) < 0 ? "-" : "";
+				coord_out << sign << labeled_ivs[ivI].first->LeftEnd(seqI) << '\t' << sign << labeled_ivs[ivI].first->RightEnd(seqI);
 			}
 			coord_out << endl;
 		}
