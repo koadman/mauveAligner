@@ -28,7 +28,7 @@ int main( int argc, char* argv[] )
 {
 	if( argc < 4 )
 	{
-		cerr << "Usage: stripSubsetLCBs <input xmfa> <input bbcols> <output xmfa>\n";
+		cerr << "Usage: stripSubsetLCBs <input xmfa> <input bbcols> <output xmfa> [min LCB size]\n";
 		return -1;
 	}
 	ifstream aln_in;
@@ -49,6 +49,11 @@ int main( int argc, char* argv[] )
 	if( !aln_out.is_open() ){
 		cerr << "Error writing to " << argv[3] << endl;
 		return -1;
+	}
+
+	size_t min_block_length = 0;
+	if(argc>=5){
+		min_block_length = atol(argv[4]);
 	}
 	
 
@@ -114,7 +119,15 @@ int main( int argc, char* argv[] )
 			Interval* sub_iv = input_ivs[bbcols[bbI].get<0>()].Copy();
 			sub_iv->CropStart( bbcols[bbI].get<1>() - 1 );
 			sub_iv->CropEnd( sub_iv->Length() - bbcols[bbI].get<2>() );
-			output_ivs.push_back( *sub_iv );
+			// calculate mean length
+			size_t avglen = 0;
+			for(size_t seqI=0; seqI < sub_iv->SeqCount(); seqI++){
+				avglen += sub_iv->Length(seqI);
+			}
+			avglen /= sub_iv->SeqCount();
+			if(avglen >= min_block_length){
+				output_ivs.push_back( *sub_iv );
+			}
 			sub_iv->Free();
 		}
 		cout << "output_ivs.size() " << output_ivs.size() << endl;
