@@ -213,10 +213,20 @@ int main( int argc, char* argv[] )
 		for( int seqI = 0; seqI < seqs.size(); seqI++ )
 			sitepat[seqI] = binseqs[seqI][bbI];
 		map< string, int >::iterator iter = sitepattern_count.find(sitepat);
+		size_t length=0;
+		size_t sc=0;
+		for( int seqI = 0; seqI < seqs.size(); seqI++ )
+		{
+			if(sitepat[seqI]=='1'){
+				length += genome::absolut(bb_seq_list[bbI][seqI].second - bb_seq_list[bbI][seqI].first);
+				sc++;
+			}
+		}
+		length /= sc;
 		if(iter == sitepattern_count.end())
-			sitepattern_count.insert( make_pair( sitepat, 1 ) );
+			sitepattern_count.insert( make_pair( sitepat, length ) );
 		else
-			iter->second++;
+			iter->second+= length;
 	}
 
 	// write out the seqs!!
@@ -244,24 +254,19 @@ int main( int argc, char* argv[] )
 		anal_output << "\t</alignment>\n";
 	}else{
 		// write out a header line with the number of times each site pattern is used.
-		for( size_t bbI = 0; bbI < binseqs[0].size(); bbI++ )
-		{
-			// construct the site pattern
-			string sitepat( seqs.size(), '0' );
-			for( int seqI = 0; seqI < seqs.size(); seqI++ )
-				sitepat[seqI] = binseqs[seqI][bbI];
-			if(bbI>0)	anal_output << ' ';
-			anal_output << sitepattern_count[sitepat];
+		map<string,int>::iterator f = sitepattern_count.begin();
+		for(; f!= sitepattern_count.end(); f++){
+			if(f!=sitepattern_count.begin())	anal_output << ' ';
+			anal_output << (f->second / 20);
 		}
 		anal_output << endl;
 		// write genoplast format
 		for( size_t seqI = 0; seqI < seqs.size(); seqI++ )
 		{
-			for( size_t cI = 0; cI < binseqs[seqI].size(); cI++ )
-			{
-				if( cI > 0 )
-					anal_output << ' ';
-				anal_output << binseqs[seqI][cI];
+			f = sitepattern_count.begin();
+			for(; f!= sitepattern_count.end(); f++){
+				if(f!=sitepattern_count.begin())	anal_output << ' ';
+				anal_output << f->first[seqI];
 			}
 			anal_output << endl;
 		}
