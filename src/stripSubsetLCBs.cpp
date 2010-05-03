@@ -28,7 +28,7 @@ int main( int argc, char* argv[] )
 {
 	if( argc < 4 )
 	{
-		cerr << "Usage: stripSubsetLCBs <input xmfa> <input bbcols> <output xmfa> [min LCB size]\n";
+		cerr << "Usage: stripSubsetLCBs <input xmfa> <input bbcols> <output xmfa> [min LCB size] [min genomes] [randomly subsample to X kb]\n";
 		return -1;
 	}
 	ifstream aln_in;
@@ -54,6 +54,14 @@ int main( int argc, char* argv[] )
 	size_t min_block_length = 0;
 	if(argc>=5){
 		min_block_length = atol(argv[4]);
+	}
+	size_t min_genome_count = -1;
+	if(argc>=6){
+		min_genome_count = atol(argv[5]);
+	}
+	size_t subsample_kb = 0;
+	if(argc>=7){
+		subsample_kb = atol(argv[6]);
 	}
 	
 
@@ -112,9 +120,11 @@ int main( int argc, char* argv[] )
 		}
 */
 		cout << "seq_count is: " << input_ivs.seq_table.size() << endl;
+		if(min_genome_count==-1) min_genome_count = input_ivs.seq_table.size();
+
 		for( size_t bbI = 0; bbI < bbcols.size(); bbI++ )
 		{
-			if( bbcols[bbI].get<3>().size() < input_ivs.seq_table.size() )
+			if( bbcols[bbI].get<3>().size() < min_genome_count )
 				continue;
 			Interval* sub_iv = input_ivs[bbcols[bbI].get<0>()].Copy();
 			sub_iv->CropStart( bbcols[bbI].get<1>() - 1 );
@@ -130,9 +140,31 @@ int main( int argc, char* argv[] )
 			}
 			sub_iv->Free();
 		}
-		cout << "output_ivs.size() " << output_ivs.size() << endl;
-
-		output_ivs.WriteStandardAlignment( aln_out );
+		if(subsample_kb==0){
+			cout << "output_ivs.size() " << output_ivs.size() << endl;
+			output_ivs.WriteStandardAlignment( aln_out );
+		}else{
+			set<size_t> sampled;
+			double cur_kb=0;
+			for(; cur_kb < (double)subsample_kb && sampled.size() < output_ivs.size(); cur_kb++){
+				int block = rand()%output_ivs.size();
+				if(sampled.find(block)!=sampled.end()){
+					continue;
+				}
+				sampled.insert(block);
+				cur_kb += (double)(output_ivs[block].AlignmentLength()) / 1000.0;
+				
+			}
+			IntervalList new_ivs;
+			new_ivs.seq_table=output_ivs.seq_table;
+			new_ivs.seq_filename=output_ivs.seq_filename;
+			int i=0;
+			for(set<size_t>::iterator siter = sampled.begin(); siter != sampled.end(); siter++){
+				new_ivs.push_back(output_ivs[*siter]);
+			}
+			cout << "Writing " << cur_kb << " kb of alignment columns in " << new_ivs.size() << " blocks" << endl;
+			new_ivs.WriteStandardAlignment( aln_out );
+		}
 
 	}catch( gnException& gne ){
 		cerr << gne << endl;
