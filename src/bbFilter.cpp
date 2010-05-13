@@ -57,7 +57,7 @@ int main( int argc, char* argv[] )
 	int indie_dist = atoi( argv[2] );
 	string output_fname( argv[3] );
 	string target_format( argv[4] );
-	bool allow_alternalogs = false;
+	bool allow_alternalogs = true;
 	bool check_independence = false;
 
 	ifstream bbseq_input( bbseq_fname.c_str() );
@@ -206,23 +206,22 @@ int main( int argc, char* argv[] )
 	}
 	map< string, int > sitepattern_count;
 	// count how many segments of each site pattern
-	for( size_t bbI = 0; bbI < binseqs[0].size(); bbI++ )
+	for( size_t bbI = 0; bbI < good_bb.size(); bbI++ )
 	{
-		// construct the site pattern
-		string sitepat( seqs.size(), '0' );
-		for( int seqI = 0; seqI < seqs.size(); seqI++ )
-			sitepat[seqI] = binseqs[seqI][bbI];
-		map< string, int >::iterator iter = sitepattern_count.find(sitepat);
+		if(!good_bb.test(bbI))	continue;
 		size_t length=0;
 		size_t sc=0;
+		string sitepat( seqs.size(), '0' );
 		for( int seqI = 0; seqI < seqs.size(); seqI++ )
 		{
-			if(sitepat[seqI]=='1'){
+			sitepat[seqI] = spa_seqs[seqI][bbI] ? '1' : '0';
+			if(spa_seqs[seqI][bbI]){
 				length += genome::absolut(bb_seq_list[bbI][seqI].second - bb_seq_list[bbI][seqI].first);
 				sc++;
 			}
 		}
 		length /= sc;
+		map< string, int >::iterator iter = sitepattern_count.find(sitepat);
 		if(iter == sitepattern_count.end())
 			sitepattern_count.insert( make_pair( sitepat, length ) );
 		else
