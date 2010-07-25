@@ -20,7 +20,7 @@ stripGapColumns progressiveMauve progressiveMauveStatic \
 extractBCITrees createBackboneMFA \
 repeatoire alignmentProjector stripSubsetLCBs \
 projectAndStrip makeBadgerMatrix randomGeneSample getOrthologList \
-bbFilter bbAnalyze backbone_global_to_local 
+bbFilter bbAnalyze backbone_global_to_local xmfa2maf 
 
 EXTRA_PROGRAMS = bbBreakOnGenes mauveMpatrol mauveEfence toGBKsequence \
 multiToRawSequence unalign makeMc4Matrix multiEVD evd scoreALU \
@@ -97,6 +97,11 @@ mfa2xmfa_SOURCES = mfa2xmfa.cpp
 mfa2xmfa_LDADD = $(LIBRARY_CL)
 EXTRA_mfa2xmfa_SOURCES = getopt.c getopt.h getopt1.c
 mfa2xmfa_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
+
+xmfa2maf_SOURCES = xmfa2maf.cpp
+xmfa2maf_LDADD = $(LIBRARY_CL)
+EXTRA_mfa2xmfa_SOURCES = getopt.c getopt.h getopt1.c
+xmfa2maf_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
 
 toGBKsequence_SOURCES = toGBKsequence.cpp
 toGBKsequence_LDADD = $(LIBRARY_CL)
