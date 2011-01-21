@@ -49,21 +49,29 @@ try{
 	uint seq_count = ivs[ 0 ].SeqCount();
 	gnSequence output_seq;
 	for( uint seqI = 0; seqI < seq_count; seqI++ ){
-		string cur_seq;
+		gnSequence cur_seq;
 		AbstractMatchStartComparator<Interval> ivcomp(seqI);
 		sort( ivs.begin(), ivs.end(), ivcomp );
 		for( uint ivI = 0; ivI < ivs.size(); ivI++ ){
 			const vector< AbstractMatch* >& matches = ivs[ivI].GetMatches();
 			const vector< string >& alignment = GetAlignment(*((GappedAlignment*)matches[0]), vector<gnSequence*>(seq_count) );
 			cur_seq += alignment[seqI];
+			if(ivs[ivI].LeftEnd(seqI)<0)	cur_seq.setReverseComplement(true, cur_seq.contigListLength()-1);
 		}
+		string strseq = cur_seq.ToString();
 		// strip gaps
 		string gapless_seq;
 		for( string::size_type charI = 0; charI < cur_seq.size(); charI++ ){
-			if( cur_seq[ charI ] != '-' )
-				gapless_seq += cur_seq[ charI ];
+			if( strseq[ charI ] != '-' )
+				gapless_seq += strseq[ charI ];
 		}
 		output_seq += gapless_seq;
+		if(ivs.seq_filename.size()>0){
+			output_seq.setContigName(seqI,ivs.seq_filename[seqI]);
+			gnSequence file_seq;
+			file_seq += gapless_seq;
+			gnFASSource::Write( file_seq, ivs.seq_filename[seqI] );
+		}
 	}
 	cerr << "Writing " << output_fname << endl;
 	gnFASSource::Write( output_seq, mfa_out );
