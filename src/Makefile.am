@@ -100,7 +100,7 @@ mfa2xmfa_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
 
 xmfa2maf_SOURCES = xmfa2maf.cpp
 xmfa2maf_LDADD = $(LIBRARY_CL)
-EXTRA_mfa2xmfa_SOURCES = getopt.c getopt.h getopt1.c
+EXTRA_xmfa2maf_SOURCES = getopt.c getopt.h getopt1.c
 xmfa2maf_DEPENDENCIES = @GETOPT_LONG_SYSTEM@
 
 toGBKsequence_SOURCES = toGBKsequence.cpp
