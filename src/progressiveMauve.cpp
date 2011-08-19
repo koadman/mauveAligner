@@ -302,6 +302,8 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_go_unrelated( mauve_options, "hmm-p-go-unrelated", required_argument, "<number> Probability of transitioning from the homologous to the unrelated state [0.000000001]" );
 	MauveOption opt_hmm_identity( mauve_options, "hmm-identity", required_argument, "<number> Expected level of sequence identity among pairs of sequences, ranging between 0 and 1 [0.7]" );
 	MauveOption opt_seed_family( mauve_options, "seed-family", no_argument, "Use a family of spaced seeds to improve sensitivity" );
+	MauveOption opt_solid_seeds( mauve_options, "solid-seeds", no_argument, "Use solid seeds. Do not permit substitutions in anchor matches." );
+	MauveOption opt_coding_seeds( mauve_options, "coding-seeds", no_argument, "Use coding pattern seeds. Useful to generate matches coding regions with 3rd codon position degeneracy." );
 	MauveOption opt_disable_cache( mauve_options, "disable-cache", no_argument, "Disable recursive anchor search cacheing to workaround a crash bug" );
 	MauveOption opt_recursive( mauve_options, "no-recursion", no_argument, "Disable recursive anchor search" );
 
@@ -442,7 +444,12 @@ int doAlignment( int argc, char* argv[] ){
 		// testing: rewrite seq files in RAW format
 		LoadAndCreateRawSequences( pairwise_match_list, &cout );
 //		LoadSequences( pairwise_match_list, &cout );
-		pairwise_match_list.LoadSMLs( mer_size, &cout );
+		if(opt_solid_seeds.set)
+			pairwise_match_list.LoadSMLs( mer_size, &cout, SOLID_SEED, true );
+		else if(opt_coding_seeds.set)
+			pairwise_match_list.LoadSMLs( mer_size, &cout, CODING_SEED );
+		else
+			pairwise_match_list.LoadSMLs( mer_size, &cout, CODING_SEED );
 	}
 
 	ostream* match_out;
@@ -679,8 +686,6 @@ int doAlignment( int argc, char* argv[] ){
 		pss = PairwiseScoringScheme(matrix, pss.gap_open, pss.gap_extend);
 	}
 	aligner.setPairwiseScoringScheme(pss);
-
-	MauveOption opt_subsitution_matrix( mauve_options, "subsitution-matrix", required_argument, "<file> Nucleotide substitution matrix in NCBI format" );
 
 	if( opt_input_guide_tree.set )
 		aligner.setInputGuideTreeFileName( opt_input_guide_tree.arg_value );
