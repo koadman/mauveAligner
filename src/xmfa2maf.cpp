@@ -63,7 +63,7 @@ int main(int argc, char* argv[] ){
 			if(l_contigI != r_contigI){
 				cerr << "interval " << ivI << " seq " << seqI << " left " << alignments[ivI]->LeftEnd(seqI) << " right " << alignments[ivI]->RightEnd(seqI) << endl;
 				cerr << "l_baseI " << l_baseI << " r_baseI " << r_baseI << " l_contigI " << l_contigI << " r_contigI " << r_contigI << " name " << contig_name << endl;
-				cerr << "Error, input alignment must spans multiple contigs/chromosomes. Unable to translate to MAF\n";
+				cerr << "Error, input alignment spans multiple contigs/chromosomes. Unable to translate to MAF\n";
 				return -1;
 			}
 			ofile << "s " << xmfa.seq_filename[seqI] << "." << contig_name;
