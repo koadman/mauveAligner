@@ -456,7 +456,7 @@ int doAlignment( int argc, char* argv[] ){
 	if( opt_output.set ){
 		ofstream* match_out_file = new ofstream( opt_output.arg_value.c_str() );
 		if( !match_out_file->is_open() ){
-			cerr << "Error opening \"" << opt_output.val << "\"\n";
+			cerr << "Unable to open output file \"" << opt_output.arg_value << "\" for writing.\nCheck that you have permission to write files in this location and that the disk has free space.\n";
 			return -2;
 		}
 		match_out = match_out_file;
