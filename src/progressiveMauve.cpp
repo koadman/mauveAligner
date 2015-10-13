@@ -274,7 +274,6 @@ int doAlignment( int argc, char* argv[] ){
 	MauveOption opt_output( mauve_options, "output", required_argument, "<file> Output file name.  Prints to screen by default" );
 	MauveOption opt_backbone_output( mauve_options, "backbone-output", required_argument, "<file> Backbone output file name (optional)." );
 	MauveOption opt_match_input( mauve_options, "match-input", required_argument, "<file> Use specified match file instead of searching for matches" );
-	MauveOption opt_input_id_matrix( mauve_options, "input-id-matrix", required_argument, "<file> An identity matrix describing similarity among all pairs of input sequences/alignments" );
 	MauveOption opt_max_gapped_aligner_length( mauve_options, "max-gapped-aligner-length", required_argument, "<number> Maximum number of base pairs to attempt aligning with the gapped aligner" );
 	MauveOption opt_input_guide_tree( mauve_options, "input-guide-tree", required_argument, "<file> A phylogenetic guide tree in NEWICK format that describes the order in which sequences will be aligned" );
 	MauveOption opt_output_guide_tree( mauve_options, "output-guide-tree", required_argument, "<file> Write out the guide tree used for alignment to a file" );
