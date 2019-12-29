@@ -11,7 +11,7 @@
 #endif
 
 #include "mauveAligner.h"
-#include "getopt.h"
+#include "my_getopt.h"
 #include <sstream>
 #include <stdexcept>
 #include "libGenome/gnSequence.h"

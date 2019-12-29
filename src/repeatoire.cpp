@@ -1591,7 +1591,7 @@ void processNovelSubsetMatches( GappedMatchRecord*& M_i, vector< NeighborhoodGro
 		getSubsets(M_j,-direction*ni_parity*nj_parity).push_back(nj_link);
         //getExtraSubsets(M_j,-direction*ni_parity*nj_parity).push_back(nj_link);
 		// push M_n onto the heap
-		novel_subset_list.push_back(M_n);
+		novel_subset_list.push_back(boost::make_tuple(M_n,vector<size_t>(),vector<size_t>()));
 		//procrastination_queue.push(M_n);
 		novel_subset_count++;
 	}
