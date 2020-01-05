@@ -4,12 +4,10 @@ D_CXXFLAGS = -Wall -g -DCOMMAND_LINE -D__GNDEBUG__
 else
 P_CXXFLAGS = -DCOMMAND_LINE
 endif
-OPTIMIZATION = -O2 -funroll-loops -fomit-frame-pointer -ftree-vectorize 
-AM_CXXFLAGS = $(OPTIMIZATION) $(D_CXXFLAGS) $(P_CXXFLAGS) 
+OPTIMIZATION = -Ofast 
+AM_CXXFLAGS = $(OPTIMIZATION) $(D_CXXFLAGS) $(P_CXXFLAGS) @DEPS_CFLAGS@ 
 AM_LDFLAGS = @STATIC_FLAG@
 LIBRARY_CL = $(DEPS_LIBS) 
-#AM_LDADD = $(DEPS_LIBS) 
-INCLUDES = @DEPS_CFLAGS@ 
 
 bin_PROGRAMS = mauveAligner mauveStatic scoreAlignment \
 uniqueMerCount toRawSequence \

@@ -17,15 +17,19 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
 
-#ifndef _GETOPT_H
+#ifndef _MY_GETOPT_H
 
 #ifndef __need_getopt
-# define _GETOPT_H 1
+# define _MY_GETOPT_H 1
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifndef GETOPT_UNDEFINED
+#include <getopt.h>
+#else // define getopt for ourselves
 
 /* If __GNU_LIBRARY__ is not already defined, either we are being used
    standalone, or this is the first header included in the source file.
@@ -182,4 +186,5 @@ extern int _getopt_internal ();
 /* Make sure we later can get all the definitions and declarations.  */
 #undef __need_getopt
 
+#endif /* getopt_core.h */
 #endif /* getopt.h */
